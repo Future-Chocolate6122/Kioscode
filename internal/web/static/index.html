@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>{{.Title}}</title>
+<link rel="stylesheet" href="/static/app.css?v={{.Version}}">
+<script src="/static/app.js?v={{.Version}}" defer></script>
+</head>
+<body class="{{if .Mock}}modo-prueba{{end}}{{if .HasBackground}} con-fondo{{end}}"
+      data-config="{{.ClientConfig}}" data-ssid="{{.MainSSID}}">
+
+{{if .Mock}}<div class="franja-prueba" role="status">{{.T.modo_prueba}}</div>{{end}}
+
+<header class="cabecera">
+  <div class="logo">
+    {{if .HasLogo}}<img src="/logo" alt="{{.Organization}}">{{else if .Organization}}<span class="logo-texto">{{.Organization}}</span>{{end}}
+  </div>
+  <div class="servicio">{{.Title}}</div>
+</header>
+
+<main class="contenido">
+
+  <!-- Estado «inicio» -->
+  <section id="inicio" class="pantalla activa" aria-live="polite">
+    <svg class="icono-grande" viewBox="0 0 48 48" aria-hidden="true">
+      <path d="M4 18a28 28 0 0 1 40 0M10 25a19 19 0 0 1 28 0M16 32a10 10 0 0 1 16 0"/>
+      <circle cx="24" cy="38" r="2.5" class="relleno"/>
+    </svg>
+    <h1 class="titulo">{{.Title}}</h1>
+    <p class="intro">{{.T.intro}}</p>
+
+    {{if gt (len .SSIDs) 1}}
+    <fieldset class="selector-red">
+      <legend class="etiqueta">{{.T.elige_red}}</legend>
+      {{range $i, $s := .SSIDs}}
+      <label class="opcion-red">
+        <input type="radio" name="ssid" value="{{$s}}"{{if eq $i 0}} checked{{end}}>
+        <span>{{$s}}</span>
+      </label>
+      {{end}}
+    </fieldset>
+    {{else}}
+    <div class="red">
+      <span class="etiqueta">{{.T.red}}</span>
+      <span class="ssid">{{.MainSSID}}</span>
+    </div>
+    {{end}}
+
+    <button id="btn-obtener" type="button" class="boton boton-principal">{{.T.boton_obtener}}</button>
+    <p class="validez-inicio">{{.Validity}}</p>
+  </section>
+
+  <!-- Estado «cargando» -->
+  <section id="cargando" class="pantalla" aria-live="polite">
+    <div class="cargador" aria-hidden="true"><span></span><span></span><span></span></div>
+    <p class="mensaje">{{.T.cargando}}</p>
+  </section>
+
+  <!-- Estado «codigo» -->
+  <section id="codigo" class="pantalla" aria-live="polite">
+    <div class="tarjeta">
+      <h2 class="seccion">{{.T.codigo_titulo}}</h2>
+      <div class="tarjeta-cuerpo">
+        <figure class="qr">
+          <img id="qr" alt="QR">
+          <figcaption>{{.T.qr_ayuda}}</figcaption>
+        </figure>
+        <div class="datos">
+          <div id="codigo-valor" class="codigo"></div>
+          <p id="validez" class="validez"></p>
+        </div>
+      </div>
+      <ol class="pasos">
+        <li>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 20a26 26 0 0 1 36 0M12 27a17 17 0 0 1 24 0M18 34a8 8 0 0 1 12 0"/><circle cx="24" cy="39" r="2" class="relleno"/></svg>
+          <span class="num">1</span><span id="paso1">{{.T.paso1}}</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="9" width="38" height="30" rx="1"/><path d="M5 17h38M10 13h2M15 13h2M20 13h2"/></svg>
+          <span class="num">2</span><span>{{.T.paso2}}</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="13" width="40" height="22" rx="1"/><path d="M10 19h2M16 19h2M22 19h2M28 19h2M34 19h4M10 24h2M16 24h2M22 24h2M28 24h2M34 24h4M14 29h20"/></svg>
+          <span class="num">3</span><span>{{.T.paso3}}</span>
+        </li>
+      </ol>
+      <div class="pie-tarjeta">
+        <div class="cuenta">
+          <span id="cuenta-texto"></span>
+          <div class="barra"><div id="cuenta-barra"></div></div>
+        </div>
+        <button id="btn-terminado" type="button" class="boton boton-secundario">{{.T.boton_terminado}}</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Estado «error» -->
+  <section id="error" class="pantalla" aria-live="assertive">
+    <div class="aviso-error">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="19"/><path d="M24 13v14"/><circle cx="24" cy="34" r="2" class="relleno"/></svg>
+      <p id="error-texto"></p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pie">{{.T.pie}}</footer>
+</body>
+</html>

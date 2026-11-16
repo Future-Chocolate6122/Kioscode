@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+{{if .CSRF}}<meta name="csrf" content="{{.CSRF}}">{{end}}
+<title>Administración · {{.Title}}</title>
+<link rel="stylesheet" href="/static/app.css?v={{.Version}}">
+<script src="/static/admin.js?v={{.Version}}" defer></script>
+</head>
+<body class="admin">
+<header class="cabecera">
+  <div class="logo">
+    {{if .HasLogo}}<img src="/logo" alt="{{.LogoText}}">{{else if .LogoText}}<span class="logo-texto">{{.LogoText}}</span>{{end}}
+  </div>
+  <div class="servicio">{{.Title}} · Administración</div>
+</header>
+
+<main class="admin-main">
+
+{{if eq .View "setup"}}
+  <div class="bloque tarjeta-login">
+    <h1>Primer acceso</h1>
+    <p>Cree la contraseña de administración. Se guardará cifrada (bcrypt) en la configuración.</p>
+    {{if .Error}}<div class="aviso mal">{{.Error}}</div>{{end}}
+    <form method="post" action="/admin/setup">
+      <div class="campo"><label for="p1">Nueva contraseña (mínimo 10 caracteres)</label>
+        <input id="p1" type="password" name="password" autocomplete="new-password" required minlength="10" maxlength="72" autofocus></div>
+      <div class="campo"><label for="p2">Repita la contraseña</label>
+        <input id="p2" type="password" name="password2" autocomplete="new-password" required minlength="10" maxlength="72"></div>
+      <div class="acciones"><button class="boton boton-principal" type="submit">Crear contraseña</button></div>
+    </form>
+  </div>
+
+{{else if eq .View "login"}}
+  <div class="bloque tarjeta-login">
+    <h1>Administración</h1>
+    {{if .Error}}<div class="aviso mal">{{.Error}}</div>{{end}}
+    <form method="post" action="/admin/login">
+      <div class="campo"><label for="pw">Contraseña</label>
+        <input id="pw" type="password" name="password" autocomplete="current-password" required autofocus></div>
+      <div class="acciones"><button class="boton boton-principal" type="submit">Entrar</button></div>
+    </form>
+  </div>
+
+{{else}}
+  <h1>Administración</h1>
+  {{if .Flash}}<div class="aviso">{{.Flash}}</div>{{end}}
+  {{if .Error}}<div class="aviso mal">{{.Error}}</div>{{end}}
+  {{range .Warnings}}<div class="aviso mal">{{.}}</div>{{end}}
+  {{if .Cfg.UniFi.Mock}}<div class="aviso prueba"><b>Modo simulación activo.</b> El quiosco entrega códigos falsos y muestra la franja «MODO PRUEBA».</div>{{end}}
+
+  <section class="bloque">
+    <h2>Estado</h2>
+    <div class="estado">
+      <div><b>Modo</b><span>{{if .Cfg.UniFi.Mock}}Simulación{{else}}Real{{end}}</span></div>
+      <div><b>UniFi</b><span class="{{if eq .Health.Status "ok"}}ok{{else if eq .Health.Status "error"}}ko{{end}}">{{if eq .Health.Status "ok"}}Conectado{{else if eq .Health.Status "error"}}Error{{else if eq .Health.Status "mock"}}No se usa{{else}}Sin comprobar{{end}}</span></div>
+      <div><b>Códigos hoy</b><span>{{.DailyUsed}} / {{.Cfg.Kiosk.DailyLimit}}</span></div>
+      <div><b>API key</b><span class="{{if .APIKeySet}}ok{{else}}ko{{end}}">{{if .APIKeySet}}Configurada{{else}}No configurada{{end}}</span></div>
+      {{if .Firewall.Managed}}<div><b>Cortafuegos (ufw)</b><span id="fw-estado" data-state="{{.Firewall.State}}" class="{{if eq .Firewall.State "ok"}}ok{{else if eq .Firewall.State "error"}}ko{{end}}">{{if eq .Firewall.State "ok"}}Actualizado{{else if eq .Firewall.State "pendiente"}}Aplicando…{{else if eq .Firewall.State "inactivo"}}Desactivado{{else}}Error{{end}}</span></div>{{end}}
+      <div><b>Versión</b><span>{{.Version}}</span></div>
+    </div>
+    {{if .Firewall.Managed}}<div id="fw-texto" class="resultado{{if eq .Firewall.State "error"}} mal{{end}}">{{.Firewall.Text}}</div>{{end}}
+    {{if and (eq .Health.Status "error") .Health.Error}}<div class="resultado mal">Último error ({{.Health.At.Format "02/01 15:04:05"}}): {{.Health.Error}}</div>{{end}}
+    <p class="mono">Configuración: {{.ConfigPath}}<br>Datos y log: {{.DataDir}}</p>
+    <div class="acciones">
+      <button type="button" class="boton boton-principal" id="btn-probar">Probar conexión con UniFi</button>
+      <button type="button" class="boton boton-secundario" id="btn-prueba-voucher">Generar voucher de prueba</button>
+    </div>
+    <div id="res-acciones" class="resultado" aria-live="polite"></div>
+  </section>
+
+  <form method="post" action="/admin" autocomplete="off" id="form-config">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+
+    <section class="bloque">
+      <h2>UniFi OS Server</h2>
+      <div class="rejilla">
+        <div class="campo ancho">
+          <label class="casilla"><input type="checkbox" name="unifi_mock" value="1"{{if .Cfg.UniFi.Mock}} checked{{end}}> Modo simulación (códigos falsos, no contacta con UniFi)</label>
+        </div>
+        <div class="campo ancho">
+          <label for="base_url">URL del servidor</label>
+          <input id="base_url" type="text" name="unifi_base_url" value="{{.Cfg.UniFi.BaseURL}}" required>
+          <small>El servidor de UniFi de esta sede, con el formato https://IP:11443.</small>
+        </div>
+        <div class="campo ancho">
+          <label for="api_key">API key ({{if .APIKeySet}}configurada: sí{{else}}configurada: no{{end}})</label>
+          <input id="api_key" type="password" name="unifi_api_key" value="" autocomplete="new-password" placeholder="{{if .APIKeySet}}Deje vacío para conservar la actual{{else}}Pegue aquí la clave creada en Network → Integrations{{end}}">
+          {{if .APIKeySet}}<label class="casilla"><input type="checkbox" name="unifi_api_key_clear" value="1"> Borrar la clave guardada</label>{{end}}
+          <details class="ayuda">
+            <summary>¿Cómo crear la clave?</summary>
+            <p>La clave tiene los mismos permisos que el usuario de UniFi que la crea. Lo recomendable es un usuario solo para el tótem:</p>
+            <ol>
+              <li>En UniFi OS Server, en <b>Admins &amp; Users</b>, cree un administrador <b>local</b> (por ejemplo <code>totem-api</code>), no una cuenta de ui.com, con una contraseña larga.</li>
+              <li>Dele acceso <b>solo a la aplicación Network</b>, sin Protect, Access ni otras.</li>
+              <li>En Network, dele el permiso más bajo que permita <b>administrar</b> la red (suele llamarse «Full Management» o «Admin»). No sirven «Hotspot» ni «Solo lectura» (<i>View Only</i>): crear vouchers requiere permiso de escritura.</li>
+              <li>Entre en UniFi con ese usuario y cree la clave en <b>Network → Settings → Control Plane → Integrations</b>. Cópiela: UniFi solo la muestra una vez.</li>
+              <li>Péguela aquí, pulse <b>Guardar</b> y luego <b>Probar conexión con UniFi</b>. Si responde 403, el permiso se queda corto.</li>
+            </ol>
+            <p>Cada servidor de UniFi tiene sus propias claves: si cambia de servidor, cree una en el nuevo.</p>
+          </details>
+        </div>
+        <div class="campo ancho">
+          <label for="cert">Huella SHA-256 del certificado (anclado)</label>
+          <input id="cert" class="mono" type="text" name="unifi_cert_sha256" value="{{.Cfg.UniFi.CertSHA256}}" placeholder="64 caracteres hexadecimales">
+          <div class="acciones"><button type="button" class="boton boton-secundario" id="btn-huella">Obtener huella del certificado</button></div>
+          <div id="res-huella" class="resultado" aria-live="polite"></div>
+        </div>
+        <div class="campo ancho">
+          <label for="site">ID del sitio</label>
+          <input id="site" class="mono" type="text" name="unifi_site_id" value="{{.Cfg.UniFi.SiteID}}" placeholder="vacío = detectar «default»">
+        </div>
+      </div>
+    </section>
+
+    <section class="bloque">
+      <h2>Red y voucher</h2>
+      <div class="rejilla">
+        <div class="campo"><label for="ssid">SSID principal</label>
+          <input id="ssid" type="text" name="voucher_ssid" value="{{.Cfg.Voucher.SSID}}" required maxlength="32"></div>
+        <div class="campo"><label for="ssidpw">Contraseña Wi-Fi del SSID</label>
+          <input id="ssidpw" type="text" name="voucher_ssid_password" value="{{.Cfg.Voucher.SSIDPassword}}" placeholder="vacío = red abierta con portal"></div>
+        <div class="campo ancho">
+          <span class="rotulo">SSID adicionales (si hay alguno, el quiosco muestra un selector)</span>
+          <table class="tabla-ssid">
+            {{range $i, $e := .Extras}}
+            <tr><td><input type="text" name="extra_ssid_{{$i}}" value="{{$e.SSID}}" placeholder="SSID" maxlength="32"></td>
+                <td><input type="text" name="extra_password_{{$i}}" value="{{$e.Password}}" placeholder="contraseña (vacío = abierta)"></td></tr>
+            {{end}}
+          </table>
+        </div>
+        <div class="campo"><label for="note">Nota del voucher (visible en UniFi)</label>
+          <input id="note" type="text" name="voucher_note" value="{{.Cfg.Voucher.Note}}" required></div>
+        <div class="campo"><label for="min">Duración (minutos)</label>
+          <input id="min" type="number" name="voucher_minutes" value="{{.Cfg.Voucher.Minutes}}" min="1" max="1000000" required>
+          <small>240 = 4 horas · 1440 = 1 día</small></div>
+        <div class="campo"><label for="gl">Dispositivos por código</label>
+          <input id="gl" type="number" name="voucher_guest_limit" value="{{.Cfg.Voucher.GuestLimit}}" min="0" max="1000"><small>0 = sin límite</small></div>
+        <div class="campo"><label for="mb">Límite de datos (MB)</label>
+          <input id="mb" type="number" name="voucher_data_mb" value="{{.Cfg.Voucher.DataMB}}" min="0"><small>0 = sin límite</small></div>
+        <div class="campo"><label for="rx">Velocidad de bajada (kbps)</label>
+          <input id="rx" type="number" name="voucher_rx_kbps" value="{{.Cfg.Voucher.RxKbps}}" min="0" max="100000"><small>0 = sin límite · 2–100000</small></div>
+        <div class="campo"><label for="tx">Velocidad de subida (kbps)</label>
+          <input id="tx" type="number" name="voucher_tx_kbps" value="{{.Cfg.Voucher.TxKbps}}" min="0" max="100000"><small>0 = sin límite · 2–100000</small></div>
+      </div>
+    </section>
+
+    <section class="bloque">
+      <h2>Quiosco</h2>
+      <div class="rejilla">
+        <div class="campo"><label for="title">Título</label>
+          <input id="title" type="text" name="kiosk_title" value="{{.Cfg.Kiosk.Title}}" required></div>
+        <div class="campo"><label for="org">Nombre de la organización</label>
+          <input id="org" type="text" name="kiosk_organization" value="{{.Cfg.Kiosk.Organization}}" placeholder="se muestra en la cabecera si no hay logo">
+          <small>No se incluye en el código: cada instalación pone el suyo.</small></div>
+        <div class="campo"><label for="ds">Tiempo del código en pantalla (s)</label>
+          <input id="ds" type="number" name="kiosk_display_seconds" value="{{.Cfg.Kiosk.DisplaySeconds}}" min="10" max="600"></div>
+        <div class="campo"><label for="cd">Espera entre códigos por tótem (s)</label>
+          <input id="cd" type="number" name="kiosk_cooldown_seconds" value="{{.Cfg.Kiosk.CooldownSeconds}}" min="0" max="3600"></div>
+        <div class="campo"><label for="dl">Límite diario de códigos</label>
+          <input id="dl" type="number" name="kiosk_daily_limit" value="{{.Cfg.Kiosk.DailyLimit}}" min="1"></div>
+        <div class="campo"><label for="lang">Idioma</label>
+          <select id="lang" name="kiosk_language">{{range .Languages}}<option value="{{.}}"{{if eq . $.Cfg.Kiosk.Language}} selected{{end}}>{{.}}</option>{{end}}</select></div>
+        <div class="campo"><label for="logo">Fichero del logotipo</label>
+          <input id="logo" type="text" name="kiosk_logo_path" value="{{.Cfg.Kiosk.LogoPath}}" placeholder="vacío = logo.svg o logo.png">
+          <small>En la carpeta de datos. Sin logo se muestra el nombre de la organización.</small></div>
+        <div class="campo"><label for="bg">Foto de fondo (opcional)</label>
+          <input id="bg" type="text" name="kiosk_background_image" value="{{.Cfg.Kiosk.BackgroundImage}}" placeholder="p. ej. fondo.jpg"></div>
+      </div>
+    </section>
+
+    <section class="bloque">
+      <h2>Acceso</h2>
+      <div class="rejilla">
+        <div class="campo"><label for="ac">Equipos que pueden usar el quiosco</label>
+          <textarea id="ac" name="allowed_clients">{{join .Cfg.AllowedClients "\n"}}</textarea>
+          <small>Una IP o red CIDR por línea (192.0.2.0/24). Este equipo (localhost) siempre está permitido.</small></div>
+        <div class="campo"><label for="aac">Equipos que pueden abrir /admin</label>
+          <textarea id="aac" name="admin_allowed_clients">{{join .Cfg.AdminAllowedClients "\n"}}</textarea>
+          <small>Vacío = solo este equipo.</small></div>
+        <div class="campo"><label for="listen">Dirección y puerto de escucha</label>
+          <input id="listen" class="mono" type="text" name="listen" value="{{.Cfg.Listen}}" required>
+          <small>Requiere reiniciar el servicio.</small></div>
+        <div class="campo ancho confirmar" id="confirmar-acceso"{{if not .ConfirmAccess}} hidden{{end}}>
+          <label for="confirm">Confirmar con la contraseña de administración</label>
+          <input id="confirm" type="password" name="confirm_password" autocomplete="current-password">
+          <small>Necesaria para cambiar los equipos permitidos o el puerto{{if .Firewall.Managed}}, porque también se actualiza el cortafuegos (ufw){{end}}.</small>
+        </div>
+      </div>
+      {{if .Firewall.Managed}}<small>Al guardar cambios en estas listas, el cortafuegos (ufw) se actualiza solo en unos segundos.</small>{{end}}
+    </section>
+
+    <section class="bloque">
+      <h2>Cambiar contraseña de administración</h2>
+      <div class="rejilla">
+        <div class="campo"><label for="cp">Contraseña actual</label>
+          <input id="cp" type="password" name="current_password" autocomplete="current-password"></div>
+        <div class="campo"><label for="np">Nueva contraseña</label>
+          <input id="np" type="password" name="new_password" autocomplete="new-password" minlength="10" maxlength="72"></div>
+        <div class="campo"><label for="np2">Repita la nueva</label>
+          <input id="np2" type="password" name="new_password2" autocomplete="new-password" minlength="10" maxlength="72"></div>
+      </div>
+      <small>Déjelo vacío para no cambiarla.</small>
+    </section>
+
+    <div class="acciones">
+      <button class="boton boton-principal" type="submit">Guardar</button>
+    </div>
+  </form>
+
+  <form method="post" action="/admin/logout" class="acciones">
+    <button class="boton boton-secundario" type="submit">Cerrar sesión</button>
+    <a href="/" class="mono">Ver la pantalla del quiosco</a>
+  </form>
+{{end}}
+</main>
+</body>
+</html>

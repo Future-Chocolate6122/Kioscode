@@ -1,0 +1,219 @@
+# Instrucciones para Claude Code: proyecto «Tótem Wi-Fi»
+
+Lee primero `CONTEXTO.md`: describe la red, los dos servidores UniFi, la API y lo que debe ver el
+ciudadano. Este fichero dice **cómo** construir la aplicación. Responde y comenta el código **en
+castellano**.
+
+## 1. Objetivo en una frase
+
+Un único ejecutable (`totem-wifi.exe` / `totem-wifi`) que sirve una web de quiosco, pide vouchers del
+hotspot a UniFi OS Server por su Integration API y los muestra con un QR Wi-Fi. Sin instalar nada más
+en la máquina.
+
+## 2. Stack (decidido)
+
+| Pieza | Elección | Motivo |
+|---|---|---|
+| Lenguaje | **Go 1.23+** | Un binario estático por plataforma, sin runtime, cross-compila a Windows y Linux desde cualquier sitio |
+| HTTP | `net/http` de la biblioteca estándar + `embed` para los estáticos | Cero dependencias en tiempo de ejecución |
+| QR | `github.com/skip2/go-qrcode` (genera SVG/PNG en el servidor) | Evita JS externo; el QR se sirve como `<img>` |
+| Servicio del SO | `github.com/kardianos/service` | Mismo código para servicio de Windows y systemd |
+| Contraseña admin | `golang.org/x/crypto/bcrypt` | |
+| Estado persistente | Ficheros JSON en el directorio de datos (`state.json`: contador diario; `config.json`) | No hace falta SQLite para dos contadores |
+| Frontend | HTML + CSS + JS vanilla, **sin frameworks ni CDN** | Debe funcionar sin Internet |
+| Tests | `testing` estándar + `net/http/httptest` | |
+
+Si crees que hace falta otra dependencia, añádela solo si es Go puro (sin CGO) y explícalo en el
+commit. **Nunca** CGO: rompería la compilación cruzada y la promesa de «un solo binario».
+
+## 3. Estructura del repositorio
+
+```
+totem-wifi/
+├── CLAUDE.md                 ← este fichero
+├── CONTEXTO.md
+├── README.md                 ← guía de instalación y uso para el administrador (en castellano)
+├── go.mod / go.sum
+├── Makefile                  ← build, build-all, test, run, release
+├── cmd/totem-wifi/main.go    ← flags, arranque, instalación como servicio
+├── internal/
+│   ├── config/               ← carga/validación/guardado de config.json; valores por defecto
+│   ├── unifi/                ← cliente de la Integration API + cliente mock; anclaje del certificado
+│   ├── voucher/              ← servicio: cooldown, límite diario, persistencia del contador, formato del código
+│   ├── web/                  ← servidor HTTP: rutas, middlewares (allowlist, rate limit, auth admin), plantillas
+│   │   └── static/           ← index.html, admin.html, app.css, app.js (embebidos con //go:embed)
+│   │       └── fonts/        ← Montserrat, Raleway y Open Sans en .woff2 (ver «Estilo visual»)
+│   └── i18n/                 ← textos en castellano (es.json) y mecanismo para añadir idiomas
+├── deploy/
+│   ├── windows/install.ps1   ← crea %ProgramData%\TotemWifi, copia el exe, registra el servicio, abre el firewall
+│   ├── windows/uninstall.ps1
+│   ├── linux/install.sh      ← /opt/totem-wifi + /etc/totem-wifi + unidad systemd + ufw opcional
+│   └── linux/uninstall.sh
+└── dist/                     ← salida de `make release` (ignorado en git)
+```
+
+## 4. Comportamiento que hay que implementar
+
+### Rutas HTTP
+
+| Ruta | Método | Quién | Qué hace |
+|---|---|---|---|
+| `/` | GET | tótems (allowlist) | Pantalla del quiosco |
+| `/api/voucher` | POST | tótems (allowlist) | Crea un voucher. Devuelve `{code, formatted, ssid, qr_url, expires_in_seconds, mock}`. Aplica cooldown por IP y límite diario. Errores: `429` (espera), `503` (UniFi no disponible), siempre con mensaje en castellano apto para mostrar |
+| `/api/qr.svg?ssid=…` | GET | tótems | SVG del QR Wi-Fi (solo de los SSID configurados; nunca de un SSID arbitrario) |
+| `/healthz` | GET | cualquiera de la allowlist | `{"ok":true,"mock":false,"unifi":"ok|error","daily_used":12}` |
+| `/admin` | GET/POST | `admin_allowed_clients` + contraseña | Formulario de configuración; botón «Probar conexión con UniFi»; botón «Obtener huella del certificado»; «Generar voucher de prueba» |
+| `/admin/logout` | POST | | |
+
+### Reglas de negocio
+
+- **Modo mock** (`unifi.mock=true`): genera códigos aleatorios de 10 cifras, nunca llama a UniFi, y
+  la web muestra la franja «MODO PRUEBA». Es el estado inicial tras instalar.
+- **Cooldown** por IP de cliente (`cooldown_seconds`) y **límite diario** global (`daily_limit`,
+  reinicio a medianoche local). El contador se persiste en `state.json` tras cada voucher.
+- **Anclaje del certificado**: el cliente HTTPS usa `tls.Config{InsecureSkipVerify: true,
+  VerifyPeerCertificate: …}` y en `VerifyPeerCertificate` compara el SHA-256 del certificado hoja con
+  `unifi.cert_sha256`. Si no coincide, error claro en el log («huella del certificado distinta: ¿se
+  ha regenerado el certificado de UniFi?»). Con `cert_sha256` vacío y `mock=false`, el servicio
+  arranca pero `/api/voucher` devuelve 503 y el log explica cómo obtener la huella.
+- **`site_id` vacío** → al arrancar (y al pulsar «Probar conexión») se llama a `GET /v1/sites` y se
+  usa el que tenga `internalReference == "default"`; se guarda en la configuración.
+- La **API key** solo se lee del servidor. No aparece en ninguna respuesta HTTP, ni en `/admin`
+  (mostrar «configurada: sí/no» y un campo para sustituirla).
+- **Logs** a stdout/stderr (el gestor de servicios los recoge) y, además, a un fichero rotado
+  `totem-wifi.log` en el directorio de datos. Una línea por voucher creado (IP del tótem, código
+  enmascarado `*****-67890`, SSID, minutos) y por error de UniFi (código HTTP y cuerpo recortado).
+- **Primer arranque**: si `config.json` no existe, se crea con los valores por defecto de
+  `CONTEXTO.md` §6. Si `admin_password_hash` está vacío, `/admin` muestra un formulario para crear
+  la contraseña (solo desde `admin_allowed_clients`).
+
+### Pantalla del quiosco (`index.html`)
+
+- Una sola página, sin recargas. Estados: `inicio` → `cargando` → `codigo` | `error` → `inicio`.
+- Tipografía grande (código a ≥ 96 px), contraste alto, funciona en vertical y horizontal.
+- Bloquear menú contextual, selección de texto, zoom y arrastre. Recarga automática a las 04:00.
+- Cuenta atrás visible. Al terminar o al pulsar «He terminado», el código se elimina del DOM.
+- Si hay más de un SSID configurado, selector antes del botón; si hay uno, no se muestra selector.
+- Sin peticiones a dominios externos. Comprobarlo con la pestaña Red del navegador.
+
+### Estilo visual
+
+El quiosco debe parecer un **servicio de una administración pública**: sobrio, limpio, de formas
+cuadradas, con una paleta azul institucional. La organización concreta no se nombra en el código: su
+nombre se lee de `kiosk.organization` y su logotipo de `kiosk.logo_path`.
+
+**Paleta** (define estas variables CSS en `app.css` y usa solo estas):
+
+| Variable | Valor | Uso en el quiosco |
+|---|---|---|
+| `--azul` | `#079BE2` | **Botón «Obtener código», títulos, cuenta atrás** |
+| `--azul-claro` | `#00ACEC` | Estado hover/activo del botón, borde del QR |
+| `--azul-oscuro` | `#0085AF` | Botón pulsado, fondo de la franja de pasos |
+| `--rojo` | `#CD2027` | Rojo del emblema institucional → **solo** para el logo y para mensajes de error; nunca como color decorativo |
+| `--amarillo` | `#EFBE00` | Franja «MODO PRUEBA» |
+| `--gris-texto` | `#5A5A5A` | Instrucciones |
+| `--gris-nav` | `#5E6A71` | Texto secundario, cabecera, pie |
+| `--gris-oscuro` | `#111111` / `#454548` | **Código del voucher** (máximo contraste) |
+| `--gris-fondo` | `#F7F8F9` | Fondo de la pantalla y de las tarjetas secundarias |
+| `--blanco` | `#FFFFFF` | Cabecera y tarjeta central con el QR y el código |
+
+**Tipografía** (las tres son de Google Fonts con licencia OFL: inclúyelas como ficheros `.woff2`
+en `internal/web/static/fonts/`, embebidas en el binario; **ningún `<link>` a fonts.googleapis.com**):
+
+- **Montserrat 700** para el título de la pantalla y el nombre del SSID (en mayúsculas, tamaño medio
+  y color `--azul`).
+- **Raleway 600–700** en mayúsculas para botones y etiquetas cortas («OBTENER CÓDIGO», «HE TERMINADO»).
+- **Open Sans 300/400/700** para el cuerpo e instrucciones. El **código del voucher** en Open Sans 700
+  o en una monoespaciada del sistema, ≥ 96 px, con `letter-spacing` amplio y guion central
+  (`12345-67890`).
+- Si no hubiera forma de embeber las fuentes, degradar a `"Segoe UI", Roboto, Arial, sans-serif`.
+
+**Formas y composición:**
+
+- Cabecera blanca de ~90 px de alto con el **logotipo a la izquierda** (si lo hay) y, a la derecha,
+  el nombre del servicio en Raleway mayúsculas gris (`--gris-nav`). Fina sombra debajo
+  (`0 0 2px rgba(0,0,0,.5)`).
+- Todo **cuadrado o casi**: radios de 0–4 px en tarjetas y botones (0 px en tarjetas, 2 px en
+  botones). Nada de pastillas redondeadas ni degradados.
+- Tarjeta central blanca sobre fondo `--gris-fondo`, con sombra amplia y suave
+  (`0 0 30px rgba(0,0,0,.3)`) que contiene QR + código + pasos.
+- Botón principal: fondo `--azul`, texto blanco, Raleway mayúsculas, radio 2 px, grande (≥ 72 px de
+  alto para pantalla táctil). Botón secundario «He terminado»: fondo `#EAEAEA`, texto `--gris-oscuro`.
+- Títulos de sección en mayúsculas y `--azul`.
+- Iconos de línea sencillos, de un solo color, para los tres pasos (Wi-Fi, navegador, teclado).
+  Dibújalos como SVG inline; no uses Font Awesome ni ninguna fuente de iconos.
+- Mucho aire: márgenes generosos, pocas cosas en pantalla. Fotografía de fondo **opcional** y
+  configurable (`kiosk.background_image`), con una capa blanca semitransparente encima
+  (`rgba(255,255,255,.56)`) para que el código siga leyéndose.
+
+**Logotipo y nombre:** no incrustes ningún logotipo ni nombre de organización en el código. La app
+lee `logo.svg`/`logo.png` del directorio de datos (`kiosk.logo_path`) y el nombre de
+`kiosk.organization`. Si ambos están vacíos, la cabecera muestra solo el título del servicio.
+
+**Comprobación:** la pantalla debe leerse como un servicio público serio, sin que nada en ella (ni en
+el repositorio) identifique a qué organización pertenece.
+
+### Línea de comandos
+
+```
+totem-wifi                      # ejecuta en primer plano (desarrollo)
+totem-wifi -config RUTA         # fichero de configuración alternativo
+totem-wifi install | uninstall | start | stop | status   # servicio del SO (requiere administrador/root)
+totem-wifi fingerprint HOST:PUERTO   # imprime la huella SHA-256 del certificado de un servidor
+totem-wifi check                # prueba la configuración y la conexión con UniFi; sale con código ≠0 si falla
+totem-wifi version
+```
+
+## 5. Compilación y entrega
+
+- `make build` → binario para la plataforma actual.
+- `make build-all` → `dist/totem-wifi_windows_amd64.exe`, `dist/totem-wifi_linux_amd64`,
+  `dist/totem-wifi_linux_arm64`, con `CGO_ENABLED=0 -ldflags="-s -w -X main.version=…"`.
+- `make release` → además empaqueta cada binario con sus scripts de `deploy/` y el `README.md` en un
+  `.zip` (Windows) o `.tar.gz` (Linux). **Eso es lo que se copia a la máquina destino.**
+- Los scripts de instalación no descargan nada de Internet.
+- `install.ps1` debe: crear `%ProgramData%\TotemWifi`, copiar el exe a `%ProgramFiles%\TotemWifi`,
+  ejecutar `totem-wifi install`, abrir el puerto en el Firewall de Windows **solo para las IPs de
+  `allowed_clients`** (regla con `-RemoteAddress`), arrancar el servicio y abrir
+  `http://localhost:8080/admin` en el navegador.
+- `install.sh` equivalente: usuario de sistema `totem`, `/opt/totem-wifi/totem-wifi`,
+  `/etc/totem-wifi/config.json` (640, `root:totem`), unidad systemd con
+  `ProtectSystem=strict`, `ProtectHome=yes`, `NoNewPrivileges=yes`, `ReadWritePaths=/var/lib/totem-wifi`.
+
+## 6. Orden de trabajo sugerido
+
+1. `go mod init`, `config` con valores por defecto y tests de validación.
+2. Cliente `unifi` real + mock, con tests sobre `httptest` que comprueben cabecera `X-API-KEY`, cuerpo
+   del POST y manejo de 401/403/5xx.
+3. Servicio `voucher` (cooldown, límite diario, persistencia) con tests de reloj inyectado.
+4. Servidor `web` con la pantalla del quiosco en modo mock. Hito: se puede abrir `http://localhost:8080/`
+   y obtener un código falso.
+5. `/admin` y anclaje del certificado. Hito: `totem-wifi check` pasa contra un UniFi real.
+6. Servicio del SO, scripts de `deploy/`, `Makefile`, `README.md`.
+7. Pasada final: `go vet`, `staticcheck` si está disponible, `go test ./...`, y una revisión de que
+   ninguna respuesta HTTP filtra la API key ni rutas internas.
+
+Haz un commit por paso, con mensaje en castellano que diga qué se ha añadido.
+
+## 7. Cómo trabajar conmigo
+
+- Antes de empezar, confirma en un párrafo cómo lo vas a hacer y pregunta solo lo que bloquee
+  (ver «Decisiones pendientes» en `CONTEXTO.md`). Lo que no bloquee, déjalo configurable y sigue.
+- Comandos listos para copiar y pegar, con una línea que explique cada uno.
+- El `README.md` final es para el administrador que instala el servicio: pasos numerados, qué
+  ejecutar en PowerShell/bash, cómo obtener la API key y la huella del certificado, cómo pasar de
+  mock a real, cómo ver el log y cómo rotar la clave. En castellano, sin jerga innecesaria.
+- No uses frameworks web, ORMs ni librerías JS externas. Si dudas entre «una dependencia más» y
+  «cincuenta líneas de código», elige las cincuenta líneas.
+- No hagas `InsecureSkipVerify` sin `VerifyPeerCertificate`. No guardes la API key en el log.
+- **Anonimato del repositorio (obligatorio).** Ni el código, ni los tests, ni los valores por defecto,
+  ni `README.md`, ni los commits contienen: el nombre de la organización, nombres de sedes, nombres
+  reales de SSID, IPs o rangos de red de producción, hostnames reales ni nombres de personas. En
+  ejemplos y tests usa solo IPs de documentación (`192.0.2.x`, `198.51.100.x`, `203.0.113.x`) o
+  `127.0.0.1`, y nombres genéricos («Sede A», `WifiPublica`, «Organización»). Antes de cada commit,
+  pasa `git grep -n -i -E "192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|10\.[0-9]+\." -- . ':!CLAUDE.md'`
+  y revisa cualquier coincidencia que no sea una IP de documentación.
+- Al diagnosticar problemas con UniFi, ve por capas: ¿llega TCP a 11443? → ¿coincide la huella? →
+  ¿401/403 (clave/rol)? → ¿404 (`site_id`)? → ¿400 (cuerpo del voucher)?
+- Para dudas sobre la Integration API, consulta el OpenAPI oficial de la versión instalada
+  (`https://apidoc-cdn.ui.com/network/<versión>/integration.json`) antes que la memoria.

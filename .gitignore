@@ -1,0 +1,7 @@
+dist/
+/totem-wifi
+/totem-wifi.exe
+dev/
+*.log
+config.json
+state.json
