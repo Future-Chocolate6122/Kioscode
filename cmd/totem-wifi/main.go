@@ -194,7 +194,7 @@ Uso:
   totem-wifi fingerprint HOST:PUERTO      imprime la huella SHA-256 del certificado de un servidor
   totem-wifi check                        prueba la configuración y la conexión con UniFi
   totem-wifi init                         crea config.json con los valores por defecto
-  totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA] [-nota TEXTO]
+  totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]
                                           ajusta la configuración de esta sede (lo usa install.sh)
   totem-wifi firewall-sync                ajusta ufw a las IPs permitidas (root; lo lanza systemd)
   totem-wifi allowlist                    lista puerto e IPs permitidas
@@ -211,7 +211,6 @@ func main() {
 	fs.StringVar(&so.unifiURL, "unifi-url", "", "con «set»: URL de UniFi OS Server de esta sede (https://IP:11443)")
 	fs.StringVar(&so.totems, "totems", "", "con «set»: IPs o redes de los tótems, separadas por comas")
 	fs.StringVar(&so.adminIPs, "admin-ips", "", "con «set»: IPs o redes que pueden abrir /admin, separadas por comas")
-	fs.StringVar(&so.note, "nota", "", "con «set»: nota de los vouchers visible en UniFi (p. ej. «Totem Sede A»)")
 	fs.Usage = func() {
 		fmt.Fprintf(fs.Output(), usage, version)
 		fs.PrintDefaults()

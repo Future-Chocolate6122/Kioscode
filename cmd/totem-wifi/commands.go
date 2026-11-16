@@ -206,8 +206,8 @@ func runAllowlist(configPath string) int {
 
 // setOptions son los ajustes por sede que admite «totem-wifi set».
 type setOptions struct {
-	unifiURL, totems, adminIPs, note string
-	given                            []string // opciones indicadas en la línea de comandos
+	unifiURL, totems, adminIPs string
+	given                      []string // opciones indicadas en la línea de comandos
 }
 
 func (o setOptions) has(name string) bool {
@@ -227,8 +227,8 @@ func splitList(s string) []string {
 // runSet ajusta los datos de la sede en config.json (lo crea si no existe).
 // La API key no se admite aquí a propósito: quedaría en el historial de la consola.
 func runSet(configPath string, o setOptions) int {
-	if !o.has("unifi-url") && !o.has("totems") && !o.has("admin-ips") && !o.has("nota") {
-		fmt.Fprintln(os.Stderr, "uso: totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA] [-nota TEXTO]")
+	if !o.has("unifi-url") && !o.has("totems") && !o.has("admin-ips") {
+		fmt.Fprintln(os.Stderr, "uso: totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]")
 		return 2
 	}
 	st, _, err := config.Load(configPath)
@@ -253,10 +253,6 @@ func runSet(configPath string, o setOptions) int {
 		if o.has("admin-ips") {
 			c.AdminAllowedClients = splitList(o.adminIPs)
 			changes = append(changes, "administración desde: localhost "+strings.Join(c.AdminAllowedClients, " "))
-		}
-		if o.has("nota") {
-			c.Voucher.Note = o.note
-			changes = append(changes, "nota de los vouchers: "+o.note)
 		}
 		return nil
 	})

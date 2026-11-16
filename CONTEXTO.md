@@ -201,7 +201,7 @@ fichero con permisos solo para el servicio/administrador.
   producción. Todo eso se introduce en cada instalación desde `/admin`.
 - **Servidor: Ubuntu Server**, una instalación por sede. Los datos de cada sede (URL de UniFi, IPs de
   los tótems, IPs de administración, nota del voucher) se indican al instalar
-  (`install.sh --unifi-url … --totems … --admin-ips … --nota …`) y se cambian después en `/admin`.
+  (`install.sh --unifi-url … --totems … --admin-ips …`) y se cambian después en `/admin`.
 - **Todo lo variable es configurable desde `/admin`**: servidor UniFi, API key, huella, IPs de los
   tótems y de administración, SSID, duración y límites del voucher, cooldown y límite diario.
 - **Cortafuegos (opción A):** un ayudante `totem-wifi firewall-sync`, lanzado como root por systemd

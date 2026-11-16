@@ -7,7 +7,6 @@
 #   --unifi-url URL      UniFi OS Server de la sede, p. ej. https://192.0.2.10:11443
 #   --totems LISTA       IPs o redes de los tótems, separadas por comas, p. ej. 192.0.2.0/24
 #   --admin-ips LISTA    IPs que pueden abrir /admin además de este servidor, p. ej. 192.0.2.50
-#   --nota TEXTO         nota de los vouchers en UniFi, p. ej. "Totem Sede A"
 #   --no-ufw             no instalar el ayudante que mantiene ufw al día
 #
 # No descarga nada de Internet. Conserva config.json y los datos si ya existen.
@@ -29,10 +28,9 @@ while [ $# -gt 0 ]; do
     --unifi-url) SET_ARGS+=(-unifi-url "${2:?falta la URL}"); shift 2 ;;
     --totems)    SET_ARGS+=(-totems "${2:?falta la lista}"); shift 2 ;;
     --admin-ips) SET_ARGS+=(-admin-ips "${2:?falta la lista}"); shift 2 ;;
-    --nota)      SET_ARGS+=(-nota "${2:?falta el texto}"); shift 2 ;;
     --no-ufw)    UFW=0; shift ;;
     --ufw)       UFW=1; shift ;;   # compatibilidad: ya es el comportamiento por defecto
-    -h|--help)   sed -n '2,14p' "$0"; exit 0 ;;
+    -h|--help)   sed -n '2,13p' "$0"; exit 0 ;;
     *) echo "Opción desconocida: $1 (use --help)" >&2; exit 2 ;;
   esac
 done

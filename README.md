@@ -87,18 +87,17 @@ y atiende a **sus** tótems. Los pasos son los mismos en todas; solo cambian los
    | `--unifi-url` | UniFi OS Server de la sede | `https://192.0.2.10:11443` |
    | `--totems` | IPs o redes de los tótems, separadas por comas | `192.0.2.0/24` |
    | `--admin-ips` | Su PC, para abrir `/admin` sin túnel SSH | `192.0.2.50` |
-   | `--nota` | Nombre de los vouchers en UniFi, para saber de qué sede salen | `"Totem Sede A"` |
 
    Ejemplo para la **Sede A**:
 
    ```bash
-   sudo ./install.sh --unifi-url https://192.0.2.10:11443 --totems 192.0.2.0/24 --nota "Totem Sede A"
+   sudo ./install.sh --unifi-url https://192.0.2.10:11443 --totems 192.0.2.0/24
    ```
 
    Ejemplo para la **Sede B**:
 
    ```bash
-   sudo ./install.sh --unifi-url https://198.51.100.20:11443 --totems 198.51.100.0/24 --nota "Totem Sede B"
+   sudo ./install.sh --unifi-url https://198.51.100.20:11443 --totems 198.51.100.0/24
    ```
 
    El instalador crea el usuario de sistema `totem`, copia el programa a `/opt/totem-wifi`, crea la
@@ -522,7 +521,7 @@ totem-wifi fingerprint HOST:PUERTO
                                  muestra la huella SHA-256 del certificado de un servidor
 totem-wifi check                 prueba la configuración y UniFi por capas (sale con ≠0 si falla)
 totem-wifi init                  crea config.json con los valores por defecto si no existe
-totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA] [-nota TEXTO]
+totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]
                                  ajusta los datos de la sede (lo usa install.sh; reinicie después)
 totem-wifi firewall-sync         ajusta ufw a los equipos permitidos (root; lo lanza systemd solo)
 totem-wifi allowlist             puerto e IPs permitidas
