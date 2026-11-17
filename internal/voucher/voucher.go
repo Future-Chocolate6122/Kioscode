@@ -144,6 +144,7 @@ func (s *Service) DailyUsed() int {
 type Options struct {
 	SkipCooldown bool   // voucher de prueba desde /admin
 	Note         string // sustituye a voucher.note
+	TermsVersion string // versión de las condiciones de uso aceptadas (vacío = no se mostraban)
 }
 
 // Issue crea un voucher para el cliente con IP ip y el SSID indicado
@@ -226,8 +227,12 @@ func (s *Service) Issue(ctx context.Context, ip, ssid string, opt Options) (Resu
 	if res.Mock {
 		modo = " [SIMULACIÓN]"
 	}
-	s.log.Printf("voucher creado%s ip=%s codigo=%s ssid=%q minutos=%d hoy=%d/%d",
-		modo, ip, Mask(v.Code), ssid, res.Minutes, st.Count, cfg.Kiosk.DailyLimit)
+	condiciones := ""
+	if opt.TermsVersion != "" {
+		condiciones = " condiciones_aceptadas=" + opt.TermsVersion
+	}
+	s.log.Printf("voucher creado%s ip=%s codigo=%s ssid=%q minutos=%d hoy=%d/%d%s",
+		modo, ip, Mask(v.Code), ssid, res.Minutes, st.Count, cfg.Kiosk.DailyLimit, condiciones)
 	return res, nil
 }
 

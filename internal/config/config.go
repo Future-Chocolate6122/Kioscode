@@ -7,6 +7,7 @@ package config
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -19,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode/utf8"
 )
 
 // Config es el contenido completo de config.json.
@@ -63,8 +65,14 @@ type Voucher struct {
 
 // Kiosk agrupa lo que afecta a la pantalla del tótem.
 type Kiosk struct {
-	Title           string `json:"title"`
-	Organization    string `json:"organization"`
+	Title        string `json:"title"`
+	Organization string `json:"organization"`
+	// Textos editables desde /admin (vacío = texto por defecto del idioma).
+	HeaderText string `json:"header_text"` // nombre del servicio en la cabecera; vacío = título
+	Intro      string `json:"intro"`       // texto bajo el título de la pantalla de inicio
+	// Condiciones de uso: si están activadas, el ciudadano debe aceptarlas antes de obtener el código.
+	TermsEnabled    bool   `json:"terms_enabled"`
+	TermsText       string `json:"terms_text"`
 	DisplaySeconds  int    `json:"display_seconds"`
 	CooldownSeconds int    `json:"cooldown_seconds"`
 	DailyLimit      int    `json:"daily_limit"`
@@ -99,6 +107,43 @@ func Default() Config {
 			Language:        "es",
 		},
 	}
+}
+
+// Límites de longitud de los textos editables (en caracteres).
+const (
+	MaxTitleLen  = 60
+	MaxIntroLen  = 400
+	MaxTermsLen  = 20000
+	termsVerSize = 8
+)
+
+// HeaderName es el nombre del servicio que se muestra en la cabecera.
+func (k Kiosk) HeaderName() string {
+	if k.HeaderText != "" {
+		return k.HeaderText
+	}
+	return k.Title
+}
+
+// TermsVersion identifica el texto de las condiciones (8 cifras hexadecimales de su
+// SHA-256). Cambia en cuanto se edita el texto y se anota en el log de cada código.
+func (k Kiosk) TermsVersion() string {
+	if !k.TermsEnabled {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(k.TermsText))
+	return hex.EncodeToString(sum[:])[:termsVerSize]
+}
+
+// cleanText normaliza saltos de línea y espacios de un texto multilínea.
+func cleanText(s string) string {
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\r", "\n")
+	lines := strings.Split(s, "\n")
+	for i, l := range lines {
+		lines[i] = strings.TrimRight(l, " \t")
+	}
+	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
 
 // SSIDs devuelve la lista de redes que se ofrecen, la principal primero y sin duplicados.
@@ -216,6 +261,23 @@ func (c *Config) Validate() error {
 	c.Kiosk.Title = strings.TrimSpace(c.Kiosk.Title)
 	if c.Kiosk.Title == "" {
 		add("kiosk.title: no puede estar vacío")
+	}
+	c.Kiosk.HeaderText = strings.TrimSpace(c.Kiosk.HeaderText)
+	c.Kiosk.Intro = cleanText(c.Kiosk.Intro)
+	c.Kiosk.TermsText = cleanText(c.Kiosk.TermsText)
+	for name, v := range map[string]string{"kiosk.title": c.Kiosk.Title, "kiosk.header_text": c.Kiosk.HeaderText} {
+		if utf8.RuneCountInString(v) > MaxTitleLen {
+			add("%s: como máximo %d caracteres", name, MaxTitleLen)
+		}
+	}
+	if utf8.RuneCountInString(c.Kiosk.Intro) > MaxIntroLen {
+		add("kiosk.intro: como máximo %d caracteres", MaxIntroLen)
+	}
+	if utf8.RuneCountInString(c.Kiosk.TermsText) > MaxTermsLen {
+		add("kiosk.terms_text: como máximo %d caracteres", MaxTermsLen)
+	}
+	if c.Kiosk.TermsEnabled && c.Kiosk.TermsText == "" {
+		add("kiosk.terms_text: escriba las condiciones de uso o desactive «Mostrar condiciones»")
 	}
 	if c.Kiosk.DisplaySeconds < 10 || c.Kiosk.DisplaySeconds > 600 {
 		add("kiosk.display_seconds: debe estar entre 10 y 600")

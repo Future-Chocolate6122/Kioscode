@@ -274,15 +274,20 @@ type adminData struct {
 	HasLogo  bool
 	LogoText string
 
-	Cfg           config.Config
-	Extras        []config.SSID
-	APIKeySet     bool
-	Languages     []string
-	Health        voucher.Health
-	DailyUsed     int
-	ConfigPath    string
-	DataDir       string
-	Warnings      []string
+	Cfg        config.Config
+	Extras     []config.SSID
+	APIKeySet  bool
+	Languages  []string
+	Health     voucher.Health
+	DailyUsed  int
+	ConfigPath string
+	DataDir    string
+	Warnings   []string
+	// Textos de la pantalla
+	MaxTitleLen, MaxIntroLen, MaxTermsLen int
+	DefaultIntro                          string
+	TermsVersion                          string
+
 	ConfirmAccess bool         // mostrar el campo de confirmación con contraseña
 	Firewall      firewallView // estado de ufw (solo Linux con el ayudante)
 }
@@ -338,7 +343,10 @@ func (s *Server) apiFirewall(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) render(w http.ResponseWriter, status int, d adminData) {
 	c := s.cfg.Get()
-	d.Title = c.Kiosk.Title
+	d.Title = c.Kiosk.HeaderName()
+	d.MaxTitleLen, d.MaxIntroLen, d.MaxTermsLen = config.MaxTitleLen, config.MaxIntroLen, config.MaxTermsLen
+	d.DefaultIntro = s.texts(c)["intro"]
+	d.TermsVersion = c.Kiosk.TermsVersion()
 	d.Version = s.version
 	d.HasLogo = s.logoPath(c) != ""
 	d.LogoText = c.Kiosk.Organization
@@ -551,6 +559,10 @@ func formToConfig(r *http.Request, base config.Config) (config.Config, []string)
 	num("voucher_tx_kbps", "Velocidad de subida", &c.Voucher.TxKbps)
 
 	c.Kiosk.Title = r.FormValue("kiosk_title")
+	c.Kiosk.HeaderText = r.FormValue("kiosk_header_text")
+	c.Kiosk.Intro = r.FormValue("kiosk_intro")
+	c.Kiosk.TermsEnabled = r.FormValue("kiosk_terms_enabled") == "1"
+	c.Kiosk.TermsText = r.FormValue("kiosk_terms_text")
 	c.Kiosk.Organization = strings.TrimSpace(r.FormValue("kiosk_organization"))
 	num("kiosk_display_seconds", "Tiempo en pantalla", &c.Kiosk.DisplaySeconds)
 	num("kiosk_cooldown_seconds", "Espera entre códigos", &c.Kiosk.CooldownSeconds)
@@ -563,7 +575,9 @@ func formToConfig(r *http.Request, base config.Config) (config.Config, []string)
 
 func (s *Server) adminSave(w http.ResponseWriter, r *http.Request) {
 	sc := sessionFrom(r)
-	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
+	// 512 KB: las condiciones de uso (hasta 20 000 caracteres) ocupan bastante más al
+	// codificarse en el formulario (cada letra con tilde son 6 bytes).
+	r.Body = http.MaxBytesReader(w, r.Body, 512<<10)
 	before := s.cfg.Get()
 	next, errs := formToConfig(r, before)
 

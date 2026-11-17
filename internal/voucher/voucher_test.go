@@ -251,7 +251,7 @@ func TestConcurrenciaNoSuperaLimite(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			if _, err := s.Issue(context.Background(), "10.0.0."+string(rune('0'+i%10)), "", Options{SkipCooldown: true}); err == nil {
+			if _, err := s.Issue(context.Background(), "203.0.113."+string(rune('0'+i%10)), "", Options{SkipCooldown: true}); err == nil {
 				mu.Lock()
 				ok++
 				mu.Unlock()

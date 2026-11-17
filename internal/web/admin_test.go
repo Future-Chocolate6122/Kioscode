@@ -467,3 +467,33 @@ func TestAdminAyudaClaveYEstadoCortafuegos(t *testing.T) {
 		t.Errorf("sin sesión: %d", w.Code)
 	}
 }
+
+func TestAdminTextosDeLaPantalla(t *testing.T) {
+	e := nuevoEntorno(t, nil)
+	n := entrar(t, e)
+	body := n.hacer("GET", "/admin", nil, nil).Body.String()
+	if !strings.Contains(body, "Textos de la pantalla") || !strings.Contains(body, `name="kiosk_terms_text"`) {
+		t.Fatal("falta la sección de textos en /admin")
+	}
+	form := formularioActual(e.cfg.Get(), n.csrf)
+	form.Set("kiosk_header_text", "Servicio de Wi-Fi")
+	form.Set("kiosk_intro", "Hola.\r\nSegunda línea.")
+	form.Set("kiosk_terms_enabled", "1")
+	form.Set("kiosk_terms_text", strings.Repeat("Condición con tildes: áéíóú. ", 600)) // ~18 000 caracteres
+	if w := n.hacer("POST", "/admin", form, nil); w.Code != 303 {
+		t.Fatalf("guardar textos: %d %s", w.Code, w.Body)
+	}
+	k := e.cfg.Get().Kiosk
+	if k.HeaderText != "Servicio de Wi-Fi" || k.Intro != "Hola.\nSegunda línea." || !k.TermsEnabled || len([]rune(k.TermsText)) < 17000 {
+		t.Errorf("no se han guardado los textos: %+v", k.HeaderText)
+	}
+	body = n.hacer("GET", "/admin", nil, nil).Body.String()
+	if !strings.Contains(body, "Servicio de Wi-Fi · Administración") || !strings.Contains(body, k.TermsVersion()) {
+		t.Error("la cabecera de /admin debe usar el nombre configurado y mostrarse la versión de las condiciones")
+	}
+	// Activar las condiciones sin texto no se permite.
+	form.Set("kiosk_terms_text", "  ")
+	if w := n.hacer("POST", "/admin", form, nil); w.Code != 400 || !strings.Contains(w.Body.String(), "condiciones") {
+		t.Errorf("condiciones vacías: %d", w.Code)
+	}
+}

@@ -156,6 +156,10 @@ func (s *Server) texts(c config.Config) i18n.Texts {
 
 type indexData struct {
 	Organization  string
+	HeaderName    string // nombre del servicio en la cabecera
+	Intro         string
+	TermsEnabled  bool
+	TermsText     string
 	Lang          string
 	Title         string
 	Mock          bool
@@ -179,15 +183,21 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	clientCfg, _ := json.Marshal(map[string]any{
 		"display_seconds": c.Kiosk.DisplaySeconds,
 		"textos": map[string]string{
-			"cuenta_atras":  t["cuenta_atras"],
-			"error_general": t["error_general"],
-			"paso1":         t["paso1"],
+			"cuenta_atras":        t["cuenta_atras"],
+			"error_general":       t["error_general"],
+			"paso1":               t["paso1"],
+			"ver_condiciones":     t["ver_condiciones"],
+			"ocultar_condiciones": t["ocultar_condiciones"],
 		},
 	})
 	data := indexData{
 		Lang:          c.Kiosk.Language,
 		Title:         c.Kiosk.Title,
 		Organization:  c.Kiosk.Organization,
+		HeaderName:    c.Kiosk.HeaderName(),
+		Intro:         firstNonEmpty(c.Kiosk.Intro, t["intro"]),
+		TermsEnabled:  c.Kiosk.TermsEnabled,
+		TermsText:     c.Kiosk.TermsText,
 		Mock:          c.UniFi.Mock,
 		SSIDs:         ssids,
 		MainSSID:      c.Voucher.SSID,
@@ -207,6 +217,13 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Write(buf.Bytes()) //nolint:errcheck
+}
+
+func firstNonEmpty(a, b string) string {
+	if a != "" {
+		return a
+	}
+	return b
 }
 
 // sameOrigin rechaza peticiones enviadas desde páginas de otro origen
@@ -242,7 +259,8 @@ func (s *Server) handleVoucher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		SSID string `json:"ssid"`
+		SSID     string `json:"ssid"`
+		Accepted bool   `json:"accepted"` // casilla de las condiciones de uso
 	}
 	body, err := io.ReadAll(io.LimitReader(r.Body, 1024))
 	if err == nil && len(bytes.TrimSpace(body)) > 0 {
@@ -252,7 +270,12 @@ func (s *Server) handleVoucher(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, errorResponse{Error: t["error_general"]})
 		return
 	}
-	res, err := s.svc.Issue(r.Context(), clientIP(r).String(), req.SSID, voucher.Options{})
+	// Las condiciones se comprueban también aquí: la casilla del navegador no basta.
+	if c.Kiosk.TermsEnabled && !req.Accepted {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: t["error_condiciones"]})
+		return
+	}
+	res, err := s.svc.Issue(r.Context(), clientIP(r).String(), req.SSID, voucher.Options{TermsVersion: c.Kiosk.TermsVersion()})
 	var ce *voucher.CooldownError
 	switch {
 	case err == nil:

@@ -30,8 +30,48 @@
   }
 
   // ---- Petición del código ----
+  // ---- Condiciones de uso (solo si están activadas en /admin) ----
+  var acepto = $('acepto');
+  var btnCondiciones = $('btn-condiciones');
+  var textoCondiciones = $('texto-condiciones');
+  var avisoAceptar = $('aviso-aceptar');
+
+  function aceptadas() { return !acepto || acepto.checked; }
+
+  function actualizarBoton() {
+    var b = $('btn-obtener');
+    b.classList.toggle('inactivo', !aceptadas());
+    b.setAttribute('aria-disabled', aceptadas() ? 'false' : 'true');
+    if (aceptadas() && avisoAceptar) avisoAceptar.hidden = true;
+  }
+
+  function mostrarCondiciones(abrir) {
+    if (!textoCondiciones) return;
+    textoCondiciones.hidden = !abrir;
+    textoCondiciones.scrollTop = 0;
+    btnCondiciones.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+    btnCondiciones.textContent = abrir ? textos.ocultar_condiciones : textos.ver_condiciones;
+    $('inicio').classList.toggle('condiciones-abiertas', abrir);
+  }
+
+  // Tras entregar un código, el siguiente ciudadano empieza con la casilla sin marcar.
+  function reiniciarCondiciones() {
+    if (!acepto) return;
+    acepto.checked = false;
+    mostrarCondiciones(false);
+    if (avisoAceptar) avisoAceptar.hidden = true;
+    actualizarBoton();
+  }
+
   function obtener() {
     if (ocupado || estado !== 'inicio') return;
+    if (!aceptadas()) {                 // pulsado sin marcar la casilla
+      avisoAceptar.hidden = false;
+      $('condiciones').classList.remove('resaltar');
+      void $('condiciones').offsetWidth; // reinicia la animación
+      $('condiciones').classList.add('resaltar');
+      return;
+    }
     ocupado = true;
     mostrar('cargando');
 
@@ -41,7 +81,7 @@
     fetch('/api/voucher', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ssid: ssidElegido() }),
+      body: JSON.stringify({ ssid: ssidElegido(), accepted: aceptadas() }),
       cache: 'no-store',
       credentials: 'same-origin',
       signal: ctl ? ctl.signal : undefined
@@ -93,6 +133,7 @@
     $('qr').removeAttribute('src');
     $('validez').textContent = '';
     $('cuenta-texto').textContent = '';
+    reiniciarCondiciones();
     mostrar('inicio');
   }
 
@@ -119,7 +160,8 @@
   document.addEventListener('dragstart', impedir);
   document.addEventListener('gesturestart', impedir);            // pellizco en Safari
   document.addEventListener('touchmove', function (e) {          // pellizco y arrastre
-    if (e.touches.length > 1 || !e.target.closest('.selector-red')) e.preventDefault();
+    // Solo se permite desplazar el selector de red y el texto de las condiciones.
+    if (e.touches.length > 1 || !e.target.closest('.selector-red, .texto-condiciones')) e.preventDefault();
   }, { passive: false });
   document.addEventListener('wheel', function (e) { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
   document.addEventListener('keydown', function (e) {
@@ -156,6 +198,11 @@
 
   // ---- Arranque ----
   $('btn-obtener').addEventListener('click', obtener);
+  if (acepto) {
+    acepto.addEventListener('change', actualizarBoton);
+    btnCondiciones.addEventListener('click', function () { mostrarCondiciones(textoCondiciones.hidden); });
+    actualizarBoton();
+  }
   $('btn-terminado').addEventListener('click', terminar);
   $('error').addEventListener('click', volverDeError);
   programarRecarga();

@@ -236,7 +236,24 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
 
 ## 9. Estado de la implementación
 
-Construida en Go siguiendo `CLAUDE.md`, con el código en un repositorio privado de GitHub. Probado con `go vet`, `staticcheck`, `go test -race` y Go 1.23;
+**Versiones:**
+
+- **1.0.0** — primera versión publicada.
+- **1.1.0** — textos de la pantalla editables en `/admin` (título, nombre en la cabecera,
+  introducción) y condiciones de uso opcionales: casilla obligatoria con desplegable del texto,
+  comprobación también en el servidor y versión de las condiciones anotada en el log de cada código.
+
+**Planificado** (valorado con el OpenAPI de Network 10.0.162 / 10.1.84):
+
+- Subir logotipo y fondo desde `/admin`.
+- Gestión de los vouchers del tótem en `/admin` (listar, borrar uno, borrar todos filtrando por la
+  nota del tótem). Borrar un voucher no desconecta a quien ya lo usó; para eso existe
+  `UNAUTHORIZE_GUEST_ACCESS` por dispositivo.
+- Tope de 1 048 576 MB en `voucher.data_mb` (máximo de la API).
+- Descartado por ahora: acceso sin código con `AUTHORIZE_GUEST_ACCESS` (requiere exponer el servidor
+  a la red de invitados).
+
+Construida en Go siguiendo `CLAUDE.md`, con el código en un repositorio de GitHub. Probado con `go vet`, `staticcheck`, `go test -race` y Go 1.23;
 contra un UniFi **simulado** por HTTPS; e instalación en Ubuntu con systemd simulado y ufw real
 inactivo.
 

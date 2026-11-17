@@ -126,7 +126,7 @@ func TestAllowlist(t *testing.T) {
 		t.Errorf("localhost IPv6: %d", w.Code)
 	}
 	// X-Forwarded-For no sirve para saltarse la lista.
-	if w := e.peticion("GET", "/", "10.1.1.1", "", map[string]string{"X-Forwarded-For": "192.0.2.5"}); w.Code != 403 {
+	if w := e.peticion("GET", "/", "203.0.113.1", "", map[string]string{"X-Forwarded-For": "192.0.2.5"}); w.Code != 403 {
 		t.Errorf("X-Forwarded-For no debe tenerse en cuenta: %d", w.Code)
 	}
 	if !strings.Contains(e.logs.String(), "acceso denegado") {
@@ -278,5 +278,57 @@ func TestNingunaRespuestaFiltraLaClave(t *testing.T) {
 	}
 	if strings.Contains(e.logs.String(), claveSecreta) {
 		t.Error("el log contiene la API key")
+	}
+}
+
+func TestTextosEditablesEnPantalla(t *testing.T) {
+	e := nuevoEntorno(t, func(c *config.Config) {
+		c.Kiosk.HeaderText = "Servicio de Wi-Fi"
+		c.Kiosk.Intro = "Introducción propia de la sede."
+	})
+	b := e.peticion("GET", "/", "127.0.0.1", "", nil).Body.String()
+	if !strings.Contains(b, `<div class="servicio">Servicio de Wi-Fi</div>`) || !strings.Contains(b, "Introducción propia de la sede.") {
+		t.Error("no se muestran la cabecera o la introducción configuradas")
+	}
+	if strings.Contains(b, `id="acepto"`) || strings.Contains(b, "inactivo") {
+		t.Error("sin condiciones activadas no debe haber casilla ni botón inactivo")
+	}
+	// Sin introducción propia se usa la del idioma.
+	e2 := nuevoEntorno(t, nil)
+	if !strings.Contains(e2.peticion("GET", "/", "127.0.0.1", "", nil).Body.String(), "Conéctate gratis a Internet") {
+		t.Error("falta la introducción por defecto")
+	}
+}
+
+func TestCondicionesDeUso(t *testing.T) {
+	e := nuevoEntorno(t, func(c *config.Config) {
+		c.Kiosk.TermsEnabled = true
+		c.Kiosk.TermsText = "1. Uso responsable.\n\n2. <script>alert(1)</script>"
+	})
+	b := e.peticion("GET", "/", "127.0.0.1", "", nil).Body.String()
+	for _, want := range []string{`id="acepto"`, "He leído y acepto las condiciones de uso", "Ver condiciones", "1. Uso responsable.", `boton-principal inactivo`} {
+		if !strings.Contains(b, want) {
+			t.Errorf("falta %q en la pantalla", want)
+		}
+	}
+	if strings.Contains(b, "<script>alert(1)</script>") || !strings.Contains(b, "&lt;script&gt;") {
+		t.Error("el texto de las condiciones debe mostrarse como texto, sin ejecutar HTML")
+	}
+
+	// Sin aceptar: el servidor no entrega código aunque la casilla se salte en el navegador.
+	w := e.peticion("POST", "/api/voucher", "127.0.0.1", `{}`, jsonHdr)
+	if w.Code != 400 || !strings.Contains(w.Body.String(), "aceptar las condiciones") {
+		t.Fatalf("sin aceptar: %d %s", w.Code, w.Body)
+	}
+	if strings.Contains(e.logs.String(), "voucher creado") {
+		t.Error("no debe crearse ningún voucher sin aceptar las condiciones")
+	}
+	w = e.peticion("POST", "/api/voucher", "127.0.0.1", `{"accepted":true}`, jsonHdr)
+	if w.Code != 200 {
+		t.Fatalf("aceptadas: %d %s", w.Code, w.Body)
+	}
+	ver := e.cfg.Get().Kiosk.TermsVersion()
+	if !strings.Contains(e.logs.String(), "condiciones_aceptadas="+ver) {
+		t.Errorf("el log debe anotar la versión aceptada (%s): %s", ver, e.logs.String())
 	}
 }

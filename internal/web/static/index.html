@@ -17,7 +17,7 @@
   <div class="logo">
     {{if .HasLogo}}<img src="/logo" alt="{{.Organization}}">{{else if .Organization}}<span class="logo-texto">{{.Organization}}</span>{{end}}
   </div>
-  <div class="servicio">{{.Title}}</div>
+  <div class="servicio">{{.HeaderName}}</div>
 </header>
 
 <main class="contenido">
@@ -29,7 +29,7 @@
       <circle cx="24" cy="38" r="2.5" class="relleno"/>
     </svg>
     <h1 class="titulo">{{.Title}}</h1>
-    <p class="intro">{{.T.intro}}</p>
+    <p class="intro">{{.Intro}}</p>
 
     {{if gt (len .SSIDs) 1}}
     <fieldset class="selector-red">
@@ -48,7 +48,22 @@
     </div>
     {{end}}
 
-    <button id="btn-obtener" type="button" class="boton boton-principal">{{.T.boton_obtener}}</button>
+    {{if .TermsEnabled}}
+    <div class="condiciones" id="condiciones">
+      <label class="acepto">
+        <input type="checkbox" id="acepto">
+        <span>{{.T.acepto}}</span>
+      </label>
+      <button type="button" class="ver-condiciones" id="btn-condiciones" aria-expanded="false" aria-controls="texto-condiciones">{{.T.ver_condiciones}}</button>
+      <div class="texto-condiciones" id="texto-condiciones" hidden>
+        <h2 class="titulo-condiciones">{{.T.condiciones_titulo}}</h2>
+        <div class="texto">{{.TermsText}}</div>
+      </div>
+      <p class="aviso-aceptar" id="aviso-aceptar" hidden>{{.T.aviso_aceptar}}</p>
+    </div>
+    {{end}}
+
+    <button id="btn-obtener" type="button" class="boton boton-principal{{if .TermsEnabled}} inactivo{{end}}"{{if .TermsEnabled}} aria-disabled="true"{{end}}>{{.T.boton_obtener}}</button>
     <p class="validez-inicio">{{.Validity}}</p>
   </section>
 

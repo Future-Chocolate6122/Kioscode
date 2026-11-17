@@ -148,13 +148,33 @@
     </section>
 
     <section class="bloque">
-      <h2>Quiosco</h2>
+      <h2>Textos de la pantalla</h2>
       <div class="rejilla">
         <div class="campo"><label for="title">Título</label>
-          <input id="title" type="text" name="kiosk_title" value="{{.Cfg.Kiosk.Title}}" required></div>
+          <input id="title" type="text" name="kiosk_title" value="{{.Cfg.Kiosk.Title}}" required maxlength="{{.MaxTitleLen}}">
+          <small>Texto grande de la pantalla de inicio y título de la página.</small></div>
+        <div class="campo"><label for="header">Nombre en la cabecera</label>
+          <input id="header" type="text" name="kiosk_header_text" value="{{.Cfg.Kiosk.HeaderText}}" maxlength="{{.MaxTitleLen}}" placeholder="vacío = el título">
+          <small>Arriba a la derecha, y en la cabecera de esta página.</small></div>
         <div class="campo"><label for="org">Nombre de la organización</label>
           <input id="org" type="text" name="kiosk_organization" value="{{.Cfg.Kiosk.Organization}}" placeholder="se muestra en la cabecera si no hay logo">
-          <small>No se incluye en el código: cada instalación pone el suyo.</small></div>
+          <small>Arriba a la izquierda, solo si no hay logotipo.</small></div>
+        <div class="campo ancho"><label for="intro">Texto de introducción</label>
+          <textarea id="intro" name="kiosk_intro" maxlength="{{.MaxIntroLen}}" placeholder="{{.DefaultIntro}}">{{.Cfg.Kiosk.Intro}}</textarea>
+          <small>Bajo el título. Vacío = el texto por defecto (el que se ve en gris). Máximo {{.MaxIntroLen}} caracteres.</small></div>
+        <div class="campo ancho">
+          <label class="casilla"><input type="checkbox" name="kiosk_terms_enabled" value="1"{{if .Cfg.Kiosk.TermsEnabled}} checked{{end}}> Mostrar condiciones de uso antes de obtener el código</label>
+          <small>El ciudadano tendrá que marcar «He leído y acepto las condiciones de uso». Puede leerlas en un desplegable de la propia pantalla.</small>
+        </div>
+        <div class="campo ancho"><label for="terms">Condiciones de uso</label>
+          <textarea id="terms" class="condiciones-admin" name="kiosk_terms_text" maxlength="{{.MaxTermsLen}}" placeholder="Escriba aquí las condiciones. Texto sin formato; deje una línea en blanco entre párrafos.">{{.Cfg.Kiosk.TermsText}}</textarea>
+          <small>Texto sin formato. {{if .TermsVersion}}Versión actual: <span class="mono">{{.TermsVersion}}</span>; queda anotada en el log junto a cada código entregado y cambia al editar el texto.{{else}}Cada versión del texto queda anotada en el log junto a cada código entregado.{{end}}</small></div>
+      </div>
+    </section>
+
+    <section class="bloque">
+      <h2>Quiosco</h2>
+      <div class="rejilla">
         <div class="campo"><label for="ds">Tiempo del código en pantalla (s)</label>
           <input id="ds" type="number" name="kiosk_display_seconds" value="{{.Cfg.Kiosk.DisplaySeconds}}" min="10" max="600"></div>
         <div class="campo"><label for="cd">Espera entre códigos por tótem (s)</label>

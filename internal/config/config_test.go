@@ -136,14 +136,14 @@ func TestAllowlist(t *testing.T) {
 		t.Fatal(err)
 	}
 	casos := map[string]bool{
-		"192.0.2.10":       true,
-		"198.51.100.10":    true,
-		"198.51.100.11":    false,
-		"10.0.0.1":         false,
-		"127.0.0.1":        true, // loopback siempre
-		"::1":              true,
-		"::ffff:192.0.2.3": true, // IPv4 mapeada en IPv6
-		"::ffff:10.0.0.1":  false,
+		"192.0.2.10":         true,
+		"198.51.100.10":      true,
+		"198.51.100.11":      false,
+		"203.0.113.1":        false,
+		"127.0.0.1":          true, // loopback siempre
+		"::1":                true,
+		"::ffff:192.0.2.3":   true, // IPv4 mapeada en IPv6
+		"::ffff:203.0.113.1": false,
 	}
 	for ip, want := range casos {
 		if got := l.Allows(netip.MustParseAddr(ip)); got != want {
@@ -187,5 +187,55 @@ func TestGetDevuelveCopia(t *testing.T) {
 	c.AllowedClients[0] = "1.1.1.1"
 	if st.Get().AllowedClients[0] == "1.1.1.1" {
 		t.Error("Get debe devolver una copia independiente")
+	}
+}
+
+func TestTextosYCondiciones(t *testing.T) {
+	c := Default()
+	if c.Kiosk.TermsEnabled || c.Kiosk.HeaderName() != c.Kiosk.Title || c.Kiosk.TermsVersion() != "" {
+		t.Error("por defecto: sin condiciones y la cabecera muestra el título")
+	}
+	c.Kiosk.HeaderText = "  Servicio de Wi-Fi  "
+	c.Kiosk.Intro = "Línea 1  \r\nLínea 2\r\n"
+	c.Kiosk.TermsEnabled = true
+	c.Kiosk.TermsText = "\r\n1. Uso responsable.\r\n\r\n2. Sin garantías.  \r\n"
+	if err := c.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if c.Kiosk.HeaderName() != "Servicio de Wi-Fi" {
+		t.Errorf("cabecera: %q", c.Kiosk.HeaderName())
+	}
+	if c.Kiosk.Intro != "Línea 1\nLínea 2" || c.Kiosk.TermsText != "1. Uso responsable.\n\n2. Sin garantías." {
+		t.Errorf("textos sin normalizar: %q / %q", c.Kiosk.Intro, c.Kiosk.TermsText)
+	}
+	v1 := c.Kiosk.TermsVersion()
+	if len(v1) != 8 {
+		t.Errorf("versión de las condiciones: %q", v1)
+	}
+	c.Kiosk.TermsText += " Editado."
+	if c.Kiosk.TermsVersion() == v1 {
+		t.Error("la versión debe cambiar al editar el texto")
+	}
+}
+
+func TestTextosLimites(t *testing.T) {
+	casos := map[string]func(*Config){
+		"condiciones vacías": func(c *Config) { c.Kiosk.TermsEnabled = true; c.Kiosk.TermsText = "  " },
+		"título largo":       func(c *Config) { c.Kiosk.Title = strings.Repeat("á", MaxTitleLen+1) },
+		"cabecera larga":     func(c *Config) { c.Kiosk.HeaderText = strings.Repeat("x", MaxTitleLen+1) },
+		"intro larga":        func(c *Config) { c.Kiosk.Intro = strings.Repeat("x", MaxIntroLen+1) },
+		"condiciones largas": func(c *Config) { c.Kiosk.TermsText = strings.Repeat("x", MaxTermsLen+1) },
+	}
+	for nombre, mod := range casos {
+		c := Default()
+		mod(&c)
+		if err := c.Validate(); err == nil {
+			t.Errorf("%s: debería ser inválida", nombre)
+		}
+	}
+	c := Default()
+	c.Kiosk.Title = strings.Repeat("á", MaxTitleLen) // se cuentan caracteres, no bytes
+	if err := c.Validate(); err != nil {
+		t.Errorf("un título de %d caracteres con tildes debe valer: %v", MaxTitleLen, err)
 	}
 }

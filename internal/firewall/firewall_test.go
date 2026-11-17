@@ -24,15 +24,15 @@ const reglasEjemplo = `*filter
 ### tuple ### allow tcp 8080 0.0.0.0/0 any 192.0.2.0/24 in comment=546f74656d2057692d4669
 -A ufw-user-input -p tcp --dport 8080 -s 192.0.2.0/24 -j ACCEPT
 
-### tuple ### allow tcp 8080 0.0.0.0/0 any 10.9.9.9 in comment=546f74656d2057692d4669
-### tuple ### allow tcp 8080 0.0.0.0/0 any 10.0.0.0/8 in
-### tuple ### allow tcp 9090 0.0.0.0/0 any 10.1.1.1 in comment=6f74726f
+### tuple ### allow tcp 8080 0.0.0.0/0 any 203.0.113.9 in comment=546f74656d2057692d4669
+### tuple ### allow tcp 8080 0.0.0.0/0 any 203.0.113.0/24 in
+### tuple ### allow tcp 9090 0.0.0.0/0 any 203.0.113.11 in comment=6f74726f
 ### END RULES ###
 `
 
 func TestParseUserRulesSoloLasSuyas(t *testing.T) {
 	got := ParseUserRules([]byte(reglasEjemplo))
-	if len(got) != 2 || got[0] != (Rule{"192.0.2.0/24", 8080}) || got[1] != (Rule{"10.9.9.9", 8080}) {
+	if len(got) != 2 || got[0] != (Rule{"192.0.2.0/24", 8080}) || got[1] != (Rule{"203.0.113.9", 8080}) {
 		t.Errorf("reglas leídas: %+v", got)
 	}
 	if hexComment != "546f74656d2057692d4669" {
@@ -71,7 +71,7 @@ func TestDesiredLimitaEntradas(t *testing.T) {
 	c := config.Default()
 	c.AllowedClients = nil
 	for i := 0; i < MaxEntries+1; i++ {
-		c.AllowedClients = append(c.AllowedClients, "10.0.0."+strconv.Itoa(i))
+		c.AllowedClients = append(c.AllowedClients, "203.0.113."+strconv.Itoa(i))
 	}
 	if _, err := Desired(c); err == nil {
 		t.Error("debería limitar el número de reglas")
@@ -116,7 +116,7 @@ func TestSyncAnadeYQuitaSoloLoNecesario(t *testing.T) {
 	if len(st.Added) != 1 || st.Added[0].Src != "198.51.100.0/24" {
 		t.Errorf("añadidas: %+v", st.Added)
 	}
-	if len(st.Removed) != 1 || st.Removed[0].Src != "10.9.9.9" {
+	if len(st.Removed) != 1 || st.Removed[0].Src != "203.0.113.9" {
 		t.Errorf("quitadas: %+v", st.Removed)
 	}
 	if len(u.llamadas) != 2 {
@@ -124,7 +124,7 @@ func TestSyncAnadeYQuitaSoloLoNecesario(t *testing.T) {
 	}
 	del := strings.Join(u.llamadas[0], " ")
 	add := strings.Join(u.llamadas[1], " ")
-	if del != "delete allow from 10.9.9.9 to any port 8080 proto tcp" {
+	if del != "delete allow from 203.0.113.9 to any port 8080 proto tcp" {
 		t.Errorf("borrado: %s", del)
 	}
 	if add != "allow from 198.51.100.0/24 to any port 8080 proto tcp comment Totem Wi-Fi" {
@@ -132,7 +132,7 @@ func TestSyncAnadeYQuitaSoloLoNecesario(t *testing.T) {
 	}
 	for _, l := range u.llamadas {
 		s := strings.Join(l, " ")
-		if strings.Contains(s, " 22 ") || strings.Contains(s, "10.0.0.0/8") || strings.Contains(s, "enable") || strings.Contains(s, "disable") {
+		if strings.Contains(s, " 22 ") || strings.Contains(s, "203.0.113.0/24") || strings.Contains(s, "enable") || strings.Contains(s, "disable") {
 			t.Errorf("ha tocado algo que no es suyo: %s", s)
 		}
 	}
@@ -140,7 +140,7 @@ func TestSyncAnadeYQuitaSoloLoNecesario(t *testing.T) {
 
 func TestSyncSinCambiosNoLlamaAUfw(t *testing.T) {
 	c := config.Default()
-	c.AllowedClients = []string{"192.0.2.0/24", "10.9.9.9"}
+	c.AllowedClients = []string{"192.0.2.0/24", "203.0.113.9"}
 	c.AdminAllowedClients = nil
 	u := &ufwFalso{}
 	st := Sync(c, rutas(t, reglasEjemplo, "ENABLED=no\n", ""), u.run)

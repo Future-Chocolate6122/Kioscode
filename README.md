@@ -319,6 +319,32 @@ escriba su nombre en **Quiosco → Foto de fondo**. En Ubuntu, tras copiar, dé 
 sudo chown totem:totem /var/lib/totem-wifi/logo.svg
 ```
 
+### Textos de la pantalla y condiciones de uso
+
+En `/admin` → **Textos de la pantalla** se cambian sin tocar ficheros:
+
+| Campo | Dónde se ve |
+|---|---|
+| **Título** | Texto grande de la pantalla de inicio (máx. 60 caracteres). |
+| **Nombre en la cabecera** | Arriba a la derecha y en la cabecera de `/admin`. Vacío = el título. |
+| **Nombre de la organización** | Arriba a la izquierda, solo si no hay logotipo. |
+| **Texto de introducción** | Bajo el título (máx. 400 caracteres). Vacío = el texto por defecto. |
+| **Condiciones de uso** | Texto sin formato (máx. 20 000 caracteres); deje una línea en blanco entre párrafos. |
+
+Si marca **«Mostrar condiciones de uso antes de obtener el código»**:
+
+- La pantalla muestra la casilla **«He leído y acepto las condiciones de uso»** y un desplegable
+  **«Ver condiciones»** con el texto, que se puede desplazar con el dedo.
+- **«Obtener código»** queda atenuado hasta marcar la casilla; si se pulsa antes, aparece un aviso.
+- Tras entregar un código, la casilla vuelve a quedar sin marcar para la siguiente persona.
+- El servidor también lo comprueba: sin aceptar no entrega código.
+- Cada código entregado queda en el log con la **versión** de las condiciones aceptadas
+  (`condiciones_aceptadas=84a03f5a`). La versión actual se ve en `/admin` bajo el texto y cambia en
+  cuanto se edita, así que se puede saber qué texto estaba vigente en cada momento.
+
+> El portal cautivo de UniFi también puede mostrar condiciones de uso. Si ya las tiene activadas
+> allí, valore si hace falta mostrarlas dos veces.
+
 ---
 
 ## 8. Ver el log
@@ -423,6 +449,13 @@ Otros problemas frecuentes:
 Descomprima el paquete nuevo y ejecute **el mismo instalador** que la primera vez. Para el servicio,
 sustituye el programa y lo vuelve a arrancar **conservando la configuración y el contador**.
 
+Antes de actualizar, guarde una copia de la configuración. Las versiones nuevas pueden añadir campos
+a `config.json` que una versión anterior no reconoce: si tuviera que volver atrás, restaure esa copia.
+
+```bash
+sudo cp /etc/totem-wifi/config.json /etc/totem-wifi/config.json.bak
+```
+
 Windows (PowerShell como administrador, en la carpeta del paquete nuevo):
 
 ```powershell
@@ -496,6 +529,10 @@ arránquelo después; un campo mal escrito impide arrancar y el error dice cuál
 | `voucher.rx_kbps` / `tx_kbps` | `0` | Velocidad de bajada / subida (0 = sin límite; si no, 2–100 000). |
 | `kiosk.title` | `Wi-Fi gratuita` | Título de la pantalla. |
 | `kiosk.organization` | vacío | Nombre de la organización, en la cabecera cuando no hay logo. |
+| `kiosk.header_text` | vacío | Nombre del servicio en la cabecera (vacío = el título). |
+| `kiosk.intro` | vacío | Texto de introducción (vacío = el texto por defecto del idioma). |
+| `kiosk.terms_enabled` | `false` | Pedir que se acepten las condiciones de uso antes de dar el código. |
+| `kiosk.terms_text` | vacío | Texto de las condiciones de uso (obligatorio si `terms_enabled` es `true`). |
 | `kiosk.display_seconds` | `60` | Segundos que el código permanece en pantalla. |
 | `kiosk.cooldown_seconds` | `20` | Espera mínima entre códigos para un mismo tótem. |
 | `kiosk.daily_limit` | `300` | Máximo de códigos al día entre todos los tótems (se reinicia a medianoche). |
