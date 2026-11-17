@@ -199,7 +199,7 @@ func TestHostPort(t *testing.T) {
 }
 
 func TestMock(t *testing.T) {
-	m := MockClient{}
+	m := NewMock()
 	re := regexp.MustCompile(`^\d{10}$`)
 	vistos := map[string]bool{}
 	for i := 0; i < 50; i++ {

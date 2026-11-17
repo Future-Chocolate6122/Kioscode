@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -80,6 +81,7 @@ func formularioActual(c config.Config, csrf string) url.Values {
 	v.Set("voucher_note", c.Voucher.Note)
 	v.Set("voucher_minutes", "240")
 	v.Set("voucher_guest_limit", "1")
+	v.Set("voucher_unused_cleanup_hours", strconv.Itoa(c.Voucher.UnusedCleanupHours))
 	v.Set("kiosk_title", c.Kiosk.Title)
 	v.Set("kiosk_organization", c.Kiosk.Organization)
 	v.Set("kiosk_display_seconds", "60")

@@ -46,6 +46,7 @@
 
 {{else}}
   <h1>Administración</h1>
+  {{template "nav" .}}
   {{if .Flash}}<div class="aviso">{{.Flash}}</div>{{end}}
   {{if .Error}}<div class="aviso mal">{{.Error}}</div>{{end}}
   {{range .Warnings}}<div class="aviso mal">{{.}}</div>{{end}}
@@ -144,6 +145,9 @@
           <input id="rx" type="number" name="voucher_rx_kbps" value="{{.Cfg.Voucher.RxKbps}}" min="0" max="100000"><small>0 = sin límite · 2–100000</small></div>
         <div class="campo"><label for="tx">Velocidad de subida (kbps)</label>
           <input id="tx" type="number" name="voucher_tx_kbps" value="{{.Cfg.Voucher.TxKbps}}" min="0" max="100000"><small>0 = sin límite · 2–100000</small></div>
+        <div class="campo"><label for="limpieza">Borrar códigos sin usar tras (horas)</label>
+          <input id="limpieza" type="number" name="voucher_unused_cleanup_hours" value="{{.Cfg.Voucher.UnusedCleanupHours}}" min="0" max="720">
+          <small>Los códigos que nadie usa no caducan solos: se borran en UniFi pasado este plazo (se revisa cada hora). 0 = no borrar.</small></div>
       </div>
     </section>
 

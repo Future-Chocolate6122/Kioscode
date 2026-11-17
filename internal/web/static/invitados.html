@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="csrf" content="{{.CSRF}}">
+<title>Invitados conectados · {{.Title}}</title>
+<link rel="stylesheet" href="/static/app.css?v={{.Version}}">
+<script src="/static/invitados.js?v={{.Version}}" defer></script>
+</head>
+<body class="admin">
+<header class="cabecera">
+  <div class="logo">
+    {{if .HasLogo}}<img src="/logo" alt="{{.LogoText}}">{{else if .LogoText}}<span class="logo-texto">{{.LogoText}}</span>{{end}}
+  </div>
+  <div class="servicio">{{.Title}} · Administración</div>
+</header>
+
+<main class="admin-main">
+  <h1>Administración</h1>
+  {{template "nav" .}}
+
+  {{if .Flash}}<div class="aviso">{{.Flash}}</div>{{end}}
+  {{if .Cfg.UniFi.Mock}}<div class="aviso prueba"><b>Modo simulación.</b> Estos invitados son de ejemplo: sirven para probar la página sin UniFi.</div>{{end}}
+  {{if .GuestsError}}<div class="aviso mal">No se puede obtener la lista de invitados. {{.GuestsError}}</div>{{end}}
+
+  <section class="bloque">
+    <div class="barra-invitados" id="barra">
+      <div class="resumen-invitados">
+        <span><b id="total">{{len .Guests}}</b> {{if .ShowPending}}dispositivos en la red de invitados{{else}}invitados conectados{{end}}</span>
+        {{if .PendingCount}}
+          {{if .ShowPending}}<a href="/admin/invitados">Ocultar los pendientes de código</a>
+          {{else}}<a href="/admin/invitados?pendientes=1">Mostrar también {{.PendingCount}} pendiente{{if gt .PendingCount 1}}s{{end}} de código</a>{{end}}
+        {{end}}
+      </div>
+      <div class="acciones-invitados">
+        <input type="search" id="buscar" placeholder="Buscar por nombre, IP o MAC" aria-label="Buscar">
+        <a class="boton boton-secundario" href="/admin/invitados{{if .ShowPending}}?pendientes=1{{end}}">Actualizar</a>
+        <button type="button" class="boton boton-principal" id="btn-seleccionados" disabled>Desconectar seleccionados (<span id="n-sel">0</span>)</button>
+        <button type="button" class="boton boton-peligro" id="btn-todos"{{if not .Guests}} disabled{{end}}>Desconectar todos…</button>
+      </div>
+      <div class="panel-todos" id="panel-todos" hidden>
+        <p><b>Desconectar a todos los invitados conectados.</b> Escriba su contraseña de administración para confirmar.</p>
+        <div class="fila-todos">
+          <input type="password" id="pw-todos" autocomplete="current-password" placeholder="Contraseña de administración">
+          <label class="casilla"><input type="checkbox" id="invalidar" checked> Invalidar también los códigos entregados por el tótem (no podrán volver a entrar con ellos)</label>
+        </div>
+        <div class="acciones">
+          <button type="button" class="boton boton-peligro" id="btn-confirmar-todos">Desconectar a todos</button>
+          <button type="button" class="boton boton-secundario" id="btn-cancelar-todos">Cancelar</button>
+        </div>
+      </div>
+      <div id="resultado" class="resultado" aria-live="polite"></div>
+    </div>
+
+    {{if .Guests}}
+    <div class="tabla-envoltorio">
+      <table class="tabla-invitados" id="tabla">
+        <thead>
+          <tr>
+            <th class="col-sel"><input type="checkbox" id="sel-todos" aria-label="Seleccionar todos"></th>
+            <th data-orden="nombre">Dispositivo</th>
+            <th data-orden="ip">IP</th>
+            <th>MAC</th>
+            <th data-orden="conectado" class="ordenada desc">Conectado desde</th>
+            <th data-orden="hasta">Acceso hasta</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Guests}}
+          <tr data-id="{{.ID}}" data-nombre="{{.Name}}" data-ip="{{.IP}}" data-mac="{{.MAC}}"
+              data-conectado="{{.ConnectedAt.Unix}}" data-hasta="{{if .ExpiresAt.IsZero}}0{{else}}{{.ExpiresAt.Unix}}{{end}}"{{if not .Authorized}} class="pendiente"{{end}}>
+            <td class="col-sel">{{if .Authorized}}<input type="checkbox" class="sel" aria-label="Seleccionar">{{end}}</td>
+            <td>{{if .Name}}{{.Name}}{{else}}<span class="sin-nombre">(sin nombre)</span>{{end}}{{if .Wired}} <span class="etiqueta-uso">Cable</span>{{end}}</td>
+            <td class="mono">{{.IP}}</td>
+            <td class="mono">{{.MAC}}</td>
+            <td>{{hora .ConnectedAt}}</td>
+            <td>{{if .Authorized}}{{hora .ExpiresAt}}{{if .Method}} <small>({{metodo .Method}})</small>{{end}}{{else}}<i>Pendiente de código</i>{{end}}</td>
+            <td>{{if .Authorized}}<button type="button" class="borrar" data-desconectar="{{.ID}}">Desconectar</button>{{end}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    <div class="paginacion" id="paginacion"></div>
+    <p class="sin-resultados" id="sin-resultados" hidden>Ningún invitado coincide con la búsqueda.</p>
+    {{else if not .GuestsError}}
+    <p>No hay invitados conectados en este momento.</p>
+    {{end}}
+    <small>Se muestran los dispositivos que han entrado por el portal cautivo. Desconectar retira su acceso; si su código sigue vigente, pueden volver a entrar escribiéndolo.</small>
+  </section>
+
+  <form method="post" action="/admin/logout" class="acciones">
+    <button class="boton boton-secundario" type="submit">Cerrar sesión</button>
+    <a href="/" class="mono">Ver la pantalla del quiosco</a>
+  </form>
+</main>
+</body>
+</html>

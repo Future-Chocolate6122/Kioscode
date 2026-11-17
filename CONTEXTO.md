@@ -247,11 +247,22 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
   SVG con código. El quiosco se recarga solo (comprueba cada minuto `/api/version`) cuando cambia
   algo en `/admin`. Tope de 1 048 576 MB en `voucher.data_mb`.
 
+- **1.3.0** — pestaña **Invitados conectados** en `/admin` (`/admin/invitados`): lista de los
+  dispositivos con acceso de invitado (portal cautivo), con búsqueda, orden y paginación;
+  desconectar uno, los seleccionados o todos (`UNAUTHORIZE_GUEST_ACCESS`, uno a uno y en paralelo).
+  «Desconectar todos» pide la contraseña y puede invalidar los códigos del tótem vigentes. Limpieza
+  horaria de los códigos del tótem sin usar (`voucher.unused_cleanup_hours`, 24 h por defecto).
+  Decidido con el usuario: invitado = entró por el portal; MAC completa; sin listado de vouchers.
+
+**Comportamiento de la API a tener en cuenta:**
+
+- Los vouchers sin usar **no caducan**: `timeLimitMinutes` cuenta desde el primer uso.
+- La API no indica el SSID de cada cliente ni qué voucher usó cada invitado.
+- No documenta si borrar un voucher activado desconecta a quien lo usa (pendiente de comprobar en
+  real; el diseño no depende de ello).
+
 **Planificado** (valorado con el OpenAPI de Network 10.0.162 / 10.1.84):
 
-- Gestión de los vouchers del tótem en `/admin` (listar, borrar uno, borrar todos filtrando por la
-  nota del tótem). Borrar un voucher no desconecta a quien ya lo usó; para eso existe
-  `UNAUTHORIZE_GUEST_ACCESS` por dispositivo.
 - Descartado por ahora: acceso sin código con `AUTHORIZE_GUEST_ACCESS` (requiere exponer el servidor
   a la red de invitados).
 

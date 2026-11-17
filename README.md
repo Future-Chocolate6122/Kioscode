@@ -364,6 +364,36 @@ Si marca **«Mostrar condiciones de uso antes de obtener el código»**:
 > El portal cautivo de UniFi también puede mostrar condiciones de uso. Si ya las tiene activadas
 > allí, valore si hace falta mostrarlas dos veces.
 
+### Invitados conectados
+
+En `/admin`, la pestaña **Invitados conectados** muestra los dispositivos que han entrado por el portal
+cautivo: nombre del dispositivo, IP, MAC, desde cuándo están conectados y hasta cuándo tienen acceso.
+
+- **Buscar** por nombre, IP o MAC; **ordenar** pulsando en el título de una columna. Con más de 50
+  invitados, la lista se reparte en páginas.
+- **Desconectar** a uno con el enlace de su fila, o marcar varios (la casilla de la cabecera marca
+  todos los que coinciden con la búsqueda) y pulsar **Desconectar seleccionados**.
+- **Desconectar todos…** pide la **contraseña de administración**. Con la opción **«Invalidar también
+  los códigos entregados por el tótem»** (marcada por defecto) se borran además en UniFi los códigos
+  del tótem aún vigentes, para que nadie pueda volver a entrar con un código antiguo. Los códigos
+  creados a mano en UniFi no se tocan.
+- Por defecto no se muestran los dispositivos conectados a la red que **aún no han escrito el
+  código**; el enlace «Mostrar también … pendientes de código» los añade a la lista.
+- Desconectar retira el acceso del dispositivo. Si su código sigue vigente, la persona **puede volver
+  a entrar escribiéndolo** en el portal (salvo tras «Desconectar todos» con la invalidación marcada).
+- Cada desconexión queda en el log con la MAC, la IP del dispositivo y la IP del administrador.
+- Si al desconectar aparece un error 403, el usuario de UniFi que creó la API key no tiene permiso
+  para gestionar invitados: dele permiso de gestión en Network (ver
+  [5](#5-crear-la-api-key-en-unifi)).
+
+### Limpieza de códigos sin usar
+
+Un código que se entrega y **nadie usa no caduca nunca**: su duración empieza a contar cuando se
+escribe en el portal. Para que no se acumulen, la aplicación **borra cada hora** en UniFi los códigos
+**del tótem** que nunca se han usado y tienen más de **24 horas**. El plazo se cambia en `/admin` →
+*Red y voucher* → **Borrar códigos sin usar tras (horas)**; 0 desactiva la limpieza. No afecta a los
+códigos en uso ni a los creados a mano en UniFi. Cada limpieza que borra algo queda en el log.
+
 ---
 
 ## 8. Ver el log
@@ -544,6 +574,7 @@ arránquelo después; un campo mal escrito impide arrancar y el error dice cuál
 | `voucher.note` | `Totem` | Nota del voucher visible en UniFi (útil para saber de qué tótem sale). |
 | `voucher.minutes` | `240` | Duración del voucher (1–1 000 000). |
 | `voucher.guest_limit` | `1` | Dispositivos por código (0 = sin límite). |
+| `voucher.unused_cleanup_hours` | `24` | Horas tras las que se borran los códigos del tótem que nadie ha usado (0 = no borrar; máx. 720). |
 | `voucher.data_mb` | `0` | Límite de datos en MB (0 = sin límite; máximo 1 048 576, el que admite UniFi). |
 | `voucher.rx_kbps` / `tx_kbps` | `0` | Velocidad de bajada / subida (0 = sin límite; si no, 2–100 000). |
 | `kiosk.title` | `Wi-Fi gratuita` | Título de la pantalla. |

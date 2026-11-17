@@ -34,6 +34,7 @@ type app struct {
 	srv        *http.Server
 	cfg        *config.Store
 	svc        *voucher.Service
+	cancel     context.CancelFunc // detiene las tareas periódicas
 }
 
 // setup carga la configuración, abre el log y prepara servicio y servidor web.
@@ -88,6 +89,9 @@ func (a *app) start() error {
 	c := a.cfg.Get()
 	a.logger.Printf("Tótem Wi-Fi %s escuchando en http://%s/ (configuración: %s, datos: %s)", version, a.srv.Addr, a.cfg.Path(), a.dataDir)
 	a.startupCheck(c)
+	ctx, cancel := context.WithCancel(context.Background())
+	a.cancel = cancel
+	a.svc.StartCleanup(ctx) // borra cada hora los códigos del tótem sin usar (si está activado)
 	go func() {
 		if err := a.srv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			a.logger.Printf("ERROR servidor HTTP: %v", err)
@@ -122,6 +126,9 @@ func (a *app) startupCheck(c config.Config) {
 func (a *app) stop() error {
 	if a.srv == nil {
 		return nil
+	}
+	if a.cancel != nil {
+		a.cancel()
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

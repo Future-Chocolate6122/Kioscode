@@ -84,6 +84,7 @@ func TestValidateErrores(t *testing.T) {
 		"tx":                func(c *Config) { c.Voucher.TxKbps = 100001 },
 		"datos":             func(c *Config) { c.Voucher.DataMB = -1 },
 		"datos máx":         func(c *Config) { c.Voucher.DataMB = MaxDataMB + 1 },
+		"limpieza":          func(c *Config) { c.Voucher.UnusedCleanupHours = 721 },
 		"display":           func(c *Config) { c.Kiosk.DisplaySeconds = 5 },
 		"límite diario":     func(c *Config) { c.Kiosk.DailyLimit = 0 },
 		"logo con ruta":     func(c *Config) { c.Kiosk.LogoPath = "../secreto.svg" },

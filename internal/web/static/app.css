@@ -503,7 +503,7 @@ body.admin { font-size: 16px; }
   font-size: 12px; letter-spacing: .1em; color: var(--gris-nav);
 }
 .campo small { color: var(--gris-nav); font-size: 13px; }
-.admin input[type=text], .admin input[type=password], .admin input[type=number], .admin input[type=url],
+.admin input[type=text], .admin input[type=password], .admin input[type=number], .admin input[type=url], .admin input[type=search],
 .admin select, .admin textarea {
   font: inherit; color: var(--gris-oscuro); background: var(--blanco);
   border: 1px solid #C9CED2; border-radius: 2px; padding: 9px 11px; width: 100%;
@@ -554,4 +554,52 @@ body.admin { font-size: 16px; }
 .pie-miniatura b { font-size: 12px; word-break: break-all; }
 .etiqueta-uso { align-self: flex-start; background: var(--azul); color: var(--blanco); font-family: var(--fuente-etiqueta); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 10px; padding: 2px 6px; }
 .borrar { align-self: flex-start; background: none; border: 0; padding: 0; color: var(--rojo); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
+/* ---- Pestañas de /admin ---- */
+.pestanas { display: flex; gap: 4px; border-bottom: 2px solid var(--gris-boton); margin: -8px 0 24px; }
+.pestanas a {
+  font-family: var(--fuente-etiqueta); font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  font-size: 13px; color: var(--gris-nav); text-decoration: none; padding: 12px 18px; margin-bottom: -2px;
+  border-bottom: 3px solid transparent;
+}
+.pestanas a:hover { color: var(--azul); }
+.pestanas a.activa { color: var(--azul); border-bottom-color: var(--azul); }
+
+/* ---- Invitados conectados ---- */
+.barra-invitados {
+  position: sticky; top: 0; z-index: 2; background: var(--blanco);
+  padding: 4px 0 14px; margin-bottom: 8px; border-bottom: 1px solid var(--gris-boton);
+}
+.resumen-invitados { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; margin-bottom: 12px; }
+.resumen-invitados b { font-size: 22px; color: var(--gris-oscuro-2); }
+.resumen-invitados a { color: var(--azul); font-size: 14px; }
+.acciones-invitados { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.acciones-invitados input[type=search] { flex: 1 1 240px; max-width: 360px; }
+.admin a.boton { text-decoration: none; display: inline-flex; align-items: center; }
+.boton[disabled] { opacity: .5; cursor: default; }
+.boton-peligro { background: var(--rojo); color: var(--blanco); }
+.panel-todos { margin-top: 14px; padding: 14px 16px; background: var(--gris-fondo); border-left: 4px solid var(--rojo); }
+.panel-todos p { margin: 0 0 10px; }
+.fila-todos { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+.fila-todos input[type=password] { max-width: 280px; }
+.tabla-envoltorio { overflow-x: auto; }
+.tabla-invitados { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabla-invitados th {
+  text-align: left; font-family: var(--fuente-etiqueta); font-weight: 700; text-transform: uppercase;
+  font-size: 11px; letter-spacing: .08em; color: var(--gris-nav); padding: 10px 8px; border-bottom: 2px solid var(--gris-boton);
+  white-space: nowrap;
+}
+.tabla-invitados th[data-orden] { cursor: pointer; }
+.tabla-invitados th.ordenada.asc::after { content: " ▲"; }
+.tabla-invitados th.ordenada.desc::after { content: " ▼"; }
+.tabla-invitados td { padding: 9px 8px; border-bottom: 1px solid var(--gris-boton); vertical-align: middle; }
+.tabla-invitados tr:hover td { background: var(--gris-fondo); }
+.tabla-invitados .col-sel { width: 34px; }
+.tabla-invitados .col-sel input { width: 18px; height: 18px; }
+.tabla-invitados tr.pendiente td { color: var(--gris-nav); }
+.sin-nombre { color: var(--gris-nav); font-style: italic; }
+.paginacion { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
+.paginacion button { min-width: 36px; padding: 6px 10px; border: 1px solid var(--gris-boton); background: var(--blanco); cursor: pointer; font: inherit; }
+.paginacion button.activa { background: var(--azul); color: var(--blanco); border-color: var(--azul); }
+.sin-resultados { color: var(--gris-nav); }
+
 .codigo-prueba { font-weight: 700; font-size: 32px; letter-spacing: .08em; color: var(--gris-oscuro); }

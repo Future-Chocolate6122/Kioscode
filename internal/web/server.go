@@ -62,7 +62,9 @@ func New(cfg *config.Store, svc *voucher.Service, dataDir string, logger *log.Lo
 		panic(err)
 	}
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
-		"join": strings.Join,
+		"join":   strings.Join,
+		"hora":   hora,
+		"metodo": metodo,
 	}).ParseFS(sub, "*.html"))
 	return &Server{
 		cfg:       cfg,

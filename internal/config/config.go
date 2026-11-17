@@ -61,6 +61,9 @@ type Voucher struct {
 	DataMB     int    `json:"data_mb"`
 	RxKbps     int    `json:"rx_kbps"`
 	TxKbps     int    `json:"tx_kbps"`
+	// Horas tras las que se borran en UniFi los vouchers del tótem que nadie ha usado
+	// (los vouchers sin usar no caducan solos). 0 = no se borran.
+	UnusedCleanupHours int `json:"unused_cleanup_hours"`
 }
 
 // Kiosk agrupa lo que afecta a la pantalla del tótem.
@@ -93,11 +96,12 @@ func Default() Config {
 			Mock:    true,
 		},
 		Voucher: Voucher{
-			SSID:       "WifiPublica",
-			ExtraSSIDs: []SSID{},
-			Note:       "Totem",
-			Minutes:    240,
-			GuestLimit: 1,
+			SSID:               "WifiPublica",
+			ExtraSSIDs:         []SSID{},
+			Note:               "Totem",
+			Minutes:            240,
+			GuestLimit:         1,
+			UnusedCleanupHours: 24,
 		},
 		Kiosk: Kiosk{
 			Title:           "Wi-Fi gratuita",
@@ -252,6 +256,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Voucher.DataMB < 0 || c.Voucher.DataMB > MaxDataMB {
 		add("voucher.data_mb: debe estar entre 0 (sin límite) y %d (1 TB, el máximo que admite UniFi)", MaxDataMB)
+	}
+	if c.Voucher.UnusedCleanupHours < 0 || c.Voucher.UnusedCleanupHours > 720 {
+		add("voucher.unused_cleanup_hours: debe estar entre 0 (no borrar) y 720 (30 días)")
 	}
 	for name, v := range map[string]int{"voucher.rx_kbps": c.Voucher.RxKbps, "voucher.tx_kbps": c.Voucher.TxKbps} {
 		if v != 0 && (v < 2 || v > 100000) {

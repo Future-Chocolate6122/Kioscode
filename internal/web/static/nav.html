@@ -1,0 +1,6 @@
+{{define "nav"}}
+<nav class="pestanas" aria-label="Secciones de administración">
+  <a href="/admin"{{if eq .Active "config"}} class="activa" aria-current="page"{{end}}>Configuración</a>
+  <a href="/admin/invitados"{{if eq .Active "invitados"}} class="activa" aria-current="page"{{end}}>Invitados conectados</a>
+</nav>
+{{end}}

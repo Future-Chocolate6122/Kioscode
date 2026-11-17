@@ -33,6 +33,40 @@ type falso struct {
 	err      error
 	ultimo   unifi.VoucherRequest
 	site     string
+
+	// Invitados
+	invitados   []unifi.Guest
+	auth        map[string]unifi.GuestAuth
+	desconectar map[string]error // error a devolver al desconectar cada id
+	echados     []string
+	filtros     []string // filtros recibidos en DeleteVouchers
+	borrados    int
+}
+
+func (f *falso) ListGuests(context.Context, string) ([]unifi.Guest, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]unifi.Guest(nil), f.invitados...), nil
+}
+func (f *falso) GuestDetails(_ context.Context, _, id string) (unifi.GuestAuth, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.auth[id], nil
+}
+func (f *falso) UnauthorizeGuest(_ context.Context, _, id string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if err := f.desconectar[id]; err != nil {
+		return err
+	}
+	f.echados = append(f.echados, id)
+	return nil
+}
+func (f *falso) DeleteVouchers(_ context.Context, _, filter string) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.filtros = append(f.filtros, filter)
+	return f.borrados, nil
 }
 
 func (f *falso) Mock() bool { return false }
@@ -181,7 +215,7 @@ func TestStateDanado(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "state.json")
 	os.WriteFile(path, []byte("{no json"), 0o600)
 	var buf bytes.Buffer
-	s := New(config.NewMemoryStore(config.Default()), func(config.Config) unifi.Client { return unifi.MockClient{} }, path, log.New(&buf, "", 0))
+	s := New(config.NewMemoryStore(config.Default()), func(config.Config) unifi.Client { return unifi.NewMock() }, path, log.New(&buf, "", 0))
 	if s.DailyUsed() != 0 || !strings.Contains(buf.String(), "dañado") {
 		t.Error("un state.json dañado debe avisar y empezar en 0")
 	}

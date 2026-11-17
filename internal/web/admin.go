@@ -190,6 +190,10 @@ func (s *Server) registerAdmin(mux *http.ServeMux, allow func(http.Handler) http
 	// Imágenes: el límite de tamaño se aplica antes de leer nada del cuerpo.
 	mux.Handle("POST /admin/api/upload", h(limitBody(MaxFondoBytes+(256<<10), s.withSession(true, s.apiUpload))))
 	mux.Handle("POST /admin/api/image-delete", h(s.withSession(true, s.apiImageDelete)))
+	// Invitados conectados
+	mux.Handle("GET /admin/invitados", h(s.withSession(false, s.adminGuests)))
+	mux.Handle("POST /admin/api/guests/disconnect", h(s.withSession(true, s.apiDisconnect)))
+	mux.Handle("POST /admin/api/guests/disconnect-all", h(s.withSession(true, s.apiDisconnectAll)))
 	mux.Handle("GET /admin/imagenes/{nombre}", h(s.withSession(false, s.adminImage)))
 	mux.Handle("GET /admin/", allow(http.RedirectHandler("/admin", http.StatusSeeOther)))
 }
@@ -270,6 +274,8 @@ func (s *Server) startSession(w http.ResponseWriter) {
 
 type adminData struct {
 	View     string // "setup", "login" o "panel"
+	Page     string // plantilla: "admin.html" (por defecto) o "invitados.html"
+	Active   string // pestaña activa: "config" o "invitados"
 	Title    string
 	Version  string
 	CSRF     string
@@ -296,6 +302,12 @@ type adminData struct {
 	Images                  []imageInfo
 	LegacyLogo, LegacyFondo string // imagen elegida que no está en la biblioteca (copiada a mano)
 	MaxLogoMB, MaxFondoMB   int64
+
+	// Invitados conectados
+	Guests       []voucher.GuestRow
+	GuestsError  string
+	ShowPending  bool
+	PendingCount int
 
 	ConfirmAccess bool         // mostrar el campo de confirmación con contraseña
 	Firewall      firewallView // estado de ufw (solo Linux con el ayudante)
@@ -360,8 +372,12 @@ func (s *Server) render(w http.ResponseWriter, status int, d adminData) {
 	d.HasLogo = s.logoPath(c) != ""
 	d.LogoText = c.Kiosk.Organization
 	var buf bytes.Buffer
-	if err := s.tmpl.ExecuteTemplate(&buf, "admin.html", d); err != nil {
-		s.log.Printf("ERROR plantilla admin.html: %v", err)
+	page := d.Page
+	if page == "" {
+		page = "admin.html"
+	}
+	if err := s.tmpl.ExecuteTemplate(&buf, page, d); err != nil {
+		s.log.Printf("ERROR plantilla %s: %v", page, err)
 		http.Error(w, "Error interno", http.StatusInternalServerError)
 		return
 	}
@@ -373,6 +389,7 @@ func (s *Server) render(w http.ResponseWriter, status int, d adminData) {
 func (s *Server) panelData(sess *session, cfg config.Config) adminData {
 	d := adminData{
 		View:       "panel",
+		Active:     "config",
 		CSRF:       sess.csrf,
 		Cfg:        cfg,
 		APIKeySet:  s.cfg.Get().UniFi.APIKey != "",
@@ -578,6 +595,7 @@ func formToConfig(r *http.Request, base config.Config) (config.Config, []string)
 	num("voucher_data_mb", "Límite de datos", &c.Voucher.DataMB)
 	num("voucher_rx_kbps", "Velocidad de bajada", &c.Voucher.RxKbps)
 	num("voucher_tx_kbps", "Velocidad de subida", &c.Voucher.TxKbps)
+	num("voucher_unused_cleanup_hours", "Borrar códigos sin usar", &c.Voucher.UnusedCleanupHours)
 
 	c.Kiosk.Title = r.FormValue("kiosk_title")
 	c.Kiosk.HeaderText = r.FormValue("kiosk_header_text")

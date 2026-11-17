@@ -58,6 +58,11 @@ type Voucher struct {
 type Client interface {
 	Sites(ctx context.Context) ([]Site, error)
 	CreateVoucher(ctx context.Context, siteID string, req VoucherRequest) (Voucher, error)
+	// Invitados conectados (guests.go)
+	ListGuests(ctx context.Context, siteID string) ([]Guest, error)
+	GuestDetails(ctx context.Context, siteID, clientID string) (GuestAuth, error)
+	UnauthorizeGuest(ctx context.Context, siteID, clientID string) error
+	DeleteVouchers(ctx context.Context, siteID, filter string) (int, error)
 	Mock() bool
 }
 
@@ -357,16 +362,8 @@ func DefaultSite(sites []Site) (Site, error) {
 	return Site{}, ErrNoSite
 }
 
-// Mock genera códigos falsos sin contactar con UniFi.
-type MockClient struct{}
-
-func (MockClient) Mock() bool { return true }
-
-func (MockClient) Sites(context.Context) ([]Site, error) {
-	return []Site{{ID: "00000000-0000-0000-0000-000000000000", InternalReference: "default", Name: "Simulación"}}, nil
-}
-
-func (MockClient) CreateVoucher(_ context.Context, _ string, r VoucherRequest) (Voucher, error) {
+// mockVoucher genera un voucher falso con un código aleatorio de 10 cifras.
+func mockVoucher(r VoucherRequest) (Voucher, error) {
 	n, err := rand.Int(rand.Reader, big.NewInt(1e10))
 	if err != nil {
 		return Voucher{}, err
@@ -386,12 +383,18 @@ type Provider struct {
 	mu   sync.Mutex
 	key  string
 	real *Real
+	mock *MockClient // uno solo, para que recuerde a quién se ha desconectado
 }
 
 // Get devuelve el cliente adecuado para la configuración dada.
 func (p *Provider) Get(mock bool, c Config) Client {
 	if mock {
-		return MockClient{}
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		if p.mock == nil {
+			p.mock = NewMock()
+		}
+		return p.mock
 	}
 	key := c.BaseURL + "\x00" + c.APIKey + "\x00" + c.CertSHA256
 	p.mu.Lock()
