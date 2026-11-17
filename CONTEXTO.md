@@ -250,8 +250,11 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
 - **1.3.0** — pestaña **Invitados conectados** en `/admin` (`/admin/invitados`): lista de los
   dispositivos con acceso de invitado (portal cautivo), con búsqueda, orden y paginación;
   desconectar uno, los seleccionados o todos (`UNAUTHORIZE_GUEST_ACCESS`, uno a uno y en paralelo).
-  «Desconectar todos» pide la contraseña y puede invalidar los códigos del tótem vigentes. Limpieza
-  horaria de los códigos del tótem sin usar (`voucher.unused_cleanup_hours`, 24 h por defecto).
+  «Desconectar todos» pide la contraseña y puede invalidar los códigos del tótem vigentes.
+  **Caducidad de los códigos sin usar**: los del tótem que nadie ha usado se borran en UniFi a los
+  `voucher.unused_expire_minutes` minutos de generarse (15 por defecto; revisión cada minuto) y el
+  quiosco lo avisa junto al código. Sustituye a `unused_cleanup_hours` (horas), que se convierte al
+  cargar: 24 → 15 min (valor por defecto), 0 → desactivada, otro valor → a minutos.
   Decidido con el usuario: invitado = entró por el portal; MAC completa; sin listado de vouchers.
 
 **Comportamiento de la API a tener en cuenta:**

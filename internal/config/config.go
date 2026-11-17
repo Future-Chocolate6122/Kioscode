@@ -61,9 +61,12 @@ type Voucher struct {
 	DataMB     int    `json:"data_mb"`
 	RxKbps     int    `json:"rx_kbps"`
 	TxKbps     int    `json:"tx_kbps"`
-	// Horas tras las que se borran en UniFi los vouchers del tótem que nadie ha usado
-	// (los vouchers sin usar no caducan solos). 0 = no se borran.
-	UnusedCleanupHours int `json:"unused_cleanup_hours"`
+	// Minutos tras los que caduca (se borra en UniFi) un voucher del tótem que nadie ha
+	// usado: los vouchers sin usar no caducan solos. 0 = no caducan.
+	UnusedExpireMinutes int `json:"unused_expire_minutes"`
+	// Obsoleto (primera v1.3, en horas). Se acepta al leer y se convierte a
+	// unused_expire_minutes; no se vuelve a escribir.
+	LegacyCleanupHours int `json:"unused_cleanup_hours,omitempty"`
 }
 
 // Kiosk agrupa lo que afecta a la pantalla del tótem.
@@ -96,12 +99,12 @@ func Default() Config {
 			Mock:    true,
 		},
 		Voucher: Voucher{
-			SSID:               "WifiPublica",
-			ExtraSSIDs:         []SSID{},
-			Note:               "Totem",
-			Minutes:            240,
-			GuestLimit:         1,
-			UnusedCleanupHours: 24,
+			SSID:                "WifiPublica",
+			ExtraSSIDs:          []SSID{},
+			Note:                "Totem",
+			Minutes:             240,
+			GuestLimit:          1,
+			UnusedExpireMinutes: 15,
 		},
 		Kiosk: Kiosk{
 			Title:           "Wi-Fi gratuita",
@@ -115,11 +118,13 @@ func Default() Config {
 
 // Límites de longitud de los textos editables (en caracteres).
 const (
-	MaxDataMB    = 1048576 // máximo de dataUsageLimitMBytes en la Integration API
-	MaxTitleLen  = 60
-	MaxIntroLen  = 400
-	MaxTermsLen  = 20000
-	termsVerSize = 8
+	MaxDataMB = 1048576 // máximo de dataUsageLimitMBytes en la Integration API
+	// MaxUnusedExpireMinutes: caducidad máxima de los códigos sin usar (7 días).
+	MaxUnusedExpireMinutes = 7 * 24 * 60
+	MaxTitleLen            = 60
+	MaxIntroLen            = 400
+	MaxTermsLen            = 20000
+	termsVerSize           = 8
 )
 
 // HeaderName es el nombre del servicio que se muestra en la cabecera.
@@ -257,8 +262,8 @@ func (c *Config) Validate() error {
 	if c.Voucher.DataMB < 0 || c.Voucher.DataMB > MaxDataMB {
 		add("voucher.data_mb: debe estar entre 0 (sin límite) y %d (1 TB, el máximo que admite UniFi)", MaxDataMB)
 	}
-	if c.Voucher.UnusedCleanupHours < 0 || c.Voucher.UnusedCleanupHours > 720 {
-		add("voucher.unused_cleanup_hours: debe estar entre 0 (no borrar) y 720 (30 días)")
+	if c.Voucher.UnusedExpireMinutes < 0 || c.Voucher.UnusedExpireMinutes > MaxUnusedExpireMinutes {
+		add("voucher.unused_expire_minutes: debe estar entre 0 (no caducan) y %d (7 días)", MaxUnusedExpireMinutes)
 	}
 	for name, v := range map[string]int{"voucher.rx_kbps": c.Voucher.RxKbps, "voucher.tx_kbps": c.Voucher.TxKbps} {
 		if v != 0 && (v < 2 || v > 100000) {
@@ -413,10 +418,34 @@ func Parse(data []byte) (Config, error) {
 	if err := dec.Decode(&cfg); err != nil {
 		return Config{}, fmt.Errorf("JSON no válido: %w", err)
 	}
+	migrateCleanup(data, &cfg)
 	if err := cfg.Validate(); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil
+}
+
+// migrateCleanup convierte voucher.unused_cleanup_hours (primera v1.3, horas, revisión
+// horaria) en voucher.unused_expire_minutes. Si el fichero ya trae el campo nuevo, el
+// antiguo se ignora. 24 h era el valor por defecto: se pasa al nuevo valor por defecto.
+func migrateCleanup(data []byte, cfg *Config) {
+	var raw struct {
+		Voucher map[string]json.RawMessage `json:"voucher"`
+	}
+	_ = json.Unmarshal(data, &raw)
+	_, hasNew := raw.Voucher["unused_expire_minutes"]
+	_, hasOld := raw.Voucher["unused_cleanup_hours"]
+	if hasOld && !hasNew {
+		switch h := cfg.Voucher.LegacyCleanupHours; {
+		case h <= 0:
+			cfg.Voucher.UnusedExpireMinutes = 0
+		case h == 24:
+			cfg.Voucher.UnusedExpireMinutes = Default().Voucher.UnusedExpireMinutes
+		default:
+			cfg.Voucher.UnusedExpireMinutes = min(h*60, MaxUnusedExpireMinutes)
+		}
+	}
+	cfg.Voucher.LegacyCleanupHours = 0
 }
 
 // NewMemoryStore crea un Store sin fichero (para pruebas).

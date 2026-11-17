@@ -81,7 +81,7 @@ func formularioActual(c config.Config, csrf string) url.Values {
 	v.Set("voucher_note", c.Voucher.Note)
 	v.Set("voucher_minutes", "240")
 	v.Set("voucher_guest_limit", "1")
-	v.Set("voucher_unused_cleanup_hours", strconv.Itoa(c.Voucher.UnusedCleanupHours))
+	v.Set("voucher_unused_expire_minutes", strconv.Itoa(c.Voucher.UnusedExpireMinutes))
 	v.Set("kiosk_title", c.Kiosk.Title)
 	v.Set("kiosk_organization", c.Kiosk.Organization)
 	v.Set("kiosk_display_seconds", "60")
@@ -497,5 +497,22 @@ func TestAdminTextosDeLaPantalla(t *testing.T) {
 	form.Set("kiosk_terms_text", "  ")
 	if w := n.hacer("POST", "/admin", form, nil); w.Code != 400 || !strings.Contains(w.Body.String(), "condiciones") {
 		t.Errorf("condiciones vacías: %d", w.Code)
+	}
+}
+
+func TestAdminCaducidadSinUso(t *testing.T) {
+	e := nuevoEntorno(t, nil)
+	n := entrar(t, e)
+	if !strings.Contains(n.hacer("GET", "/admin", nil, nil).Body.String(), "Caducidad de los códigos sin usar (minutos)") {
+		t.Fatal("falta la casilla en /admin")
+	}
+	form := formularioActual(e.cfg.Get(), n.csrf)
+	form.Set("voucher_unused_expire_minutes", "10")
+	if w := n.hacer("POST", "/admin", form, nil); w.Code != 303 || e.cfg.Get().Voucher.UnusedExpireMinutes != 10 {
+		t.Errorf("guardar 10 min: %d %d", w.Code, e.cfg.Get().Voucher.UnusedExpireMinutes)
+	}
+	form.Set("voucher_unused_expire_minutes", "99999")
+	if w := n.hacer("POST", "/admin", form, nil); w.Code != 400 {
+		t.Errorf("fuera de rango: %d", w.Code)
 	}
 }

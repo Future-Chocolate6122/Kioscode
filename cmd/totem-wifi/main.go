@@ -91,7 +91,7 @@ func (a *app) start() error {
 	a.startupCheck(c)
 	ctx, cancel := context.WithCancel(context.Background())
 	a.cancel = cancel
-	a.svc.StartCleanup(ctx) // borra cada hora los códigos del tótem sin usar (si está activado)
+	a.svc.StartCleanup(ctx) // cada minuto, caduca los códigos del tótem sin usar (si está activado)
 	go func() {
 		if err := a.srv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			a.logger.Printf("ERROR servidor HTTP: %v", err)

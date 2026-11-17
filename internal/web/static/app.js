@@ -105,6 +105,8 @@
     cont.appendChild(document.createTextNode(d.formatted));
     $('qr').src = d.qr_url;
     $('validez').textContent = d.valid_for || '';
+    $('caduca').textContent = d.use_within || '';
+    $('caduca').hidden = !d.use_within;
     $('paso1').textContent = (textos.paso1 || '{ssid}').replace('{ssid}', d.ssid);
     mostrar('codigo');
     iniciarCuenta(d.expires_in_seconds || cfg.display_seconds || 60);
@@ -132,6 +134,8 @@
     while (cont.firstChild) cont.removeChild(cont.firstChild);
     $('qr').removeAttribute('src');
     $('validez').textContent = '';
+    $('caduca').textContent = '';
+    $('caduca').hidden = true;
     $('cuenta-texto').textContent = '';
     reiniciarCondiciones();
     mostrar('inicio');

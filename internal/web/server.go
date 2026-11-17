@@ -249,6 +249,14 @@ func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"rev": s.kioskRevision(s.cfg.Get())})
 }
 
+// useWithin redacta el aviso «Tienes X para usarlo…» (vacío si los códigos no caducan).
+func useWithin(t i18n.Texts, minutes int) string {
+	if minutes <= 0 {
+		return ""
+	}
+	return t.T("caducidad_sin_uso", "duracion", t.Duration(minutes))
+}
+
 func firstNonEmpty(a, b string) string {
 	if a != "" {
 		return a
@@ -274,6 +282,7 @@ type voucherResponse struct {
 	ExpiresInSeconds int    `json:"expires_in_seconds"`
 	Mock             bool   `json:"mock"`
 	ValidFor         string `json:"valid_for"`
+	UseWithin        string `json:"use_within,omitempty"` // aviso de caducidad si no se usa
 }
 
 type errorResponse struct {
@@ -334,6 +343,7 @@ func (s *Server) handleVoucher(w http.ResponseWriter, r *http.Request) {
 		ExpiresInSeconds: c.Kiosk.DisplaySeconds,
 		Mock:             res.Mock,
 		ValidFor:         t.T("validez", "duracion", t.Duration(res.Minutes)),
+		UseWithin:        useWithin(t, c.Voucher.UnusedExpireMinutes),
 	})
 }
 

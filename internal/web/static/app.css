@@ -364,6 +364,7 @@ body > * { position: relative; z-index: 1; }
   font-variant-numeric: tabular-nums;
 }
 .validez { font-size: 26px; margin: 20px 0 0; color: var(--gris-texto); }
+.caduca { font-size: 24px; font-weight: 700; margin: 10px 0 0; color: var(--azul-oscuro); }
 
 .pasos {
   list-style: none;

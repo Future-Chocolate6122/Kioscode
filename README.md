@@ -386,13 +386,23 @@ cautivo: nombre del dispositivo, IP, MAC, desde cuándo están conectados y hast
   para gestionar invitados: dele permiso de gestión en Network (ver
   [5](#5-crear-la-api-key-en-unifi)).
 
-### Limpieza de códigos sin usar
+### Caducidad de los códigos sin usar
 
-Un código que se entrega y **nadie usa no caduca nunca**: su duración empieza a contar cuando se
-escribe en el portal. Para que no se acumulen, la aplicación **borra cada hora** en UniFi los códigos
-**del tótem** que nunca se han usado y tienen más de **24 horas**. El plazo se cambia en `/admin` →
-*Red y voucher* → **Borrar códigos sin usar tras (horas)**; 0 desactiva la limpieza. No afecta a los
-códigos en uso ni a los creados a mano en UniFi. Cada limpieza que borra algo queda en el log.
+La duración de un código (por ejemplo, 4 horas) empieza a contar **cuando se escribe en el portal**.
+Un código que se entrega y **nadie usa no caducaría nunca**: quien lo fotografiara podría usarlo días
+después. Para evitarlo, los códigos del tótem que nadie ha usado **caducan a los 15 minutos** de
+generarse: la aplicación lo revisa **cada minuto** y los borra en UniFi.
+
+- El plazo se cambia en `/admin` → *Red y voucher* → **Caducidad de los códigos sin usar
+  (minutos)**; 0 lo desactiva.
+- El quiosco lo avisa junto al código: «Tienes 15 minutos para usarlo; si no, caducará.»
+- No afecta a quien ya está conectado ni a los códigos creados a mano en UniFi: solo se borran los
+  del tótem que **nunca** se han usado.
+- Cada vez que se borra alguno queda en el log
+  («caducidad: borrados N códigos del tótem sin usar de más de 15 min»). Si UniFi no responde, se
+  anota el error (como mucho una vez por hora) y se reintenta cada minuto.
+- Elija un plazo con margen: la persona tiene que conectarse a la red, esperar el portal y escribir
+  el código. Menos de 10 minutos puede dejar fuera a quien tarde.
 
 ---
 
@@ -574,7 +584,7 @@ arránquelo después; un campo mal escrito impide arrancar y el error dice cuál
 | `voucher.note` | `Totem` | Nota del voucher visible en UniFi (útil para saber de qué tótem sale). |
 | `voucher.minutes` | `240` | Duración del voucher (1–1 000 000). |
 | `voucher.guest_limit` | `1` | Dispositivos por código (0 = sin límite). |
-| `voucher.unused_cleanup_hours` | `24` | Horas tras las que se borran los códigos del tótem que nadie ha usado (0 = no borrar; máx. 720). |
+| `voucher.unused_expire_minutes` | `15` | Minutos tras los que caduca un código del tótem que nadie ha usado (0 = no caducan; máx. 10080). |
 | `voucher.data_mb` | `0` | Límite de datos en MB (0 = sin límite; máximo 1 048 576, el que admite UniFi). |
 | `voucher.rx_kbps` / `tx_kbps` | `0` | Velocidad de bajada / subida (0 = sin límite; si no, 2–100 000). |
 | `kiosk.title` | `Wi-Fi gratuita` | Título de la pantalla. |

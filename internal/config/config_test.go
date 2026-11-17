@@ -84,7 +84,7 @@ func TestValidateErrores(t *testing.T) {
 		"tx":                func(c *Config) { c.Voucher.TxKbps = 100001 },
 		"datos":             func(c *Config) { c.Voucher.DataMB = -1 },
 		"datos máx":         func(c *Config) { c.Voucher.DataMB = MaxDataMB + 1 },
-		"limpieza":          func(c *Config) { c.Voucher.UnusedCleanupHours = 721 },
+		"caducidad sin uso": func(c *Config) { c.Voucher.UnusedExpireMinutes = MaxUnusedExpireMinutes + 1 },
 		"display":           func(c *Config) { c.Kiosk.DisplaySeconds = 5 },
 		"límite diario":     func(c *Config) { c.Kiosk.DailyLimit = 0 },
 		"logo con ruta":     func(c *Config) { c.Kiosk.LogoPath = "../secreto.svg" },
@@ -239,5 +239,40 @@ func TestTextosLimites(t *testing.T) {
 	c.Kiosk.Title = strings.Repeat("á", MaxTitleLen) // se cuentan caracteres, no bytes
 	if err := c.Validate(); err != nil {
 		t.Errorf("un título de %d caracteres con tildes debe valer: %v", MaxTitleLen, err)
+	}
+}
+
+func TestMigracionCaducidadSinUso(t *testing.T) {
+	casos := []struct {
+		json string
+		want int
+	}{
+		{`{}`, 15}, // instalación nueva o anterior a la v1.3: valor por defecto
+		{`{"voucher":{"unused_cleanup_hours":24}}`, 15},                           // defecto antiguo sin tocar
+		{`{"voucher":{"unused_cleanup_hours":0}}`, 0},                             // estaba desactivada
+		{`{"voucher":{"unused_cleanup_hours":2}}`, 120},                           // valor propio: a minutos
+		{`{"voucher":{"unused_cleanup_hours":720}}`, MaxUnusedExpireMinutes},      // con tope
+		{`{"voucher":{"unused_cleanup_hours":2,"unused_expire_minutes":30}}`, 30}, // manda el nuevo
+	}
+	for _, c := range casos {
+		cfg, err := Parse([]byte(c.json))
+		if err != nil {
+			t.Fatalf("%s: %v", c.json, err)
+		}
+		if cfg.Voucher.UnusedExpireMinutes != c.want || cfg.Voucher.LegacyCleanupHours != 0 {
+			t.Errorf("%s: %d min (antiguo %d), want %d", c.json, cfg.Voucher.UnusedExpireMinutes, cfg.Voucher.LegacyCleanupHours, c.want)
+		}
+	}
+	// Al guardar ya no se escribe el campo antiguo.
+	path := filepath.Join(t.TempDir(), "config.json")
+	os.WriteFile(path, []byte(`{"voucher":{"unused_cleanup_hours":3}}`), 0o600)
+	st, _, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st.Update(func(c *Config) error { return nil })
+	data, _ := os.ReadFile(path)
+	if strings.Contains(string(data), "unused_cleanup_hours") || !strings.Contains(string(data), `"unused_expire_minutes": 180`) {
+		t.Errorf("fichero guardado: %s", data)
 	}
 }

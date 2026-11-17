@@ -595,7 +595,7 @@ func formToConfig(r *http.Request, base config.Config) (config.Config, []string)
 	num("voucher_data_mb", "Límite de datos", &c.Voucher.DataMB)
 	num("voucher_rx_kbps", "Velocidad de bajada", &c.Voucher.RxKbps)
 	num("voucher_tx_kbps", "Velocidad de subida", &c.Voucher.TxKbps)
-	num("voucher_unused_cleanup_hours", "Borrar códigos sin usar", &c.Voucher.UnusedCleanupHours)
+	num("voucher_unused_expire_minutes", "Caducidad de los códigos sin usar", &c.Voucher.UnusedExpireMinutes)
 
 	c.Kiosk.Title = r.FormValue("kiosk_title")
 	c.Kiosk.HeaderText = r.FormValue("kiosk_header_text")

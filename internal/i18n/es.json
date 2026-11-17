@@ -16,6 +16,7 @@
   "paso3": "Escribe este código",
   "qr_ayuda": "Escanea el QR con la cámara para conectarte a la red",
   "validez": "Válido durante {duracion}",
+  "caducidad_sin_uso": "Tienes {duracion} para usarlo; si no, caducará.",
   "cuenta_atras": "Este código desaparecerá de la pantalla en {s} s",
   "boton_terminado": "He terminado",
   "error_general": "Ahora mismo no podemos darte un código, inténtalo en unos minutos.",

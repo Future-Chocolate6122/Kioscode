@@ -196,45 +196,60 @@ func (s *Service) InvalidateTotemVouchers(ctx context.Context) (int, error) {
 	return n, err
 }
 
-// CleanupUnused borra los vouchers del tótem que nadie ha usado y tienen más de
-// voucher.unused_cleanup_hours horas. Devuelve cuántos ha borrado.
-func (s *Service) CleanupUnused(ctx context.Context) (int, error) {
+// ExpireUnused borra en UniFi los vouchers del tótem que nadie ha usado y se crearon hace
+// más de voucher.unused_expire_minutes minutos: así caducan aunque UniFi no lo haga
+// (la duración de un voucher solo empieza a contar desde su primer uso).
+// No toca los vouchers usados ni los creados a mano. Devuelve cuántos ha borrado.
+func (s *Service) ExpireUnused(ctx context.Context) (int, error) {
 	cfg := s.cfg.Get()
-	hours := cfg.Voucher.UnusedCleanupHours
-	if hours <= 0 || cfg.UniFi.Mock {
+	mins := cfg.Voucher.UnusedExpireMinutes
+	if mins <= 0 || cfg.UniFi.Mock {
 		return 0, nil
 	}
 	c, site, err := s.clientSite(ctx)
 	if err != nil {
 		return 0, err
 	}
-	limit := s.Now().Add(-time.Duration(hours) * time.Hour)
+	limit := s.Now().Add(-time.Duration(mins) * time.Minute)
 	filter := fmt.Sprintf("and(%s, authorizedGuestCount.eq(0), createdAt.lt(%s))", totemVoucherFilter(cfg), unifi.FilterTime(limit))
 	n, err := c.DeleteVouchers(ctx, site, filter)
 	if err != nil {
-		s.log.Printf("ERROR en la limpieza de códigos sin usar: %v", err)
 		return 0, err
 	}
 	if n > 0 {
-		s.log.Printf("limpieza: borrados %d códigos del tótem sin usar de más de %d h", n, hours)
+		s.log.Printf("caducidad: borrados %d códigos del tótem sin usar de más de %d min", n, mins)
 	}
 	return n, nil
 }
 
-// StartCleanup lanza la limpieza periódica (cada hora; la primera, a los 2 minutos).
+// StartCleanup revisa cada minuto los códigos sin usar caducados (ver ExpireUnused).
+// Si UniFi falla, lo anota la primera vez y después como mucho una vez por hora,
+// para no llenar el log; y anota cuándo vuelve a funcionar.
 func (s *Service) StartCleanup(ctx context.Context) {
 	go func() {
-		t := time.NewTimer(2 * time.Minute)
+		t := time.NewTicker(time.Minute)
 		defer t.Stop()
+		var failingSince, lastLog time.Time
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-t.C:
-				cctx, cancel := context.WithTimeout(ctx, 2*unifi.Timeout)
-				s.CleanupUnused(cctx) //nolint:errcheck // el error queda en el log
-				cancel()
-				t.Reset(time.Hour)
+			}
+			cctx, cancel := context.WithTimeout(ctx, unifi.Timeout+5*time.Second)
+			_, err := s.ExpireUnused(cctx)
+			cancel()
+			now := s.Now()
+			switch {
+			case err != nil && (failingSince.IsZero() || now.Sub(lastLog) >= time.Hour):
+				if failingSince.IsZero() {
+					failingSince = now
+				}
+				lastLog = now
+				s.log.Printf("ERROR al caducar los códigos sin usar (se reintenta cada minuto): %v", err)
+			case err == nil && !failingSince.IsZero():
+				s.log.Printf("caducidad de códigos sin usar: UniFi vuelve a responder tras %s", now.Sub(failingSince).Round(time.Minute))
+				failingSince = time.Time{}
 			}
 		}
 	}()

@@ -332,3 +332,24 @@ func TestCondicionesDeUso(t *testing.T) {
 		t.Errorf("el log debe anotar la versión aceptada (%s): %s", ver, e.logs.String())
 	}
 }
+
+func TestAvisoCaducidadSinUso(t *testing.T) {
+	e := nuevoEntorno(t, nil) // 15 minutos por defecto
+	var r voucherResponse
+	w := e.peticion("POST", "/api/voucher", "127.0.0.1", "{}", jsonHdr)
+	json.Unmarshal(w.Body.Bytes(), &r)
+	if r.UseWithin != "Tienes 15 minutos para usarlo; si no, caducará." {
+		t.Errorf("aviso: %q", r.UseWithin)
+	}
+	e2 := nuevoEntorno(t, func(c *config.Config) { c.Voucher.UnusedExpireMinutes = 90 })
+	w = e2.peticion("POST", "/api/voucher", "127.0.0.1", "{}", jsonHdr)
+	json.Unmarshal(w.Body.Bytes(), &r)
+	if r.UseWithin != "Tienes 1 hora y 30 minutos para usarlo; si no, caducará." {
+		t.Errorf("aviso con 90 min: %q", r.UseWithin)
+	}
+	e3 := nuevoEntorno(t, func(c *config.Config) { c.Voucher.UnusedExpireMinutes = 0 })
+	w = e3.peticion("POST", "/api/voucher", "127.0.0.1", "{}", jsonHdr)
+	if strings.Contains(w.Body.String(), "use_within") {
+		t.Error("sin caducidad no debe haber aviso")
+	}
+}

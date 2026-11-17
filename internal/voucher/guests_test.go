@@ -88,29 +88,29 @@ func TestDisconnectAllEInvalidar(t *testing.T) {
 	}
 }
 
-func TestCleanupUnused(t *testing.T) {
-	s, f, r, buf, _ := nuevo(t, nil) // limpieza por defecto: 24 h
+func TestExpireUnused(t *testing.T) {
+	s, f, r, buf, _ := nuevo(t, nil) // caducidad por defecto: 15 min
 	f.borrados = 3
-	n, err := s.CleanupUnused(context.Background())
+	n, err := s.ExpireUnused(context.Background())
 	if err != nil || n != 3 {
 		t.Fatalf("n=%d err=%v", n, err)
 	}
-	limite := unifi.FilterTime(r.Now().Add(-24 * time.Hour))
+	limite := unifi.FilterTime(r.Now().Add(-15 * time.Minute))
 	want := "and(name.in('Totem', 'Totem (prueba admin)'), authorizedGuestCount.eq(0), createdAt.lt(" + limite + "))"
 	if len(f.filtros) != 1 || f.filtros[0] != want {
-		t.Errorf("filtro de limpieza:\n got %v\nwant %s", f.filtros, want)
+		t.Errorf("filtro de caducidad:\n got %v\nwant %s", f.filtros, want)
 	}
-	if !strings.Contains(buf.String(), "borrados 3 códigos del tótem sin usar de más de 24 h") {
+	if !strings.Contains(buf.String(), "borrados 3 códigos del tótem sin usar de más de 15 min") {
 		t.Errorf("log: %s", buf.String())
 	}
 	// Desactivada o en simulación: no se toca UniFi.
-	s.cfg.Update(func(c *config.Config) error { c.Voucher.UnusedCleanupHours = 0; return nil })
-	if n, _ := s.CleanupUnused(context.Background()); n != 0 || len(f.filtros) != 1 {
-		t.Error("con 0 horas no debe limpiar")
+	s.cfg.Update(func(c *config.Config) error { c.Voucher.UnusedExpireMinutes = 0; return nil })
+	if n, _ := s.ExpireUnused(context.Background()); n != 0 || len(f.filtros) != 1 {
+		t.Error("con 0 minutos no debe borrar nada")
 	}
-	s.cfg.Update(func(c *config.Config) error { c.Voucher.UnusedCleanupHours = 24; c.UniFi.Mock = true; return nil })
-	if n, _ := s.CleanupUnused(context.Background()); n != 0 || len(f.filtros) != 1 {
-		t.Error("en simulación no debe limpiar")
+	s.cfg.Update(func(c *config.Config) error { c.Voucher.UnusedExpireMinutes = 15; c.UniFi.Mock = true; return nil })
+	if n, _ := s.ExpireUnused(context.Background()); n != 0 || len(f.filtros) != 1 {
+		t.Error("en simulación no debe borrar nada")
 	}
 }
 
