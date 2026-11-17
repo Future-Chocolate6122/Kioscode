@@ -111,6 +111,7 @@ func Default() Config {
 
 // Límites de longitud de los textos editables (en caracteres).
 const (
+	MaxDataMB    = 1048576 // máximo de dataUsageLimitMBytes en la Integration API
 	MaxTitleLen  = 60
 	MaxIntroLen  = 400
 	MaxTermsLen  = 20000
@@ -249,8 +250,8 @@ func (c *Config) Validate() error {
 	if c.Voucher.GuestLimit < 0 || c.Voucher.GuestLimit > 1000 {
 		add("voucher.guest_limit: debe estar entre 0 (sin límite) y 1000")
 	}
-	if c.Voucher.DataMB < 0 {
-		add("voucher.data_mb: no puede ser negativo (0 = sin límite)")
+	if c.Voucher.DataMB < 0 || c.Voucher.DataMB > MaxDataMB {
+		add("voucher.data_mb: debe estar entre 0 (sin límite) y %d (1 TB, el máximo que admite UniFi)", MaxDataMB)
 	}
 	for name, v := range map[string]int{"voucher.rx_kbps": c.Voucher.RxKbps, "voucher.tx_kbps": c.Voucher.TxKbps} {
 		if v != 0 && (v < 2 || v > 100000) {

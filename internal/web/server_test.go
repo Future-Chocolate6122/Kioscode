@@ -261,7 +261,7 @@ func TestEstaticosYLogo(t *testing.T) {
 	if w.Code != 200 || w.Header().Get("Content-Type") != "image/svg+xml" || !strings.Contains(w.Header().Get("Content-Security-Policy"), "sandbox") {
 		t.Errorf("logo: %d %v", w.Code, w.Header())
 	}
-	if !strings.Contains(e.peticion("GET", "/", "127.0.0.1", "", nil).Body.String(), `src="/logo"`) {
+	if !strings.Contains(e.peticion("GET", "/", "127.0.0.1", "", nil).Body.String(), `src="/logo?v=`) {
 		t.Error("con logo.svg en el directorio de datos, la página debe mostrarlo")
 	}
 }

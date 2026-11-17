@@ -77,6 +77,47 @@
     setTimeout(function () { consultarCortafuegos(10); }, 1500);
   }
 
+  // ---- Imágenes: subir (queda seleccionada) y borrar ----
+  var resImg = document.getElementById('res-imagenes');
+  function mostrarResultado(d) {
+    resImg.textContent = d.message || '';
+    resImg.classList.toggle('mal', !d.ok);
+    if (d.ok) setTimeout(function () { window.location.reload(); }, 600);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-subir]'), function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.getAttribute('data-archivo'));
+      if (!input.files || !input.files[0]) { input.click(); return; }
+      var datos = new FormData();
+      datos.append('archivo', input.files[0]);
+      btn.disabled = true;
+      resImg.classList.remove('mal');
+      resImg.textContent = 'Subiendo…';
+      fetch('/admin/api/upload?tipo=' + btn.getAttribute('data-subir'), {
+        method: 'POST', body: datos, credentials: 'same-origin', cache: 'no-store',
+        headers: { 'X-CSRF-Token': csrf }
+      }).then(function (r) {
+        if (r.status === 413) return { ok: false, message: 'El fichero es demasiado grande.' };
+        return r.json().catch(function () { return { ok: false, message: 'Respuesta inesperada (HTTP ' + r.status + ').' }; });
+      }).catch(function () {
+        return { ok: false, message: 'No se ha podido subir el fichero.' };
+      }).then(function (d) { btn.disabled = false; mostrarResultado(d); });
+    });
+  });
+  // Al elegir un fichero, el botón pasa a «Subir …»; sin fichero, abre el selector.
+  Array.prototype.forEach.call(document.querySelectorAll('.subida input[type=file]'), function (input) {
+    input.addEventListener('change', function () { resImg.textContent = ''; });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-borrar]'), function (btn) {
+    btn.addEventListener('click', function () {
+      var nombre = btn.getAttribute('data-borrar');
+      if (!window.confirm('¿Borrar la imagen «' + nombre + '» del servidor?')) return;
+      llamar('/admin/api/image-delete', { nombre: nombre }, resImg, btn).then(function (d) {
+        if (d.ok) setTimeout(function () { window.location.reload(); }, 600);
+      });
+    });
+  });
+
   if (huella) huella.addEventListener('click', function () {
     var url = document.getElementById('base_url').value;
     llamar('/admin/api/fingerprint', { base_url: url }, document.getElementById('res-huella'), huella).then(function (d) {

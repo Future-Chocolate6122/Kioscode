@@ -139,7 +139,7 @@
         <div class="campo"><label for="gl">Dispositivos por código</label>
           <input id="gl" type="number" name="voucher_guest_limit" value="{{.Cfg.Voucher.GuestLimit}}" min="0" max="1000"><small>0 = sin límite</small></div>
         <div class="campo"><label for="mb">Límite de datos (MB)</label>
-          <input id="mb" type="number" name="voucher_data_mb" value="{{.Cfg.Voucher.DataMB}}" min="0"><small>0 = sin límite</small></div>
+          <input id="mb" type="number" name="voucher_data_mb" value="{{.Cfg.Voucher.DataMB}}" min="0" max="1048576"><small>0 = sin límite · máximo 1048576 (1 TB)</small></div>
         <div class="campo"><label for="rx">Velocidad de bajada (kbps)</label>
           <input id="rx" type="number" name="voucher_rx_kbps" value="{{.Cfg.Voucher.RxKbps}}" min="0" max="100000"><small>0 = sin límite · 2–100000</small></div>
         <div class="campo"><label for="tx">Velocidad de subida (kbps)</label>
@@ -173,6 +173,58 @@
     </section>
 
     <section class="bloque">
+      <h2>Logotipo y fondo</h2>
+      <div class="rejilla">
+        <div class="campo">
+          <label for="logo">Logotipo</label>
+          <select id="logo" name="kiosk_logo_path">
+            <option value="">Ninguno (se muestra el nombre de la organización)</option>
+            {{range .Images}}{{if .ForLogo}}<option value="{{.Name}}"{{if .UsedLogo}} selected{{end}}>{{.Name}}</option>{{end}}{{end}}
+            {{if .LegacyLogo}}<option value="{{.LegacyLogo}}" selected>{{.LegacyLogo}} (copiado a mano)</option>{{end}}
+          </select>
+          <small>PNG con fondo transparente de <b>128 px de alto</b> (hasta 640 px de ancho) o SVG. Máximo {{.MaxLogoMB}} MB. En pantalla se ve a 64 px de alto.</small>
+          <div class="subida">
+            <input type="file" id="archivo-logo" accept="image/png,image/svg+xml,image/jpeg,image/webp">
+            <button type="button" class="boton boton-secundario" data-subir="logo" data-archivo="archivo-logo">Subir logotipo</button>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="fondo">Foto de fondo</label>
+          <select id="fondo" name="kiosk_background_image">
+            <option value="">Sin fondo</option>
+            {{range .Images}}{{if .ForFondo}}<option value="{{.Name}}"{{if .UsedFondo}} selected{{end}}>{{.Name}}</option>{{end}}{{end}}
+            {{if .LegacyFondo}}<option value="{{.LegacyFondo}}" selected>{{.LegacyFondo}} (copiado a mano)</option>{{end}}
+          </select>
+          <small>JPG o WebP de <b>1920×1080 px</b> (o 1080×1920 si el tótem es vertical). Máximo {{.MaxFondoMB}} MB. Se recorta para llenar la pantalla y lleva una capa blanca encima.</small>
+          <div class="subida">
+            <input type="file" id="archivo-fondo" accept="image/jpeg,image/webp,image/png">
+            <button type="button" class="boton boton-secundario" data-subir="fondo" data-archivo="archivo-fondo">Subir fondo</button>
+          </div>
+        </div>
+        <div class="campo ancho">
+          <span class="rotulo">Imágenes en el servidor ({{len .Images}})</span>
+          {{if .Images}}
+          <div class="galeria">
+            {{range .Images}}
+            <div class="miniatura{{if or .UsedLogo .UsedFondo}} en-uso{{end}}">
+              <div class="marco"><img src="/admin/imagenes/{{.Name}}" alt="" loading="lazy"></div>
+              <div class="pie-miniatura">
+                <b class="mono">{{.Name}}</b>
+                <span>{{.SizeText}}{{if .Dims}} · {{.Dims}}{{end}}</span>
+                {{if .UsedLogo}}<span class="etiqueta-uso">Logotipo</span>{{end}}{{if .UsedFondo}}<span class="etiqueta-uso">Fondo</span>{{end}}
+                {{if not (or .UsedLogo .UsedFondo)}}<button type="button" class="borrar" data-borrar="{{.Name}}">Borrar</button>{{end}}
+              </div>
+            </div>
+            {{end}}
+          </div>
+          {{else}}<small>Todavía no hay imágenes. Súbalas con los botones de arriba.</small>{{end}}
+          <small>Al subir una imagen se guarda y se selecciona en el momento: guarde antes los demás cambios pendientes del formulario.</small>
+        </div>
+      </div>
+      <div id="res-imagenes" class="resultado" aria-live="polite"></div>
+    </section>
+
+    <section class="bloque">
       <h2>Quiosco</h2>
       <div class="rejilla">
         <div class="campo"><label for="ds">Tiempo del código en pantalla (s)</label>
@@ -183,11 +235,6 @@
           <input id="dl" type="number" name="kiosk_daily_limit" value="{{.Cfg.Kiosk.DailyLimit}}" min="1"></div>
         <div class="campo"><label for="lang">Idioma</label>
           <select id="lang" name="kiosk_language">{{range .Languages}}<option value="{{.}}"{{if eq . $.Cfg.Kiosk.Language}} selected{{end}}>{{.}}</option>{{end}}</select></div>
-        <div class="campo"><label for="logo">Fichero del logotipo</label>
-          <input id="logo" type="text" name="kiosk_logo_path" value="{{.Cfg.Kiosk.LogoPath}}" placeholder="vacío = logo.svg o logo.png">
-          <small>En la carpeta de datos. Sin logo se muestra el nombre de la organización.</small></div>
-        <div class="campo"><label for="bg">Foto de fondo (opcional)</label>
-          <input id="bg" type="text" name="kiosk_background_image" value="{{.Cfg.Kiosk.BackgroundImage}}" placeholder="p. ej. fondo.jpg"></div>
       </div>
     </section>
 

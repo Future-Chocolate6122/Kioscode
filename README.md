@@ -307,17 +307,36 @@ chromium --kiosk http://IP_SERVIDOR:8080/ --incognito --noerrdialogs --disable-p
 ```
 
 La pantalla bloquea el menú contextual, la selección, el zoom y el arrastre, borra el código al
-terminar la cuenta atrás y **se recarga sola cada día a las 04:00** (para recoger cambios de
-configuración o una versión nueva).
+terminar la cuenta atrás y **se recarga sola** cuando se guarda un cambio en `/admin` (textos,
+logotipo, fondo…; lo comprueba cada minuto y solo en la pantalla de inicio, nunca con un código a la
+vista) y, además, cada día a las 04:00.
 
-**Logotipo**: copie el logo oficial que le facilite Comunicación como `logo.svg` o `logo.png` en la
-carpeta de datos (`C:\ProgramData\TotemWifi\` o `/var/lib/totem-wifi/`). Si no hay logo se muestra el
-nombre de la organización que indique en «Nombre de la organización» (o nada, si lo deja vacío). **Foto de fondo** (opcional): copie la imagen en la misma carpeta y
-escriba su nombre en **Quiosco → Foto de fondo**. En Ubuntu, tras copiar, dé permiso al servicio:
+### Logotipo y fondo
 
-```bash
-sudo chown totem:totem /var/lib/totem-wifi/logo.svg
-```
+En `/admin` → **Logotipo y fondo**:
+
+1. Pulse **Examinar / Seleccionar archivo** bajo «Logotipo» o «Foto de fondo» y elija la imagen.
+2. Pulse **Subir logotipo** o **Subir fondo**. La imagen se guarda en el servidor y queda
+   seleccionada en el momento; los tótems la muestran en menos de un minuto.
+3. Las imágenes subidas aparecen en **Imágenes en el servidor**, con miniatura, tamaño y
+   dimensiones. Para cambiar de logotipo o fondo, elíjalo en el desplegable y pulse **Guardar**.
+   Las que no están en uso se pueden **borrar**.
+
+| | Logotipo | Fondo |
+|---|---|---|
+| Formatos | PNG, SVG, JPG o WebP | JPG, WebP o PNG |
+| Tamaño máximo | **1 MB** | **5 MB** |
+| Recomendado | PNG con fondo transparente de **128 px de alto** (hasta 640 px de ancho), o SVG | **1920×1080 px** (1080×1920 si el tótem es vertical) |
+| Cómo se ve | A 64 px de alto como máximo, arriba a la izquierda | Ocupa toda la pantalla (se recorta si hace falta) con una capa blanca encima para que el texto se lea |
+
+- Se comprueba el contenido real del fichero, no solo la extensión. Los SVG con código (scripts,
+  eventos o enlaces `javascript:`) se rechazan.
+- Si la imagen es pequeña para su uso, se avisa al subirla (puede verse borrosa o pixelada).
+- Caben hasta 30 imágenes; se guardan en `imagenes/` dentro de la carpeta de datos
+  (`/var/lib/totem-wifi/imagenes/`).
+- Sin logotipo se muestra el **nombre de la organización** (o nada, si está vacío).
+- Las imágenes copiadas a mano en la carpeta de datos (`logo.svg` o `logo.png`), como en las
+  versiones anteriores, siguen funcionando.
 
 ### Textos de la pantalla y condiciones de uso
 
@@ -525,7 +544,7 @@ arránquelo después; un campo mal escrito impide arrancar y el error dice cuál
 | `voucher.note` | `Totem` | Nota del voucher visible en UniFi (útil para saber de qué tótem sale). |
 | `voucher.minutes` | `240` | Duración del voucher (1–1 000 000). |
 | `voucher.guest_limit` | `1` | Dispositivos por código (0 = sin límite). |
-| `voucher.data_mb` | `0` | Límite de datos en MB (0 = sin límite). |
+| `voucher.data_mb` | `0` | Límite de datos en MB (0 = sin límite; máximo 1 048 576, el que admite UniFi). |
 | `voucher.rx_kbps` / `tx_kbps` | `0` | Velocidad de bajada / subida (0 = sin límite; si no, 2–100 000). |
 | `kiosk.title` | `Wi-Fi gratuita` | Título de la pantalla. |
 | `kiosk.organization` | vacío | Nombre de la organización, en la cabecera cuando no hay logo. |
@@ -537,8 +556,8 @@ arránquelo después; un campo mal escrito impide arrancar y el error dice cuál
 | `kiosk.cooldown_seconds` | `20` | Espera mínima entre códigos para un mismo tótem. |
 | `kiosk.daily_limit` | `300` | Máximo de códigos al día entre todos los tótems (se reinicia a medianoche). |
 | `kiosk.language` | `es` | Idioma de la pantalla. |
-| `kiosk.logo_path` | vacío | Nombre del fichero del logo en la carpeta de datos (vacío = `logo.svg` o `logo.png`). |
-| `kiosk.background_image` | vacío | Foto de fondo opcional en la carpeta de datos (se le pone una capa blanca encima). |
+| `kiosk.logo_path` | vacío | Imagen del logotipo, elegida en `/admin` (vacío = `logo.svg` o `logo.png` copiado a mano, si existe). |
+| `kiosk.background_image` | vacío | Imagen de fondo, elegida en `/admin` (vacío = sin fondo). |
 
 **Otro idioma**: copie `internal/i18n/es.json` del código fuente como, por ejemplo, `en.json` en una
 carpeta `i18n` dentro de la carpeta de datos, traduzca los textos y elíjalo en **Quiosco → Idioma**.

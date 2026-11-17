@@ -6,9 +6,12 @@ package web
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
@@ -89,6 +92,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("POST /api/voucher", kiosk(http.HandlerFunc(s.handleVoucher)))
 	mux.Handle("GET /api/qr.svg", either(http.HandlerFunc(s.handleQR)))
 	mux.Handle("GET /healthz", either(http.HandlerFunc(s.handleHealth)))
+	mux.Handle("GET /api/version", kiosk(http.HandlerFunc(s.handleVersion)))
 	mux.Handle("GET /static/", either(http.HandlerFunc(s.handleStatic)))
 	mux.Handle("GET /logo", either(http.HandlerFunc(s.handleLogo)))
 	mux.Handle("GET /background", either(http.HandlerFunc(s.handleBackground)))
@@ -171,6 +175,7 @@ type indexData struct {
 	Validity      string
 	ClientConfig  string // JSON para app.js, en un atributo data-
 	Version       string
+	Rev           string // huella de lo que se ve en pantalla (recarga automática)
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -180,8 +185,10 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	for _, x := range c.SSIDs() {
 		ssids = append(ssids, x.SSID)
 	}
+	rev := s.kioskRevision(c)
 	clientCfg, _ := json.Marshal(map[string]any{
 		"display_seconds": c.Kiosk.DisplaySeconds,
+		"rev":             rev,
 		"textos": map[string]string{
 			"cuenta_atras":        t["cuenta_atras"],
 			"error_general":       t["error_general"],
@@ -207,6 +214,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		Validity:      t.T("validez", "duracion", t.Duration(c.Voucher.Minutes)),
 		ClientConfig:  string(clientCfg),
 		Version:       s.version,
+		Rev:           rev,
 	}
 	var buf bytes.Buffer
 	if err := s.tmpl.ExecuteTemplate(&buf, "index.html", data); err != nil {
@@ -217,6 +225,26 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Write(buf.Bytes()) //nolint:errcheck
+}
+
+// kioskRevision resume todo lo que afecta a la pantalla: si cambia, los tótems recargan.
+func (s *Server) kioskRevision(c config.Config) string {
+	h := sha256.New()
+	fmt.Fprintf(h, "%s|%v|", s.version, c.UniFi.Mock)
+	json.NewEncoder(h).Encode(c.Kiosk)       //nolint:errcheck
+	json.NewEncoder(h).Encode(c.SSIDs())     //nolint:errcheck
+	fmt.Fprintf(h, "%d|", c.Voucher.Minutes) // aparece en «Válido durante…»
+	for _, p := range []string{s.logoPath(c), s.backgroundPath(c)} {
+		if fi, err := os.Stat(p); err == nil {
+			fmt.Fprintf(h, "%s|%d|%d|", p, fi.Size(), fi.ModTime().UnixNano())
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil))[:12]
+}
+
+// handleVersion devuelve la huella actual para que el quiosco sepa si debe recargar.
+func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"rev": s.kioskRevision(s.cfg.Get())})
 }
 
 func firstNonEmpty(a, b string) string {
@@ -389,15 +417,19 @@ func (s *Server) backgroundPath(c config.Config) string {
 	return s.dataFile(c.Kiosk.BackgroundImage)
 }
 
-// dataFile devuelve el primer fichero existente del directorio de datos.
+// dataFile devuelve el primer fichero existente: primero en la biblioteca de imágenes
+// (<datos>/imagenes, lo que se sube desde /admin) y después en la carpeta de datos
+// (imágenes copiadas a mano, como en versiones anteriores).
 func (s *Server) dataFile(names ...string) string {
 	if s.dataDir == "" {
 		return ""
 	}
 	for _, n := range names {
-		p := filepath.Join(s.dataDir, filepath.Base(n))
-		if fi, err := os.Stat(p); err == nil && fi.Mode().IsRegular() {
-			return p
+		for _, dir := range []string{s.imagesPath(), s.dataDir} {
+			p := filepath.Join(dir, filepath.Base(n))
+			if fi, err := os.Stat(p); err == nil && fi.Mode().IsRegular() {
+				return p
+			}
 		}
 	}
 	return ""
@@ -428,7 +460,9 @@ func (s *Server) serveImage(w http.ResponseWriter, r *http.Request, p string) {
 	w.Header().Set("Content-Type", ct)
 	// Un SVG abierto directamente no debe poder ejecutar scripts en este origen.
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
-	w.Header().Set("Cache-Control", "public, max-age=300")
+	// no-cache: el navegador vuelve a preguntar y, si no ha cambiado, recibe un 304 sin datos.
+	// Así un logotipo o fondo nuevo se ve en cuanto el quiosco recarga.
+	w.Header().Set("Cache-Control", "no-cache")
 	http.ServeContent(w, r, "", fi.ModTime(), f)
 }
 

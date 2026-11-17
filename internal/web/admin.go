@@ -187,6 +187,10 @@ func (s *Server) registerAdmin(mux *http.ServeMux, allow func(http.Handler) http
 	mux.Handle("POST /admin/api/fingerprint", h(s.withSession(true, s.apiFingerprint)))
 	mux.Handle("POST /admin/api/test-voucher", h(s.withSession(true, s.apiTestVoucher)))
 	mux.Handle("GET /admin/api/firewall", h(s.withSession(false, s.apiFirewall)))
+	// Imágenes: el límite de tamaño se aplica antes de leer nada del cuerpo.
+	mux.Handle("POST /admin/api/upload", h(limitBody(MaxFondoBytes+(256<<10), s.withSession(true, s.apiUpload))))
+	mux.Handle("POST /admin/api/image-delete", h(s.withSession(true, s.apiImageDelete)))
+	mux.Handle("GET /admin/imagenes/{nombre}", h(s.withSession(false, s.adminImage)))
 	mux.Handle("GET /admin/", allow(http.RedirectHandler("/admin", http.StatusSeeOther)))
 }
 
@@ -288,6 +292,11 @@ type adminData struct {
 	DefaultIntro                          string
 	TermsVersion                          string
 
+	// Biblioteca de imágenes
+	Images                  []imageInfo
+	LegacyLogo, LegacyFondo string // imagen elegida que no está en la biblioteca (copiada a mano)
+	MaxLogoMB, MaxFondoMB   int64
+
 	ConfirmAccess bool         // mostrar el campo de confirmación con contraseña
 	Firewall      firewallView // estado de ufw (solo Linux con el ayudante)
 }
@@ -374,6 +383,18 @@ func (s *Server) panelData(sess *session, cfg config.Config) adminData {
 		DataDir:    s.dataDir,
 	}
 	d.Firewall = s.firewallState()
+	d.Images = s.listImages(cfg)
+	d.MaxLogoMB, d.MaxFondoMB = MaxLogoBytes>>20, MaxFondoBytes>>20
+	if n := cfg.Kiosk.LogoPath; n != "" {
+		if _, ok := s.findImage(cfg, n); !ok {
+			d.LegacyLogo = n
+		}
+	}
+	if n := cfg.Kiosk.BackgroundImage; n != "" {
+		if _, ok := s.findImage(cfg, n); !ok {
+			d.LegacyFondo = n
+		}
+	}
 	d.Extras = append(append([]config.SSID{}, cfg.Voucher.ExtraSSIDs...), make([]config.SSID, extraSSIDBlanks)...)
 	saved := s.cfg.Get()
 	if cfg.UniFi.Mock {
@@ -580,6 +601,7 @@ func (s *Server) adminSave(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 512<<10)
 	before := s.cfg.Get()
 	next, errs := formToConfig(r, before)
+	errs = append(errs, s.checkImageChoice(next)...)
 
 	// Cambio de contraseña (opcional): exige la actual.
 	var newHash string

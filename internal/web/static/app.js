@@ -196,6 +196,22 @@
     });
   }
 
+  // ---- Recarga cuando cambia la configuración en /admin ----
+  // Cada minuto pregunta al servidor; solo recarga en la pantalla de inicio, nunca con
+  // un código a la vista. Si el servidor no responde, no hace nada (no queda en blanco).
+  function comprobarCambios() {
+    if (estado !== 'inicio' || ocupado) return;
+    fetch('/api/version', { cache: 'no-store', credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (d && d.rev && cfg.rev && d.rev !== cfg.rev && estado === 'inicio' && !ocupado) {
+          window.location.reload();
+        }
+      })
+      .catch(function () {});
+  }
+  setInterval(comprobarCambios, 60000);
+
   // ---- Arranque ----
   $('btn-obtener').addEventListener('click', obtener);
   if (acepto) {

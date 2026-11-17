@@ -15,7 +15,7 @@
 
 <header class="cabecera">
   <div class="logo">
-    {{if .HasLogo}}<img src="/logo" alt="{{.Organization}}">{{else if .Organization}}<span class="logo-texto">{{.Organization}}</span>{{end}}
+    {{if .HasLogo}}<img src="/logo?v={{.Rev}}" alt="{{.Organization}}">{{else if .Organization}}<span class="logo-texto">{{.Organization}}</span>{{end}}
   </div>
   <div class="servicio">{{.HeaderName}}</div>
 </header>

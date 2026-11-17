@@ -242,14 +242,16 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
 - **1.1.0** — textos de la pantalla editables en `/admin` (título, nombre en la cabecera,
   introducción) y condiciones de uso opcionales: casilla obligatoria con desplegable del texto,
   comprobación también en el servidor y versión de las condiciones anotada en el log de cada código.
+- **1.2.0** — biblioteca de imágenes en `/admin`: subir, elegir y borrar logotipo (máx. 1 MB;
+  PNG/SVG/JPG/WebP) y fondo (máx. 5 MB; JPG/WebP/PNG), con validación del contenido real y rechazo de
+  SVG con código. El quiosco se recarga solo (comprueba cada minuto `/api/version`) cuando cambia
+  algo en `/admin`. Tope de 1 048 576 MB en `voucher.data_mb`.
 
 **Planificado** (valorado con el OpenAPI de Network 10.0.162 / 10.1.84):
 
-- Subir logotipo y fondo desde `/admin`.
 - Gestión de los vouchers del tótem en `/admin` (listar, borrar uno, borrar todos filtrando por la
   nota del tótem). Borrar un voucher no desconecta a quien ya lo usó; para eso existe
   `UNAUTHORIZE_GUEST_ACCESS` por dispositivo.
-- Tope de 1 048 576 MB en `voucher.data_mb` (máximo de la API).
 - Descartado por ahora: acceso sin código con `AUTHORIZE_GUEST_ACCESS` (requiere exponer el servidor
   a la red de invitados).
 
