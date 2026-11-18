@@ -113,14 +113,19 @@ código. Nada más.
 
 Pantalla única, pensada para verse a 2–3 metros en una pantalla vertical u horizontal:
 
-1. **Inicio**: título («Wi-Fi gratuita»), nombre del SSID, botón grande «Obtener código».
-2. **Código**: QR Wi-Fi + código en grande (`12345-67890`) + instrucciones en 3 pasos
-   («1. Conéctate a la red · 2. Abre el navegador · 3. Escribe este código») + cuenta atrás
-   + botón «He terminado».
+1. **Inicio**: título, nombre del SSID, condiciones de uso (si están activadas) y botón «Empezar».
+2. **Pasos** (desde la v1.4), los tres a la vista en una misma pantalla; en horizontal, tres columnas
+   (la central, más ancha); en vertical, apilados:
+   1. *Conéctate a la red*: QR Wi-Fi y nombre del SSID; «espera a que se abra la página de acceso».
+   2. *Solicita tu código*: botón «Solicitar código»; al pulsarlo, el código en grande
+      (`12345-67890`), su validez, «Tienes X minutos para usarlo» y la cuenta atrás.
+   3. *Escribe el código y conéctate*: «en tu móvil, ordenador o tablet».
+   El código solo se crea al pulsar «Solicitar código». Sin actividad en 2 minutos antes de pedirlo,
+   vuelta a Inicio.
 3. Pasados `display_seconds` (60 s por defecto) o al pulsar «He terminado», vuelve a Inicio y el
    código desaparece de pantalla.
-4. Si UniFi no responde: mensaje amable («Ahora mismo no podemos darte un código, inténtalo en unos
-   minutos») y vuelta a Inicio. Nunca mostrar detalles técnicos al ciudadano.
+4. Si no se puede dar un código (UniFi no responde, espera entre códigos, límite diario): mensaje
+   amable en el propio paso 2 y el botón sigue disponible. Nunca detalles técnicos al ciudadano.
 5. Franja amarilla «MODO PRUEBA» cuando la app está en modo simulación.
 
 Formato del QR Wi-Fi (estándar que entienden Android e iOS):
@@ -256,6 +261,11 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
   quiosco lo avisa junto al código. Sustituye a `unused_cleanup_hours` (horas), que se convierte al
   cargar: 24 → 15 min (valor por defecto), 0 → desactivada, otro valor → a minutos.
   Decidido con el usuario: invitado = entró por el portal; MAC completa; sin listado de vouchers.
+
+- **1.4.0** — nueva pantalla del quiosco: Inicio («Empezar», con las condiciones) y una pantalla con
+  los tres pasos (conectarse con el QR, solicitar el código, escribirlo). El código se genera al
+  pulsar «Solicitar código» y aparece en el paso 2; los errores se muestran en ese paso. Vuelta al
+  inicio tras 2 minutos sin actividad. Sin cambios en el servidor ni en la configuración.
 
 **Comportamiento de la API a tener en cuenta:**
 

@@ -306,6 +306,23 @@ Con Edge, cambie la ruta por `"C:\Program Files (x86)\Microsoft\Edge\Application
 chromium --kiosk http://IP_SERVIDOR:8080/ --incognito --noerrdialogs --disable-pinch --overscroll-history-navigation=0
 ```
 
+**Lo que ve el ciudadano:**
+
+1. **Inicio**: título, red Wi-Fi y, si están activadas, las condiciones de uso con su casilla. Pulsa
+   **Empezar**.
+2. **Pantalla de pasos** (en horizontal, tres columnas; en vertical, uno debajo de otro):
+   - **1. Conéctate a la red**: QR de la red y su nombre, por si prefiere buscarla a mano.
+   - **2. Solicita tu código**: cuando ve la página de acceso en su móvil, pulsa **Solicitar
+     código** y el código aparece ahí mismo, en grande, con su validez y la cuenta atrás.
+   - **3. Escribe el código y conéctate**: en su móvil, ordenador o tablet.
+   Si no puede darse un código (espera entre códigos, límite diario, UniFi no responde), el aviso
+   aparece en el paso 2 y el botón sigue disponible. Si nadie toca la pantalla en 2 minutos antes de
+   pedir el código, vuelve sola al inicio.
+3. Al terminar la cuenta atrás o pulsar **He terminado**, vuelve al inicio y el código desaparece.
+
+El código solo se genera al pulsar «Solicitar código», cuando la persona ya está conectada a la red
+y viendo la página de acceso.
+
 La pantalla bloquea el menú contextual, la selección, el zoom y el arrastre, borra el código al
 terminar la cuenta atrás y **se recarga sola** cuando se guarda un cambio en `/admin` (textos,
 logotipo, fondo…; lo comprueba cada minuto y solo en la pantalla de inicio, nunca con un código a la

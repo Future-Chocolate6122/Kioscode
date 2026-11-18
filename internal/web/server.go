@@ -194,7 +194,8 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		"textos": map[string]string{
 			"cuenta_atras":        t["cuenta_atras"],
 			"error_general":       t["error_general"],
-			"paso1":               t["paso1"],
+			"paso2_titulo":        t["paso2_titulo"],
+			"paso2_titulo_codigo": t["paso2_titulo_codigo"],
 			"ver_condiciones":     t["ver_condiciones"],
 			"ocultar_condiciones": t["ocultar_condiciones"],
 		},

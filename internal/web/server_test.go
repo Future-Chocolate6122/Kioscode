@@ -77,7 +77,7 @@ func TestIndexMock(t *testing.T) {
 		t.Fatalf("GET / = %d", w.Code)
 	}
 	b := w.Body.String()
-	for _, want := range []string{"MODO PRUEBA", "WifiPublica", "Obtener código", "/static/app.css"} {
+	for _, want := range []string{"MODO PRUEBA", "WifiPublica", "Empezar", "Conéctate a la red", "Solicitar código", "Escribe el código en tu móvil, ordenador o tablet", `id="paso-ssid">WifiPublica<`, "/static/app.css"} {
 		if !strings.Contains(b, want) {
 			t.Errorf("la página no contiene %q", want)
 		}

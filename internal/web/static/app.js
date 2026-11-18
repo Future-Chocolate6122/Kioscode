@@ -1,26 +1,30 @@
-// Tótem Wi-Fi · lógica de la pantalla del quiosco.
-// Estados: inicio → cargando → codigo | error → inicio. Sin dependencias externas.
+// Tótem Wi-Fi · lógica de la pantalla del quiosco. Sin dependencias externas.
+//
+// Pantallas: inicio → pasos → inicio.
+//   inicio: condiciones de uso (si están activadas) y botón «Empezar».
+//   pasos:  1. Conéctate a la red (QR)  2. Solicita tu código  3. Escribe el código.
+//           El paso 2 pasa por las fases: antes → cargando → código. Si hay un error,
+//           se muestra en el propio paso 2 y se puede volver a intentar.
 (function () {
   'use strict';
 
   var cfg = JSON.parse(document.body.getAttribute('data-config') || '{}');
   var textos = cfg.textos || {};
   var MENSAJE_GENERAL = textos.error_general || 'Ahora mismo no podemos darte un código, inténtalo en unos minutos.';
-  var ERROR_SEGUNDOS = 7;      // tiempo que se muestra un error antes de volver a inicio
-  var TIMEOUT_MS = 15000;      // el servidor ya corta a los 10 s; margen para la red
+  var TIMEOUT_MS = 15000;          // el servidor ya corta a los 10 s; margen para la red
+  var INACTIVIDAD_MS = 120000;     // sin tocar nada antes de pedir el código: vuelta al inicio
 
-  var estado = 'inicio';
+  var estado = 'inicio';           // inicio | pasos
+  var fase = 'antes';              // dentro de «pasos»: antes | cargando | codigo
   var ocupado = false;
-  var cuentaTimer = null, errorTimer = null;
+  var cuentaTimer = null, inactividadTimer = null;
   var fin = 0, total = 0;
 
   function $(id) { return document.getElementById(id); }
 
   function mostrar(nombre) {
     var ps = document.querySelectorAll('.pantalla');
-    for (var i = 0; i < ps.length; i++) {
-      ps[i].classList.toggle('activa', ps[i].id === nombre);
-    }
+    for (var i = 0; i < ps.length; i++) ps[i].classList.toggle('activa', ps[i].id === nombre);
     estado = nombre;
   }
 
@@ -29,7 +33,6 @@
     return r ? r.value : (document.body.getAttribute('data-ssid') || '');
   }
 
-  // ---- Petición del código ----
   // ---- Condiciones de uso (solo si están activadas en /admin) ----
   var acepto = $('acepto');
   var btnCondiciones = $('btn-condiciones');
@@ -39,7 +42,7 @@
   function aceptadas() { return !acepto || acepto.checked; }
 
   function actualizarBoton() {
-    var b = $('btn-obtener');
+    var b = $('btn-empezar');
     b.classList.toggle('inactivo', !aceptadas());
     b.setAttribute('aria-disabled', aceptadas() ? 'false' : 'true');
     if (aceptadas() && avisoAceptar) avisoAceptar.hidden = true;
@@ -54,7 +57,7 @@
     $('inicio').classList.toggle('condiciones-abiertas', abrir);
   }
 
-  // Tras entregar un código, el siguiente ciudadano empieza con la casilla sin marcar.
+  // Al volver al inicio, la siguiente persona empieza con la casilla sin marcar.
   function reiniciarCondiciones() {
     if (!acepto) return;
     acepto.checked = false;
@@ -63,17 +66,49 @@
     actualizarBoton();
   }
 
-  function obtener() {
-    if (ocupado || estado !== 'inicio') return;
-    if (!aceptadas()) {                 // pulsado sin marcar la casilla
+  // ---- Inicio → pasos ----
+  function empezar() {
+    if (estado !== 'inicio') return;
+    if (!aceptadas()) {                  // pulsado sin marcar la casilla
       avisoAceptar.hidden = false;
       $('condiciones').classList.remove('resaltar');
       void $('condiciones').offsetWidth; // reinicia la animación
       $('condiciones').classList.add('resaltar');
       return;
     }
+    var ssid = ssidElegido();
+    $('qr').src = '/api/qr.svg?ssid=' + encodeURIComponent(ssid);
+    $('paso-ssid').textContent = ssid;
+    ocultarError();
+    ponerFase('antes');
+    mostrar('pasos');
+    vigilarInactividad();
+  }
+
+  function marcar(id, clase) {
+    var el = $(id);
+    el.classList.remove('activo', 'hecho', 'espera');
+    el.classList.add(clase);
+  }
+
+  function ponerFase(f) {
+    fase = f;
+    $('paso2-antes').hidden = f !== 'antes';
+    $('paso2-cargando').hidden = f !== 'cargando';
+    $('paso2-codigo').hidden = f !== 'codigo';
+    $('paso2-titulo').textContent = f === 'codigo' ? textos.paso2_titulo_codigo : textos.paso2_titulo;
+    marcar('paso-1', f === 'codigo' ? 'hecho' : 'activo');
+    marcar('paso-2', 'activo');
+    marcar('paso-3', f === 'codigo' ? 'activo' : 'espera');
+  }
+
+  // ---- Paso 2: solicitar el código ----
+  function solicitar() {
+    if (ocupado || estado !== 'pasos' || fase !== 'antes') return;
     ocupado = true;
-    mostrar('cargando');
+    ocultarError();
+    ponerFase('cargando');
+    pararInactividad();
 
     var ctl = window.AbortController ? new AbortController() : null;
     var corte = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
@@ -98,20 +133,33 @@
     });
   }
 
-  // ---- Pantalla del código ----
   function mostrarCodigo(d) {
+    if (estado !== 'pasos') return;      // se volvió al inicio mientras se esperaba
     var cont = $('codigo-valor');
     while (cont.firstChild) cont.removeChild(cont.firstChild);
     cont.appendChild(document.createTextNode(d.formatted));
-    $('qr').src = d.qr_url;
     $('validez').textContent = d.valid_for || '';
     $('caduca').textContent = d.use_within || '';
     $('caduca').hidden = !d.use_within;
-    $('paso1').textContent = (textos.paso1 || '{ssid}').replace('{ssid}', d.ssid);
-    mostrar('codigo');
+    ponerFase('codigo');
     iniciarCuenta(d.expires_in_seconds || cfg.display_seconds || 60);
   }
 
+  // El error se muestra en el propio paso 2; el botón sigue disponible para reintentar.
+  function mostrarError(msg) {
+    if (estado !== 'pasos') return;
+    $('error-texto').textContent = msg;
+    $('error-texto').hidden = false;
+    ponerFase('antes');
+    vigilarInactividad();
+  }
+
+  function ocultarError() {
+    $('error-texto').textContent = '';
+    $('error-texto').hidden = true;
+  }
+
+  // ---- Cuenta atrás del código ----
   function iniciarCuenta(segundos) {
     total = segundos;
     fin = Date.now() + segundos * 1000;
@@ -126,36 +174,35 @@
     if (resto <= 0) terminar();
   }
 
-  // Elimina el código del DOM y vuelve a inicio.
+  // ---- Vuelta al inicio: elimina el código del DOM ----
   function terminar() {
     clearInterval(cuentaTimer);
     cuentaTimer = null;
+    pararInactividad();
     var cont = $('codigo-valor');
     while (cont.firstChild) cont.removeChild(cont.firstChild);
-    $('qr').removeAttribute('src');
     $('validez').textContent = '';
     $('caduca').textContent = '';
     $('caduca').hidden = true;
     $('cuenta-texto').textContent = '';
+    $('qr').removeAttribute('src');
+    ocultarError();
+    ponerFase('antes');
     reiniciarCondiciones();
     mostrar('inicio');
   }
 
-  // ---- Error ----
-  function mostrarError(msg) {
-    $('error-texto').textContent = msg;
-    mostrar('error');
-    clearTimeout(errorTimer);
-    errorTimer = setTimeout(volverDeError, ERROR_SEGUNDOS * 1000);
+  // ---- Inactividad en «pasos» antes de pedir el código ----
+  function vigilarInactividad() {
+    pararInactividad();
+    inactividadTimer = setTimeout(function () {
+      if (estado === 'pasos' && fase === 'antes') terminar();
+    }, INACTIVIDAD_MS);
   }
-
-  function volverDeError() {
-    clearTimeout(errorTimer);
-    if (estado === 'error') {
-      $('error-texto').textContent = '';
-      mostrar('inicio');
-    }
-  }
+  function pararInactividad() { clearTimeout(inactividadTimer); inactividadTimer = null; }
+  function actividad() { if (estado === 'pasos' && fase === 'antes') vigilarInactividad(); }
+  document.addEventListener('pointerdown', actividad);
+  document.addEventListener('keydown', actividad);
 
   // ---- Bloqueos propios de un quiosco ----
   function impedir(e) { e.preventDefault(); }
@@ -173,7 +220,7 @@
     if ((e.ctrlKey || e.metaKey) && (k === '+' || k === '-' || k === '=' || k === '0' || k === 'p' || k === 's' || k === 'a')) {
       e.preventDefault();
     }
-    if (k === 'Escape' && estado === 'codigo') terminar();
+    if (k === 'Escape' && estado === 'pasos') terminar();
   });
   var ultimoToque = 0;                                           // doble toque = zoom
   document.addEventListener('touchend', function (e) {
@@ -202,7 +249,7 @@
 
   // ---- Recarga cuando cambia la configuración en /admin ----
   // Cada minuto pregunta al servidor; solo recarga en la pantalla de inicio, nunca con
-  // un código a la vista. Si el servidor no responde, no hace nada (no queda en blanco).
+  // alguien siguiendo los pasos. Si el servidor no responde, no hace nada.
   function comprobarCambios() {
     if (estado !== 'inicio' || ocupado) return;
     fetch('/api/version', { cache: 'no-store', credentials: 'same-origin' })
@@ -217,13 +264,13 @@
   setInterval(comprobarCambios, 60000);
 
   // ---- Arranque ----
-  $('btn-obtener').addEventListener('click', obtener);
+  $('btn-empezar').addEventListener('click', empezar);
+  $('btn-solicitar').addEventListener('click', solicitar);
+  $('btn-terminado').addEventListener('click', terminar);
   if (acepto) {
     acepto.addEventListener('change', actualizarBoton);
     btnCondiciones.addEventListener('click', function () { mostrarCondiciones(textoCondiciones.hidden); });
     actualizarBoton();
   }
-  $('btn-terminado').addEventListener('click', terminar);
-  $('error').addEventListener('click', volverDeError);
   programarRecarga();
 })();

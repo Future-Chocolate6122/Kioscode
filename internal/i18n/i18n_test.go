@@ -11,7 +11,7 @@ func TestCastellano(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := tx.T("paso1", "ssid", "WifiPublica"); got != "Conéctate a la red WifiPublica" {
+	if got := tx.T("validez", "duracion", "4 horas"); got != "Válido durante 4 horas" {
 		t.Error(got)
 	}
 	if tx.T("no_existe") != "no_existe" {
@@ -32,12 +32,12 @@ func TestDuracion(t *testing.T) {
 func TestIdiomaDesdeDirectorioDeDatos(t *testing.T) {
 	dir := t.TempDir()
 	os.MkdirAll(filepath.Join(dir, "i18n"), 0o755)
-	os.WriteFile(filepath.Join(dir, "i18n", "en.json"), []byte(`{"boton_obtener":"Get code"}`), 0o644)
+	os.WriteFile(filepath.Join(dir, "i18n", "en.json"), []byte(`{"boton_empezar":"Start"}`), 0o644)
 	tx, err := Load("en", dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if tx.T("boton_obtener") != "Get code" {
+	if tx.T("boton_empezar") != "Start" {
 		t.Error("no se ha aplicado el idioma del directorio de datos")
 	}
 	if tx.T("boton_terminado") != "He terminado" {
@@ -48,7 +48,7 @@ func TestIdiomaDesdeDirectorioDeDatos(t *testing.T) {
 		t.Errorf("Available = %v", av)
 	}
 	// Un código de idioma con rutas no debe leer ficheros fuera.
-	if tx, _ := Load("../x", dir); tx.T("boton_obtener") != "Obtener código" {
+	if tx, _ := Load("../x", dir); tx.T("boton_empezar") != "Empezar" {
 		t.Error("código de idioma no válido")
 	}
 }

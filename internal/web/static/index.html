@@ -63,60 +63,55 @@
     </div>
     {{end}}
 
-    <button id="btn-obtener" type="button" class="boton boton-principal{{if .TermsEnabled}} inactivo{{end}}"{{if .TermsEnabled}} aria-disabled="true"{{end}}>{{.T.boton_obtener}}</button>
+    <button id="btn-empezar" type="button" class="boton boton-principal{{if .TermsEnabled}} inactivo{{end}}"{{if .TermsEnabled}} aria-disabled="true"{{end}}>{{.T.boton_empezar}}</button>
     <p class="validez-inicio">{{.Validity}}</p>
   </section>
 
-  <!-- Estado «cargando» -->
-  <section id="cargando" class="pantalla" aria-live="polite">
-    <div class="cargador" aria-hidden="true"><span></span><span></span><span></span></div>
-    <p class="mensaje">{{.T.cargando}}</p>
-  </section>
+  <!-- Estado «pasos»: los tres pasos en una sola pantalla.
+       El paso 2 pasa por: antes → cargando → código (o error, y se puede reintentar). -->
+  <section id="pasos" class="pantalla" aria-live="polite">
+    <div class="guia">
+      <div class="paso-tarjeta activo" id="paso-1">
+        <div class="paso-cab"><span class="paso-n">1</span><h2 class="paso-titulo">{{.T.paso1_titulo}}</h2></div>
+        <img id="qr" class="paso-qr" alt="QR">
+        <p>{{.T.paso1_qr}}</p>
+        <div class="paso-ssid" id="paso-ssid">{{.MainSSID}}</div>
+        <p>{{.T.paso1_espera}}</p>
+      </div>
 
-  <!-- Estado «codigo» -->
-  <section id="codigo" class="pantalla" aria-live="polite">
-    <div class="tarjeta">
-      <h2 class="seccion">{{.T.codigo_titulo}}</h2>
-      <div class="tarjeta-cuerpo">
-        <figure class="qr">
-          <img id="qr" alt="QR">
-          <figcaption>{{.T.qr_ayuda}}</figcaption>
-        </figure>
-        <div class="datos">
+      <div class="paso-tarjeta activo principal" id="paso-2">
+        <div class="paso-cab"><span class="paso-n">2</span><h2 class="paso-titulo" id="paso2-titulo">{{.T.paso2_titulo}}</h2></div>
+        <div id="paso2-antes" class="paso-bloque">
+          <svg class="paso-icono" viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="9" width="38" height="30" rx="1"/><path d="M5 17h38M10 13h2M15 13h2M20 13h2"/></svg>
+          <p>{{.T.paso2_texto}}</p>
+          <p class="error-paso" id="error-texto" role="alert" hidden></p>
+          <button id="btn-solicitar" type="button" class="boton boton-principal">{{.T.boton_solicitar}}</button>
+          <p class="paso-nota">{{.T.paso2_nota}}</p>
+        </div>
+        <div id="paso2-cargando" class="paso-bloque" hidden>
+          <div class="cargador" aria-hidden="true"><span></span><span></span><span></span></div>
+          <p class="mensaje">{{.T.cargando}}</p>
+        </div>
+        <div id="paso2-codigo" class="paso-bloque" hidden>
           <div id="codigo-valor" class="codigo"></div>
           <p id="validez" class="validez"></p>
           <p id="caduca" class="caduca" hidden></p>
+          <div class="cuenta">
+            <span id="cuenta-texto"></span>
+            <div class="barra"><div id="cuenta-barra"></div></div>
+          </div>
         </div>
       </div>
-      <ol class="pasos">
-        <li>
-          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 20a26 26 0 0 1 36 0M12 27a17 17 0 0 1 24 0M18 34a8 8 0 0 1 12 0"/><circle cx="24" cy="39" r="2" class="relleno"/></svg>
-          <span class="num">1</span><span id="paso1">{{.T.paso1}}</span>
-        </li>
-        <li>
-          <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="9" width="38" height="30" rx="1"/><path d="M5 17h38M10 13h2M15 13h2M20 13h2"/></svg>
-          <span class="num">2</span><span>{{.T.paso2}}</span>
-        </li>
-        <li>
-          <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="13" width="40" height="22" rx="1"/><path d="M10 19h2M16 19h2M22 19h2M28 19h2M34 19h4M10 24h2M16 24h2M22 24h2M28 24h2M34 24h4M14 29h20"/></svg>
-          <span class="num">3</span><span>{{.T.paso3}}</span>
-        </li>
-      </ol>
-      <div class="pie-tarjeta">
-        <div class="cuenta">
-          <span id="cuenta-texto"></span>
-          <div class="barra"><div id="cuenta-barra"></div></div>
-        </div>
-        <button id="btn-terminado" type="button" class="boton boton-secundario">{{.T.boton_terminado}}</button>
+
+      <div class="paso-tarjeta espera" id="paso-3">
+        <div class="paso-cab"><span class="paso-n">3</span><h2 class="paso-titulo">{{.T.paso3_titulo}}</h2></div>
+        <svg class="paso-icono" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="13" width="40" height="22" rx="1"/><path d="M10 19h2M16 19h2M22 19h2M28 19h2M34 19h4M10 24h2M16 24h2M22 24h2M28 24h2M34 24h4M14 29h20"/></svg>
+        <p>{{.T.paso3_texto}}</p>
+        <p>{{.T.paso3_listo}}</p>
       </div>
     </div>
-  </section>
-
-  <!-- Estado «error» -->
-  <section id="error" class="pantalla" aria-live="assertive">
-    <div class="aviso-error">
-      <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="19"/><path d="M24 13v14"/><circle cx="24" cy="34" r="2" class="relleno"/></svg>
-      <p id="error-texto"></p>
+    <div class="pie-pasos">
+      <button id="btn-terminado" type="button" class="boton boton-secundario">{{.T.boton_terminado}}</button>
     </div>
   </section>
 
