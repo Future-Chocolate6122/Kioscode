@@ -291,6 +291,9 @@ body > * { position: relative; z-index: 1; }
 .boton-principal.inactivo,
 .boton-principal.inactivo:hover,
 .boton-principal.inactivo:active { background: var(--gris-boton); color: var(--gris-nav); }
+.boton-principal[disabled] { cursor: default; }
+body:not(.admin) .boton[disabled] { opacity: 1; } /* en el quiosco el texto de espera debe leerse bien */
+#btn-solicitar.inactivo { font-size: 28px; letter-spacing: .02em; text-transform: none; } /* texto de espera: más largo y con «s» de segundos */
 /* Con las condiciones abiertas se oculta el icono para que todo quepa en pantalla. */
 .condiciones-abiertas .icono-grande { display: none; }
 .condiciones-abiertas .intro { margin-bottom: 24px; }

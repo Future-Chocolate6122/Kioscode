@@ -16,6 +16,7 @@
   "paso2_titulo_codigo": "Tu código",
   "paso2_texto": "Cuando veas la página de acceso en tu dispositivo, pulsa:",
   "boton_solicitar": "Solicitar código",
+  "boton_espera": "Podrás solicitar tu código en {s} s",
   "paso2_nota": "El código aparecerá aquí",
   "paso3_titulo": "Escribe el código y conéctate",
   "paso3_texto": "Escribe el código en tu móvil, ordenador o tablet y pulsa «Conectar».",

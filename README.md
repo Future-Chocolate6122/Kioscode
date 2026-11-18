@@ -315,9 +315,11 @@ chromium --kiosk http://IP_SERVIDOR:8080/ --incognito --noerrdialogs --disable-p
    - **2. Solicita tu código**: cuando ve la página de acceso en su móvil, pulsa **Solicitar
      código** y el código aparece ahí mismo, en grande, con su validez y la cuenta atrás.
    - **3. Escribe el código y conéctate**: en su móvil, ordenador o tablet.
-   Si no puede darse un código (espera entre códigos, límite diario, UniFi no responde), el aviso
-   aparece en el paso 2 y el botón sigue disponible. Si nadie toca la pantalla en 2 minutos antes de
-   pedir el código, vuelve sola al inicio.
+   Si el tótem acaba de dar un código y aún no ha pasado la espera entre códigos (20 s por
+   defecto), el propio botón muestra «Podrás solicitar tu código en N s» y se reactiva solo. Si no
+   puede darse un código por otro motivo (límite diario, UniFi no responde), el aviso aparece en el
+   paso 2 y el botón sigue disponible. Si nadie toca la pantalla en 2 minutos antes de pedir el
+   código, vuelve sola al inicio.
 3. Al terminar la cuenta atrás o pulsar **He terminado**, vuelve al inicio y el código desaparece.
 
 El código solo se genera al pulsar «Solicitar código», cuando la persona ya está conectada a la red

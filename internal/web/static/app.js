@@ -17,7 +17,7 @@
   var estado = 'inicio';           // inicio | pasos
   var fase = 'antes';              // dentro de «pasos»: antes | cargando | codigo
   var ocupado = false;
-  var cuentaTimer = null, inactividadTimer = null;
+  var cuentaTimer = null, inactividadTimer = null, esperaTimer = null;
   var fin = 0, total = 0;
 
   function $(id) { return document.getElementById(id); }
@@ -104,7 +104,7 @@
 
   // ---- Paso 2: solicitar el código ----
   function solicitar() {
-    if (ocupado || estado !== 'pasos' || fase !== 'antes') return;
+    if (ocupado || esperaTimer || estado !== 'pasos' || fase !== 'antes') return;
     ocupado = true;
     ocultarError();
     ponerFase('cargando');
@@ -123,6 +123,7 @@
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (d) {
         if (r.ok && d.formatted) mostrarCodigo(d);
+        else if (r.status === 429 && d.retry_after > 0) esperarParaSolicitar(d.retry_after);
         else mostrarError(d.error || MENSAJE_GENERAL);
       });
     }).catch(function () {
@@ -154,6 +155,34 @@
     vigilarInactividad();
   }
 
+  // Espera entre códigos del tótem: en lugar de un error, el propio botón muestra la
+  // cuenta atrás («Podrás solicitar tu código en N s») y se reactiva solo al llegar a 0.
+  function esperarParaSolicitar(segundos) {
+    if (estado !== 'pasos') return;
+    ponerFase('antes');
+    vigilarInactividad();
+    var b = $('btn-solicitar');
+    var hasta = Date.now() + segundos * 1000;
+    b.disabled = true;
+    b.classList.add('inactivo');
+    function tic() {
+      var resto = Math.ceil((hasta - Date.now()) / 1000);
+      if (resto <= 0) { pararEspera(); return; }
+      b.textContent = (textos.boton_espera || '{s}').replace('{s}', resto);
+    }
+    tic();
+    esperaTimer = setInterval(tic, 250);
+  }
+
+  function pararEspera() {
+    clearInterval(esperaTimer);
+    esperaTimer = null;
+    var b = $('btn-solicitar');
+    b.disabled = false;
+    b.classList.remove('inactivo');
+    b.textContent = textos.boton_solicitar || b.textContent;
+  }
+
   function ocultarError() {
     $('error-texto').textContent = '';
     $('error-texto').hidden = true;
@@ -179,6 +208,7 @@
     clearInterval(cuentaTimer);
     cuentaTimer = null;
     pararInactividad();
+    pararEspera();
     var cont = $('codigo-valor');
     while (cont.firstChild) cont.removeChild(cont.firstChild);
     $('validez').textContent = '';

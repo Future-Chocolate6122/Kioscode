@@ -196,6 +196,8 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 			"error_general":       t["error_general"],
 			"paso2_titulo":        t["paso2_titulo"],
 			"paso2_titulo_codigo": t["paso2_titulo_codigo"],
+			"boton_solicitar":     t["boton_solicitar"],
+			"boton_espera":        t["boton_espera"],
 			"ver_condiciones":     t["ver_condiciones"],
 			"ocultar_condiciones": t["ocultar_condiciones"],
 		},

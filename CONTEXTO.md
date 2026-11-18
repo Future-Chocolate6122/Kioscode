@@ -264,8 +264,10 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
 
 - **1.4.0** — nueva pantalla del quiosco: Inicio («Empezar», con las condiciones) y una pantalla con
   los tres pasos (conectarse con el QR, solicitar el código, escribirlo). El código se genera al
-  pulsar «Solicitar código» y aparece en el paso 2; los errores se muestran en ese paso. Vuelta al
-  inicio tras 2 minutos sin actividad. Sin cambios en el servidor ni en la configuración.
+  pulsar «Solicitar código» y aparece en el paso 2. La espera entre códigos se muestra en el propio
+  botón como cuenta atrás («Podrás solicitar tu código en N s») y se reactiva solo; los demás
+  errores, en rojo en ese paso. Vuelta al inicio tras 2 minutos sin actividad. Sin cambios en el
+  servidor ni en la configuración.
 
 **Comportamiento de la API a tener en cuenta:**
 
