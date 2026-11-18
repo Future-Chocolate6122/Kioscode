@@ -200,7 +200,7 @@ totem-wifi install | uninstall | start | stop | restart | status   # servicio de
 totem-wifi fingerprint HOST:PUERTO   # imprime la huella SHA-256 del certificado de un servidor
 totem-wifi check                # prueba la configuración y la conexión con UniFi; sale con código ≠0 si falla
 totem-wifi init                 # crea config.json con los valores por defecto
-totem-wifi set -unifi-url URL -totems LISTA -admin-ips LISTA   # datos de la sede (lo usa install.sh)
+totem-wifi set -unifi-url URL -totems LISTA -admin-ips LISTA   # UniFi, tótems y administración (lo usa install.sh)
 totem-wifi firewall-sync        # ajusta ufw a las IPs permitidas (root; lo lanza systemd)
 totem-wifi allowlist            # puerto e IPs permitidas
 totem-wifi version
@@ -225,6 +225,7 @@ totem-wifi version
   `--admin-ips` y `--no-ufw`. Si hay ufw, instala `totem-wifi-firewall.{path,service}`.
 - Las releases de GitHub se crean a mano desde la web (esta sesión no puede subir etiquetas ni crear
   releases): `make release VERSION=x.y.z` y se adjuntan los 4 ficheros de `dist/`.
+- En cada versión nueva, actualiza los enlaces de descarga de `README.md` §2 (`.../download/vX.Y.Z/...`).
 
 ## 6. Orden de trabajo seguido (histórico)
 
@@ -259,7 +260,9 @@ Haz un commit por paso, con mensaje en castellano que diga qué se ha añadido.
   ni `README.md`, ni los commits contienen: el nombre de la organización, nombres de sedes, nombres
   reales de SSID, IPs o rangos de red de producción, hostnames reales ni nombres de personas. En
   ejemplos y tests usa solo IPs de documentación (`192.0.2.x`, `198.51.100.x`, `203.0.113.x`) o
-  `127.0.0.1`, y nombres genéricos («Sede A», `WifiPublica`, «Organización»). Antes de cada commit,
+  `127.0.0.1`, y nombres genéricos («Sede A», `WifiPublica`, «Organización»). Única excepción
+  aprobada: la URL del propio repositorio de GitHub en los enlaces de descarga del `README.md`. La
+  documentación no habla de sedes: la aplicación se conecta a un UniFi OS Server y basta. Antes de cada commit,
   pasa `git grep -n -i -E "192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|10\.[0-9]+\." -- . ':!CLAUDE.md'`
   y revisa cualquier coincidencia que no sea una IP de documentación.
 - Al diagnosticar problemas con UniFi, ve por capas: ¿llega TCP a 11443? → ¿coincide la huella? →

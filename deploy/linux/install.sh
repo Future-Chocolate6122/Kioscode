@@ -3,8 +3,8 @@
 #
 #   sudo ./install.sh [opciones]
 #
-# Opciones para esta sede (opcionales; todo se puede cambiar después en /admin):
-#   --unifi-url URL      UniFi OS Server de la sede, p. ej. https://192.0.2.10:11443
+# Opciones (opcionales; todo se puede cambiar después en /admin):
+#   --unifi-url URL      dirección del UniFi OS Server, p. ej. https://192.0.2.10:11443
 #   --totems LISTA       IPs o redes de los tótems, separadas por comas, p. ej. 192.0.2.0/24
 #   --admin-ips LISTA    IPs que pueden abrir /admin además de este servidor, p. ej. 192.0.2.50
 #   --no-ufw             no instalar el ayudante que mantiene ufw al día

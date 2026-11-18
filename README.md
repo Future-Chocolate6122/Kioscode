@@ -62,25 +62,8 @@ de su móvil, ordenador o tablet.
 | `totem-wifi_<versión>_linux_amd64.tar.gz` | Ubuntu/Debian en PC o servidor normal | `totem-wifi`, `install.sh`, `uninstall.sh`, este README |
 | `totem-wifi_<versión>_linux_arm64.tar.gz` | Ubuntu en ARM (por ejemplo, Raspberry Pi 4/5 de 64 bits) | ídem |
 
-`SHA256SUMS.txt` permite comprobar que el paquete ha llegado íntegro.
-
-**Descarga:** los paquetes están en la página **Releases** del repositorio de GitHub. Si el servidor
-tiene salida a Internet, se pueden descargar directamente (sustituya `USUARIO/REPOSITORIO` y la
-etiqueta de la versión):
-
-```bash
-wget https://github.com/USUARIO/REPOSITORIO/releases/download/v1.4.1/totem-wifi_1.4.1_linux_amd64.tar.gz
-```
-
-```bash
-wget https://github.com/USUARIO/REPOSITORIO/releases/download/v1.4.1/SHA256SUMS.txt
-```
-
-```bash
-sha256sum -c --ignore-missing SHA256SUMS.txt
-```
-
-Si no tiene Internet, descárguelos en su PC y cópielos con `scp` (ver la sección siguiente).
+`SHA256SUMS.txt` permite comprobar que el paquete ha llegado íntegro. Todos están en la página de
+versiones: <https://github.com/Future-Chocolate6122/Unifi_Totem/releases>.
 
 Dónde queda cada cosa una vez instalado:
 
@@ -98,10 +81,27 @@ Dónde queda cada cosa una vez instalado:
 
 ## 2. Instalación en Ubuntu Server
 
-Cada sede tiene su propio servidor Ubuntu con su propia instalación, que apunta a **su** UniFi OS Server
-y atiende a **sus** tótems. Los pasos son los mismos en todas; solo cambian los datos de la sede.
+1. Descargue el paquete en el servidor. Los enlaces de la versión actual (1.4.1) son estos; para otra
+   versión, cambie `1.4.1` por la que corresponda (todas están en la
+   [página de versiones](https://github.com/Future-Chocolate6122/Unifi_Totem/releases)):
 
-1. Copie el `.tar.gz` al servidor (por ejemplo, con `scp` desde su PC):
+   ```bash
+   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.1/totem-wifi_1.4.1_linux_amd64.tar.gz
+   ```
+
+   ```bash
+   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.1/SHA256SUMS.txt
+   ```
+
+   Compruebe que ha llegado íntegro (debe decir `OK`):
+
+   ```bash
+   sha256sum -c --ignore-missing SHA256SUMS.txt
+   ```
+
+   En un equipo ARM (Raspberry Pi), use `linux_arm64` en lugar de `linux_amd64`.
+
+   Si el servidor no tiene salida a Internet, descárguelo en su PC y cópielo con `scp`:
 
    ```bash
    scp totem-wifi_1.4.1_linux_amd64.tar.gz usuario@IP_DEL_SERVIDOR:
@@ -117,26 +117,22 @@ y atiende a **sus** tótems. Los pasos son los mismos en todas; solo cambian los
    cd totem-wifi_1.4.1_linux_amd64
    ```
 
-3. Instale indicando los datos de la sede. Todos son opcionales y se pueden cambiar después en
-   `/admin`:
+3. Instale indicando los datos de su red. Se pueden cambiar después en `/admin`:
 
    | Opción | Qué es | Ejemplo |
    |---|---|---|
-   | `--unifi-url` | UniFi OS Server de la sede | `https://192.0.2.10:11443` |
+   | `--unifi-url` | Dirección del UniFi OS Server | `https://192.0.2.10:11443` |
    | `--totems` | IPs o redes de los tótems, separadas por comas | `192.0.2.0/24` |
-   | `--admin-ips` | Su PC, para abrir `/admin` sin túnel SSH | `192.0.2.50` |
-
-   Ejemplo para la **Sede A**:
+   | `--admin-ips` | IP del equipo desde el que abrirá `/admin` (su PC), separadas por comas | `192.0.2.50` |
 
    ```bash
-   sudo ./install.sh --unifi-url https://192.0.2.10:11443 --totems 192.0.2.0/24
+   sudo ./install.sh --unifi-url https://192.0.2.10:11443 --totems 192.0.2.0/24 --admin-ips 192.0.2.50
    ```
 
-   Ejemplo para la **Sede B**:
-
-   ```bash
-   sudo ./install.sh --unifi-url https://198.51.100.20:11443 --totems 198.51.100.0/24
-   ```
+   > **No olvide `--admin-ips`.** Por seguridad, `/admin` solo se puede abrir desde los equipos de esa
+   > lista y, si no se indica, solo desde el propio servidor. En un Ubuntu Server sin escritorio no hay
+   > navegador, así que sin esta opción solo podrá entrar con un túnel SSH (ver
+   > [4. Primer acceso](#4-primer-acceso-a-la-administración)).
 
    El instalador crea el usuario de sistema `totem`, copia el programa a `/opt/totem-wifi`, crea la
    configuración, registra el servicio systemd y lo arranca.
@@ -176,8 +172,8 @@ equipos. El resultado se ve en `/admin` → *Estado* → *Cortafuegos (ufw)*.
 
 ## 3. Instalación en Windows (alternativa)
 
-El sistema elegido es Ubuntu Server; esta sección queda por si alguna sede necesitara Windows 10/11
-o Windows Server.
+El sistema recomendado es Ubuntu Server; esta sección es para instalarlo en Windows 10/11 o Windows
+Server.
 
 1. Copie el `.zip` al equipo y **descomprímalo** (botón derecho → *Extraer todo…*).
 2. Abra **PowerShell como administrador** (menú Inicio → escriba *PowerShell* → botón derecho →
@@ -211,11 +207,13 @@ Get-Service TotemWifi
 
 ## 4. Primer acceso a la administración
 
-La administración está en `http://localhost:8080/admin` y, por seguridad, **solo se puede abrir desde
-el propio servidor** (lista `admin_allowed_clients`, que por defecto es `127.0.0.1`).
+La administración está en el puerto 8080 del servidor y, por seguridad, **solo se puede abrir desde
+los equipos de `--admin-ips`** y desde el propio servidor (lista `admin_allowed_clients`).
 
-- **Ubuntu sin escritorio**: abra un túnel SSH desde su PC y visite `http://localhost:8080/admin` en
-  el navegador de su PC (el túnel hace que su PC «sea» el servidor, y además cifra la conexión):
+- **Desde su PC** (si lo indicó en `--admin-ips`): abra `http://IP_DEL_SERVIDOR:8080/admin`.
+- **Sin `--admin-ips`, en un Ubuntu sin escritorio**: abra un túnel SSH desde su PC y visite
+  `http://localhost:8080/admin` en el navegador de su PC (el túnel hace que su PC «sea» el servidor, y
+  además cifra la conexión):
 
   ```bash
   ssh -L 8080:localhost:8080 usuario@IP_DEL_SERVIDOR
@@ -228,8 +226,8 @@ el propio servidor** (lista `admin_allowed_clients`, que por defecto es `127.0.0
 La primera vez pedirá **crear la contraseña** de administración (mínimo 10 caracteres). Después verá
 el panel con el estado y todos los ajustes.
 
-Si quiere administrar desde su PC sin túnel, añada su IP en **Acceso → Equipos que pueden abrir
-/admin** (o use `--admin-ips` al instalar). Tenga en cuenta que sin túnel la contraseña viaja sin
+Para añadir o cambiar los equipos de administración más adelante, use **Acceso → Equipos que pueden
+abrir /admin**. Tenga en cuenta que sin túnel la contraseña viaja sin
 cifrar por la red local.
 
 **Cambios en «Acceso».** Para cambiar los equipos permitidos o el puerto, `/admin` pide **volver a
@@ -249,15 +247,8 @@ Ajustes que conviene revisar en el primer acceso:
 
 ## 5. Crear la API key en UniFi
 
-Hay un UniFi OS Server por sede. Los vouchers solo valen en el servidor que gestiona el portal cautivo
-de la red de esa sede (en el ejemplo, el portal del SSID público está en el de la **Sede B**):
-
-| Sede | URL |
-|---|---|
-| Sede B | `https://198.51.100.20:11443` |
-| Sede A | `https://192.0.2.10:11443` |
-
-Cada sede usa la API key de **su** servidor: una clave de un servidor no sirve en el otro.
+La clave se crea en el UniFi OS Server que gestiona el portal cautivo del SSID público: los vouchers
+solo valen en ese servidor.
 
 La clave tiene los mismos permisos que el usuario de UniFi que la crea. Lo recomendable es un usuario
 dedicado solo al tótem, porque así se puede revocar sin afectar a nadie y en UniFi queda claro qué hizo
@@ -289,7 +280,7 @@ curl -sk -H "X-API-KEY: LA_CLAVE" https://198.51.100.20:11443/proxy/network/inte
 
 En `/admin`, sección **UniFi OS Server**:
 
-1. **URL del servidor**: elija la de la sede donde está el portal del SSID público.
+1. **URL del servidor**: la del UniFi OS Server, con el formato `https://IP:11443`.
 2. **API key**: pegue la clave del paso anterior.
 3. Pulse **«Obtener huella del certificado»**. UniFi usa un certificado autofirmado; el programa
    guarda su huella SHA-256 y a partir de entonces **solo acepta ese certificado** (si alguien
@@ -546,7 +537,7 @@ Si el cambio es legítimo: `/admin` → **«Obtener huella del certificado»** �
 
 ## 16. Diagnóstico de problemas
 
-Vaya **por capas**, en este orden. `totem-wifi check` y «Probar conexión con UniFi» indican la capa:
+Con UniFi, vaya **por capas**, en este orden (`totem-wifi check` y «Probar conexión con UniFi» indican la capa). Las últimas filas recogen otros problemas frecuentes:
 
 | Capa | Síntoma | Qué hacer |
 |---|---|---|
@@ -556,31 +547,11 @@ Vaya **por capas**, en este orden. `totem-wifi check` y «Probar conexión con U
 | | HTTP 403 | El usuario que creó la clave no tiene permisos suficientes: ver [5](#5-crear-la-api-key-en-unifi) (hace falta permiso de gestión en Network; «Hotspot» y «Solo lectura» no bastan). También pasa si la clave es de **otro** servidor. |
 | **Sitio** | HTTP 404 o «no se encuentra el sitio default» | Deje vacío **ID del sitio** y pulse «Probar conexión» para detectarlo. |
 | **Parámetros del voucher** | HTTP 400 | Revise duración (1–1 000 000 min) y velocidades (0 o 2–100 000 kbps). |
-
-Otros problemas frecuentes:
-
-- **El tótem muestra «Acceso no permitido desde este equipo»**: su IP no está en *Equipos que pueden
-  usar el quiosco*. En el log aparece `acceso denegado … desde IP`.
-- **El tótem no carga la página**: en Ubuntu, mire en `/admin` → *Estado* → *Cortafuegos (ufw)* que
-  la red del tótem aparece en la lista. Si el estado se queda en «Aplicando…» o da error, consulte el
-  ayudante y lance la sincronización a mano (muestra qué reglas añade o quita):
-
-  ```bash
-  systemctl status totem-wifi-firewall
-  ```
-
-  ```bash
-  sudo /opt/totem-wifi/totem-wifi firewall-sync
-  ```
-
-  En Windows, compruebe que la regla «Totem Wi-Fi (HTTP)» del Firewall incluye la IP del tótem
-  (vuelva a ejecutar `install.ps1`).
-- **«Espera N segundos antes de pedir otro código»**: es la protección contra abusos
-  (`cooldown_seconds`, 20 s por tótem). **«Hoy ya se han entregado todos los códigos»**: se ha
-  alcanzado `daily_limit` (300); el contador vuelve a cero a medianoche.
-- **Ha olvidado la contraseña de administración**: pare el servicio, edite `config.json` como
-  administrador, deje `"admin_password_hash": ""`, arranque el servicio y abra `/admin` desde el
-  propio servidor para crear una nueva.
+| **Acceso al quiosco** | El tótem muestra «Acceso no permitido desde este equipo» | Su IP no está en *Equipos que pueden usar el quiosco*. En el log aparece `acceso denegado … desde IP`. |
+| | El tótem no carga la página | En Ubuntu, compruebe en `/admin` → *Estado* → *Cortafuegos (ufw)* que la red del tótem aparece en la lista. Si se queda en «Aplicando…» o da error, mire el ayudante con `systemctl status totem-wifi-firewall` y sincronice a mano con `sudo /opt/totem-wifi/totem-wifi firewall-sync` (muestra qué reglas añade o quita). En Windows, compruebe que la regla «Totem Wi-Fi (HTTP)» del Firewall incluye la IP del tótem (vuelva a ejecutar `install.ps1`). |
+| **Límites** | El botón muestra «Podrás solicitar tu código en N s» | Es la espera entre códigos contra abusos (`cooldown_seconds`, 20 s por tótem). Se reactiva solo. |
+| | «Hoy ya se han entregado todos los códigos disponibles» | Se ha alcanzado `daily_limit` (300). El contador vuelve a cero a medianoche. |
+| **Administración** | Ha olvidado la contraseña | Pare el servicio, edite `config.json` como administrador, deje `"admin_password_hash": ""`, arranque el servicio y abra `/admin` desde un equipo de *Equipos que pueden abrir /admin* para crear una nueva. |
 
 ---
 
@@ -604,7 +575,7 @@ Windows (PowerShell como administrador, en la carpeta del paquete nuevo):
 powershell -ExecutionPolicy Bypass -File .\install.ps1 -NoBrowser
 ```
 
-Ubuntu (no hace falta repetir las opciones de la sede: la configuración se conserva):
+Ubuntu (no hace falta repetir las opciones de instalación: la configuración se conserva):
 
 ```bash
 sudo ./install.sh
@@ -656,7 +627,7 @@ arránquelo después; un campo mal escrito impide arrancar y el error dice cuál
 | `allowed_clients` | `127.0.0.1`, `192.0.2.0/24` | IPs o redes CIDR que pueden usar el quiosco. El propio equipo siempre puede. |
 | `admin_password_hash` | vacío | Contraseña de `/admin` cifrada con bcrypt. Vacío = se crea en el primer acceso. |
 | `admin_allowed_clients` | `127.0.0.1` | IPs o redes que pueden abrir `/admin`. |
-| `unifi.base_url` | `https://198.51.100.20:11443` | UniFi OS Server de la sede (IP de ejemplo). |
+| `unifi.base_url` | `https://198.51.100.20:11443` | Dirección del UniFi OS Server (IP de ejemplo). |
 | `unifi.api_key` | vacío | Clave de la Integration API. Nunca se muestra ni se registra. |
 | `unifi.site_id` | vacío | Sitio de UniFi. Vacío = se detecta el «default» y se guarda. |
 | `unifi.cert_sha256` | vacío | Huella anclada del certificado. Vacío = no se conecta (salvo simulación). |
@@ -702,7 +673,7 @@ totem-wifi fingerprint HOST:PUERTO
 totem-wifi check                 prueba la configuración y UniFi por capas (sale con ≠0 si falla)
 totem-wifi init                  crea config.json con los valores por defecto si no existe
 totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]
-                                 ajusta los datos de la sede (lo usa install.sh; reinicie después)
+                                 ajusta UniFi, tótems y administración (lo usa install.sh; reinicie después)
 totem-wifi firewall-sync         ajusta ufw a los equipos permitidos (root; lo lanza systemd solo)
 totem-wifi allowlist             puerto e IPs permitidas
 totem-wifi version               versión

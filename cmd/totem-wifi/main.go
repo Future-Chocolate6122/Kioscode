@@ -202,7 +202,7 @@ Uso:
   totem-wifi check                        prueba la configuración y la conexión con UniFi
   totem-wifi init                         crea config.json con los valores por defecto
   totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]
-                                          ajusta la configuración de esta sede (lo usa install.sh)
+                                          ajusta UniFi, tótems y administración (lo usa install.sh)
   totem-wifi firewall-sync                ajusta ufw a las IPs permitidas (root; lo lanza systemd)
   totem-wifi allowlist                    lista puerto e IPs permitidas
   totem-wifi version                      muestra la versión
@@ -215,7 +215,7 @@ func main() {
 	cfgFlag := fs.String("config", "", "ruta de config.json")
 	dataFlag := fs.String("data", "", "directorio de datos: state.json, log, logo (por defecto, el de config.json)")
 	var so setOptions
-	fs.StringVar(&so.unifiURL, "unifi-url", "", "con «set»: URL de UniFi OS Server de esta sede (https://IP:11443)")
+	fs.StringVar(&so.unifiURL, "unifi-url", "", "con «set»: URL de UniFi OS Server (https://IP:11443)")
 	fs.StringVar(&so.totems, "totems", "", "con «set»: IPs o redes de los tótems, separadas por comas")
 	fs.StringVar(&so.adminIPs, "admin-ips", "", "con «set»: IPs o redes que pueden abrir /admin, separadas por comas")
 	fs.Usage = func() {

@@ -204,7 +204,7 @@ func runAllowlist(configPath string) int {
 	return 0
 }
 
-// setOptions son los ajustes por sede que admite «totem-wifi set».
+// setOptions son los ajustes de instalación que admite «totem-wifi set».
 type setOptions struct {
 	unifiURL, totems, adminIPs string
 	given                      []string // opciones indicadas en la línea de comandos
@@ -224,7 +224,7 @@ func splitList(s string) []string {
 	return append(out, strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == ';' || r == ' ' })...)
 }
 
-// runSet ajusta los datos de la sede en config.json (lo crea si no existe).
+// runSet ajusta UniFi, tótems y administración en config.json (lo crea si no existe).
 // La API key no se admite aquí a propósito: quedaría en el historial de la consola.
 func runSet(configPath string, o setOptions) int {
 	if !o.has("unifi-url") && !o.has("totems") && !o.has("admin-ips") {
