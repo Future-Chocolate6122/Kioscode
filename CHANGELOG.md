@@ -4,6 +4,19 @@ Formato: las novedades de cada versión, de la más reciente a la más antigua. 
 haga siempre una copia de `config.json`: una versión anterior no reconoce los campos que añade una
 posterior.
 
+## 1.4.2
+
+### Novedades
+- **Copia de la configuración al actualizar**: los instaladores guardan `config.json.bak` antes de
+  sustituir el programa.
+- **Al terminar la instalación en Ubuntu** se muestra la dirección de `/admin` desde los equipos de
+  `--admin-ips`; si no se indicó, cómo entrar con un túnel SSH.
+
+### Documentación
+- Descarga con los enlaces reales de cada versión, dentro de «Instalación en Ubuntu Server».
+- El ejemplo de instalación incluye `--admin-ips`, imprescindible en un servidor sin escritorio.
+- Tabla de diagnóstico unificada y textos de ayuda más sencillos.
+
 ## 1.4.1
 
 ### Correcciones

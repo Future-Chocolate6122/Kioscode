@@ -81,16 +81,16 @@ Dónde queda cada cosa una vez instalado:
 
 ## 2. Instalación en Ubuntu Server
 
-1. Descargue el paquete en el servidor. Los enlaces de la versión actual (1.4.1) son estos; para otra
-   versión, cambie `1.4.1` por la que corresponda (todas están en la
+1. Descargue el paquete en el servidor. Los enlaces de la versión actual (1.4.2) son estos; para otra
+   versión, cambie `1.4.2` por la que corresponda (todas están en la
    [página de versiones](https://github.com/Future-Chocolate6122/Unifi_Totem/releases)):
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.1/totem-wifi_1.4.1_linux_amd64.tar.gz
+   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.2/totem-wifi_1.4.2_linux_amd64.tar.gz
    ```
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.1/SHA256SUMS.txt
+   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.2/SHA256SUMS.txt
    ```
 
    Compruebe que ha llegado íntegro (debe decir `OK`):
@@ -104,17 +104,17 @@ Dónde queda cada cosa una vez instalado:
    Si el servidor no tiene salida a Internet, descárguelo en su PC y cópielo con `scp`:
 
    ```bash
-   scp totem-wifi_1.4.1_linux_amd64.tar.gz usuario@IP_DEL_SERVIDOR:
+   scp totem-wifi_1.4.2_linux_amd64.tar.gz usuario@IP_DEL_SERVIDOR:
    ```
 
 2. En el servidor, descomprímalo y entre en la carpeta:
 
    ```bash
-   tar xzf totem-wifi_1.4.1_linux_amd64.tar.gz
+   tar xzf totem-wifi_1.4.2_linux_amd64.tar.gz
    ```
 
    ```bash
-   cd totem-wifi_1.4.1_linux_amd64
+   cd totem-wifi_1.4.2_linux_amd64
    ```
 
 3. Instale indicando los datos de su red. Se pueden cambiar después en `/admin`:
@@ -135,7 +135,8 @@ Dónde queda cada cosa una vez instalado:
    > [4. Primer acceso](#4-primer-acceso-a-la-administración)).
 
    El instalador crea el usuario de sistema `totem`, copia el programa a `/opt/totem-wifi`, crea la
-   configuración, registra el servicio systemd y lo arranca.
+   configuración, registra el servicio systemd y lo arranca. Al terminar muestra la dirección del
+   quiosco y la de `/admin`.
 
 4. Siga en [4. Primer acceso a la administración](#4-primer-acceso-a-la-administración).
 
@@ -181,7 +182,7 @@ Server.
 3. Vaya a la carpeta descomprimida (cambie la ruta por la suya):
 
    ```powershell
-   cd "$env:USERPROFILE\Downloads\totem-wifi_1.4.1_windows_amd64"
+   cd "$env:USERPROFILE\Downloads\totem-wifi_1.4.2_windows_amd64"
    ```
 
 4. Ejecute el instalador. Copia el programa, registra el servicio, abre el puerto 8080 en el
@@ -559,15 +560,14 @@ Con UniFi, vaya **por capas**, en este orden (`totem-wifi check` y «Probar cone
 
 Las novedades de cada versión están en [`CHANGELOG.md`](CHANGELOG.md).
 
-Descomprima el paquete nuevo y ejecute **el mismo instalador** que la primera vez. Para el servicio,
-sustituye el programa y lo vuelve a arrancar **conservando la configuración y el contador**.
+Descargue y descomprima el paquete nuevo como en los pasos 1 y 2 de
+[2. Instalación en Ubuntu Server](#2-instalación-en-ubuntu-server) (cambie el número de versión en los
+enlaces) y ejecute **el mismo instalador** que la primera vez. Para el servicio, sustituye el programa
+y lo vuelve a arrancar **conservando la configuración y el contador**.
 
-Antes de actualizar, guarde una copia de la configuración. Las versiones nuevas pueden añadir campos
-a `config.json` que una versión anterior no reconoce: si tuviera que volver atrás, restaure esa copia.
-
-```bash
-sudo cp /etc/totem-wifi/config.json /etc/totem-wifi/config.json.bak
-```
+El instalador guarda antes una copia de la configuración en `config.json.bak`, junto a `config.json`.
+Las versiones nuevas pueden añadir campos que una versión anterior no reconoce: si tuviera que volver
+atrás, instale la versión anterior y restaure esa copia.
 
 Windows (PowerShell como administrador, en la carpeta del paquete nuevo):
 
