@@ -6,6 +6,9 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="csrf" content="{{.CSRF}}">
 <title>Invitados conectados · {{.Title}}</title>
+<link rel="icon" href="/static/favicon.svg?v={{.Version}}" type="image/svg+xml">
+<link rel="icon" href="/static/favicon-32.png?v={{.Version}}" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v={{.Version}}">
 <link rel="stylesheet" href="/static/app.css?v={{.Version}}">
 <script src="/static/invitados.js?v={{.Version}}" defer></script>
 </head>
@@ -89,7 +92,7 @@
     {{else if not .GuestsError}}
     <p>No hay invitados conectados en este momento.</p>
     {{end}}
-    <small>Se muestran los dispositivos que han entrado por el portal cautivo. Desconectar retira su acceso; si su código sigue vigente, pueden volver a entrar escribiéndolo.</small>
+    <small>Se muestran los dispositivos que han entrado por el portal cautivo. Desconectar retira su acceso y no puede volver a entrar con el mismo código{{if ne .Cfg.Voucher.GuestLimit 1}} (aunque, como «Dispositivos por código» no es 1, otros dispositivos podrían usar las plazas que queden de ese código){{end}}.</small>
   </section>
 
   <form method="post" action="/admin/logout" class="acciones">

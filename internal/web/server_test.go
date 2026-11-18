@@ -251,6 +251,8 @@ func TestEstaticosYLogo(t *testing.T) {
 		"/static/fonts/":                    404,
 		"/logo":                             404, // aún no hay logo
 		"/no-existe":                        404,
+		"/favicon.ico":                      200,
+		"/static/favicon.svg":               200,
 	} {
 		if w := e.peticion("GET", path, "127.0.0.1", "", nil); w.Code != code {
 			t.Errorf("%s: %d, want %d", path, w.Code, code)

@@ -34,14 +34,16 @@ release: build-all
 	w=$(DIST)/pkg/totem-wifi_$(VERSION)_windows_amd64; \
 	mkdir -p $$w/licencias; \
 	cp $(DIST)/totem-wifi_windows_amd64.exe $$w/totem-wifi.exe; \
-	cp deploy/windows/*.ps1 README.md $$w/; \
+	cp deploy/windows/*.ps1 README.md CHANGELOG.md $$w/; \
+	mkdir -p $$w/docs && cp -r docs/img $$w/docs/; \
 	cp internal/web/static/fonts/OFL-*.txt $$w/licencias/; \
 	(cd $(DIST)/pkg && rm -f ../totem-wifi_$(VERSION)_windows_amd64.zip && zip -qr ../totem-wifi_$(VERSION)_windows_amd64.zip totem-wifi_$(VERSION)_windows_amd64); \
 	for arch in amd64 arm64; do \
 	  l=$(DIST)/pkg/totem-wifi_$(VERSION)_linux_$$arch; \
 	  mkdir -p $$l/licencias; \
 	  cp $(DIST)/totem-wifi_linux_$$arch $$l/totem-wifi; \
-	  cp deploy/linux/*.sh README.md $$l/; \
+	  cp deploy/linux/*.sh README.md CHANGELOG.md $$l/; \
+	  mkdir -p $$l/docs && cp -r docs/img $$l/docs/; \
 	  chmod 0755 $$l/totem-wifi $$l/*.sh; \
 	  cp internal/web/static/fonts/OFL-*.txt $$l/licencias/; \
 	  tar -C $(DIST)/pkg -czf $(DIST)/totem-wifi_$(VERSION)_linux_$$arch.tar.gz totem-wifi_$(VERSION)_linux_$$arch; \

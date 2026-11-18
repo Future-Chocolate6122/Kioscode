@@ -98,7 +98,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET /static/", either(http.HandlerFunc(s.handleStatic)))
 	mux.Handle("GET /logo", either(http.HandlerFunc(s.handleLogo)))
 	mux.Handle("GET /background", either(http.HandlerFunc(s.handleBackground)))
-	mux.Handle("GET /favicon.ico", http.NotFoundHandler())
+	mux.Handle("GET /favicon.ico", either(http.HandlerFunc(s.handleFavicon)))
 	s.registerAdmin(mux, admin)
 	return securityHeaders(mux)
 }
@@ -414,6 +414,18 @@ func (s *Server) handleStatic(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	s.static.ServeHTTP(w, r)
+}
+
+// handleFavicon sirve el icono de las pestañas del navegador (PNG de 32 px).
+func (s *Server) handleFavicon(w http.ResponseWriter, r *http.Request) {
+	data, err := staticFS.ReadFile("static/favicon-32.png")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Write(data) //nolint:errcheck
 }
 
 // logoPath devuelve la ruta del logo del directorio de datos, o "" si no hay.

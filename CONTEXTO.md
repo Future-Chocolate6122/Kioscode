@@ -269,12 +269,17 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
   errores, en rojo en ese paso. Vuelta al inicio tras 2 minutos sin actividad. Sin cambios en el
   servidor ni en la configuración.
 
+- **1.4.1** — corregido el aviso tras desconectar invitados (no pueden volver a entrar con el mismo
+  código); favicon en `/admin`; README reorganizado con capturas, `CHANGELOG.md` y `CLAUDE.md` al día.
+
 **Comportamiento de la API a tener en cuenta:**
 
 - Los vouchers sin usar **no caducan**: `timeLimitMinutes` cuenta desde el primer uso.
 - La API no indica el SSID de cada cliente ni qué voucher usó cada invitado.
 - No documenta si borrar un voucher activado desconecta a quien lo usa (pendiente de comprobar en
   real; el diseño no depende de ello).
+- Comprobado en real: tras `UNAUTHORIZE_GUEST_ACCESS`, el dispositivo no puede volver a entrar con
+  el mismo código si «Dispositivos por código» = 1.
 
 **Planificado** (valorado con el OpenAPI de Network 10.0.162 / 10.1.84):
 
@@ -285,12 +290,19 @@ Construida en Go siguiendo `CLAUDE.md`, con el código en un repositorio de GitH
 contra un UniFi **simulado** por HTTPS; e instalación en Ubuntu con systemd simulado y ufw real
 inactivo.
 
-**Sin probar todavía** (hacerlo en la primera sede real):
+**Comprobado en la instalación real** (Ubuntu Server con UniFi OS Server 5.1.42):
 
-- `totem-wifi check` y vouchers contra un UniFi OS Server real.
-- Que systemd lance el ayudante del cortafuegos al guardar en `/admin` (en las pruebas se lanzó a
-  mano). Si `/admin` se queda en «Aplicando…»: `systemctl status totem-wifi-firewall`.
-- Reglas con ufw **activo**.
+- Instalación, huella del certificado, conexión con UniFi y entrega de vouchers.
+- Hubo que abrir el puerto 11443 en el ufw del **servidor de UniFi** para la IP del gestor de
+  tótems (solo estaba abierto para el equipo de administración).
+- Desconectar a un invitado: **no puede volver a entrar con el mismo código** (con «Dispositivos
+  por código» = 1).
+
+**Sin probar todavía:**
+
+- Que systemd lance el ayudante del cortafuegos al guardar en `/admin` (en las pruebas de desarrollo
+  se lanzó a mano). Si `/admin` se queda en «Aplicando…»: `systemctl status totem-wifi-firewall`.
+- Si borrar en UniFi un voucher ya activado desconecta a quien lo usa (el diseño no depende de ello).
 - `install.ps1` / `uninstall.ps1` (no había PowerShell en el entorno de desarrollo).
 
 **Desviaciones respecto a `CLAUDE.md` (prevalecen sobre él):**

@@ -6,6 +6,9 @@
 <meta name="robots" content="noindex, nofollow">
 {{if .CSRF}}<meta name="csrf" content="{{.CSRF}}">{{end}}
 <title>Administración · {{.Title}}</title>
+<link rel="icon" href="/static/favicon.svg?v={{.Version}}" type="image/svg+xml">
+<link rel="icon" href="/static/favicon-32.png?v={{.Version}}" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v={{.Version}}">
 <link rel="stylesheet" href="/static/app.css?v={{.Version}}">
 <script src="/static/admin.js?v={{.Version}}" defer></script>
 </head>

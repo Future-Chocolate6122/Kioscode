@@ -76,7 +76,9 @@ func (s *Server) adminGuests(w http.ResponseWriter, r *http.Request) {
 }
 
 // resumen redacta el resultado de una desconexión para el administrador.
-func resumen(res voucher.DisconnectResult, all bool) string {
+// Comprobado en real: con «Dispositivos por código» = 1, un dispositivo desconectado no puede
+// volver a entrar con su código. Con otro valor, las plazas que queden del código siguen valiendo.
+func resumen(res voucher.DisconnectResult, all bool, guestLimit int) string {
 	var b strings.Builder
 	switch res.Done {
 	case 0:
@@ -92,8 +94,15 @@ func resumen(res voucher.DisconnectResult, all bool) string {
 	if len(res.Failed) > 0 {
 		fmt.Fprintf(&b, " Fallos (%d): %s.", len(res.Failed), strings.Join(res.Failed, "; "))
 	}
-	if res.Done > 0 && (!all || res.Invalidated == 0) {
-		b.WriteString(" Si su código sigue vigente, pueden volver a entrar escribiéndolo en el portal.")
+	if res.Done > 0 {
+		switch {
+		case all && res.Invalidated > 0:
+			// Ya se ha dicho que los códigos no se pueden volver a usar.
+		case guestLimit == 1:
+			b.WriteString(" No pueden volver a entrar con el mismo código.")
+		default:
+			b.WriteString(" No pueden volver a entrar con el mismo código, pero como «Dispositivos por código» no es 1, otros dispositivos podrían usar las plazas que queden de esos códigos.")
+		}
 	}
 	return b.String()
 }
@@ -117,7 +126,7 @@ func (s *Server) apiDisconnect(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, apiResult{OK: false, Layer: layer, Message: hint})
 		return
 	}
-	msg := resumen(res, false)
+	msg := resumen(res, false, s.cfg.Get().Voucher.GuestLimit)
 	s.sessions.setFlash(sessionFrom(r).sess, msg)
 	writeJSON(w, http.StatusOK, apiResult{OK: res.Done > 0, Message: msg})
 }
@@ -142,7 +151,7 @@ func (s *Server) apiDisconnectAll(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, apiResult{OK: false, Layer: layer, Message: hint})
 		return
 	}
-	msg := resumen(res, true)
+	msg := resumen(res, true, s.cfg.Get().Voucher.GuestLimit)
 	s.sessions.setFlash(sessionFrom(r).sess, msg)
 	writeJSON(w, http.StatusOK, apiResult{OK: len(res.Failed) == 0, Message: msg})
 }

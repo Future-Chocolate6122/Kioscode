@@ -4,6 +4,11 @@ Lee primero `CONTEXTO.md`: describe la red, los dos servidores UniFi, la API y l
 ciudadano. Este fichero dice **cómo** construir la aplicación. Responde y comenta el código **en
 castellano**.
 
+> **Estado:** la aplicación está terminada y en producción (versión 1.4.x). Las novedades de cada
+> versión están en `CHANGELOG.md` y las decisiones, pruebas en real y desviaciones en
+> `CONTEXTO.md` §7–§9. Ante cualquier contradicción, **`CONTEXTO.md` §9 prevalece** sobre este
+> fichero. Los cambios nuevos se hacen sobre lo existente: no rehagas lo que ya funciona.
+
 ## 1. Objetivo en una frase
 
 Un único ejecutable (`totem-wifi.exe` / `totem-wifi`) que sirve una web de quiosco, pide vouchers del
@@ -33,21 +38,28 @@ totem-wifi/
 ├── CLAUDE.md                 ← este fichero
 ├── CONTEXTO.md
 ├── README.md                 ← guía de instalación y uso para el administrador (en castellano)
+├── CHANGELOG.md              ← novedades de cada versión
+├── docs/img/                 ← capturas para el README (modo real con UniFi simulado; sin datos reales)
 ├── go.mod / go.sum
 ├── Makefile                  ← build, build-all, test, run, release
 ├── cmd/totem-wifi/main.go    ← flags, arranque, instalación como servicio
 ├── internal/
 │   ├── config/               ← carga/validación/guardado de config.json; valores por defecto
 │   ├── unifi/                ← cliente de la Integration API + cliente mock; anclaje del certificado
-│   ├── voucher/              ← servicio: cooldown, límite diario, persistencia del contador, formato del código
-│   ├── web/                  ← servidor HTTP: rutas, middlewares (allowlist, rate limit, auth admin), plantillas
-│   │   └── static/           ← index.html, admin.html, app.css, app.js (embebidos con //go:embed)
+│   ├── voucher/              ← servicio: cooldown, límite diario, persistencia del contador, formato del código;
+│   │                            invitados conectados, desconexión y caducidad de códigos sin usar (guests.go)
+│   ├── firewall/             ← ayudante que ajusta ufw a las IPs permitidas (lo lanza systemd como root)
+│   ├── logfile/              ← fichero de log con rotación
+│   ├── web/                  ← servidor HTTP: rutas, middlewares (allowlist, rate limit, auth admin), plantillas;
+│   │                            admin.go, guests.go (invitados), images.go (logotipo y fondo)
+│   │   └── static/           ← index.html, admin.html, invitados.html, nav.html (pestañas), app.css,
+│   │                            app.js, admin.js, invitados.js (embebidos con //go:embed)
 │   │       └── fonts/        ← Montserrat, Raleway y Open Sans en .woff2 (ver «Estilo visual»)
 │   └── i18n/                 ← textos en castellano (es.json) y mecanismo para añadir idiomas
 ├── deploy/
 │   ├── windows/install.ps1   ← crea %ProgramData%\TotemWifi, copia el exe, registra el servicio, abre el firewall
 │   ├── windows/uninstall.ps1
-│   ├── linux/install.sh      ← /opt/totem-wifi + /etc/totem-wifi + unidad systemd + ufw opcional
+│   ├── linux/install.sh      ← /opt/totem-wifi + /etc/totem-wifi + unidad systemd + ayudante de ufw
 │   └── linux/uninstall.sh
 └── dist/                     ← salida de `make release` (ignorado en git)
 ```
@@ -64,6 +76,13 @@ totem-wifi/
 | `/healthz` | GET | cualquiera de la allowlist | `{"ok":true,"mock":false,"unifi":"ok|error","daily_used":12}` |
 | `/admin` | GET/POST | `admin_allowed_clients` + contraseña | Formulario de configuración; botón «Probar conexión con UniFi»; botón «Obtener huella del certificado»; «Generar voucher de prueba» |
 | `/admin/logout` | POST | | |
+| `/api/version` | GET | tótems | Huella de lo que muestra la pantalla; el quiosco la consulta cada minuto y se recarga si cambia |
+| `/logo`, `/background` | GET | tótems y admin | Logotipo y fondo elegidos en `/admin` (`no-cache`) |
+| `/admin/invitados` | GET | admin con sesión | Invitados conectados (pestaña «Invitados conectados») |
+| `/admin/api/guests/disconnect` | POST | admin + CSRF | Desconecta los invitados indicados (`UNAUTHORIZE_GUEST_ACCESS`) |
+| `/admin/api/guests/disconnect-all` | POST | admin + CSRF + contraseña | Desconecta a todos; opcionalmente invalida los códigos del tótem vigentes |
+| `/admin/api/upload`, `/admin/api/image-delete`, `/admin/imagenes/{nombre}` | POST/GET | admin | Biblioteca de imágenes (logotipo ≤ 1 MB, fondo ≤ 5 MB) |
+| `/admin/api/check`, `/admin/api/fingerprint`, `/admin/api/test-voucher`, `/admin/api/firewall` | POST/GET | admin | Probar conexión, huella, voucher de prueba, estado de ufw |
 
 ### Reglas de negocio
 
@@ -86,10 +105,28 @@ totem-wifi/
 - **Primer arranque**: si `config.json` no existe, se crea con los valores por defecto de
   `CONTEXTO.md` §6. Si `admin_password_hash` está vacío, `/admin` muestra un formulario para crear
   la contraseña (solo desde `admin_allowed_clients`).
+- **Condiciones de uso** (opcionales): si `kiosk.terms_enabled`, el servidor exige `accepted: true`
+  en `/api/voucher` y anota la versión aceptada en el log.
+- **Caducidad de códigos sin usar**: los vouchers sin usar no caducan en UniFi; cada minuto se borran
+  los **del tótem** (filtro por su nota) con `authorizedGuestCount = 0` y más de
+  `voucher.unused_expire_minutes` (15 por defecto). Nunca se tocan los usados ni los creados a mano.
+- **Invitados**: la API no permite filtrar clientes por tipo de acceso; se recorren todos y se
+  quedan los `GUEST`. Desconectar = `UNAUTHORIZE_GUEST_ACCESS` (uno a uno, en paralelo).
+  Comprobado en real: un dispositivo desconectado no puede volver a entrar con el mismo código
+  (con «Dispositivos por código» = 1).
+- **Cambiar las IPs permitidas o el puerto** en `/admin` exige volver a escribir la contraseña; el
+  ayudante `totem-wifi firewall-sync` (systemd `.path`) ajusta ufw tocando solo sus reglas.
 
 ### Pantalla del quiosco (`index.html`)
 
-- Una sola página, sin recargas. Estados: `inicio` → `cargando` → `codigo` | `error` → `inicio`.
+- Una sola página, sin recargas. Pantallas: `inicio` → `pasos` → `inicio` (desde la v1.4).
+  - `inicio`: título, red, condiciones de uso (si están activadas) y botón «Empezar».
+  - `pasos`: los tres pasos a la vista (horizontal: tres columnas con la central más ancha;
+    vertical: apilados): 1. Conéctate a la red (QR), 2. Solicita tu código (botón; el código
+    aparece ahí), 3. Escribe el código en tu móvil, ordenador o tablet. El paso 2 pasa por
+    `antes` → `cargando` → `codigo`; la espera entre códigos se muestra como cuenta atrás en el
+    propio botón y los demás errores, en rojo en ese paso. 2 minutos sin actividad → `inicio`.
+- El código solo se genera al pulsar «Solicitar código».
 - Tipografía grande (código a ≥ 96 px), contraste alto, funciona en vertical y horizontal.
 - Bloquear menú contextual, selección de texto, zoom y arrastre. Recarga automática a las 04:00.
 - Cuenta atrás visible. Al terminar o al pulsar «He terminado», el código se elimina del DOM.
@@ -158,9 +195,14 @@ el repositorio) identifique a qué organización pertenece.
 ```
 totem-wifi                      # ejecuta en primer plano (desarrollo)
 totem-wifi -config RUTA         # fichero de configuración alternativo
-totem-wifi install | uninstall | start | stop | status   # servicio del SO (requiere administrador/root)
+totem-wifi -data DIR            # directorio de datos (state.json, log, imágenes)
+totem-wifi install | uninstall | start | stop | restart | status   # servicio del SO (administrador/root)
 totem-wifi fingerprint HOST:PUERTO   # imprime la huella SHA-256 del certificado de un servidor
 totem-wifi check                # prueba la configuración y la conexión con UniFi; sale con código ≠0 si falla
+totem-wifi init                 # crea config.json con los valores por defecto
+totem-wifi set -unifi-url URL -totems LISTA -admin-ips LISTA   # datos de la sede (lo usa install.sh)
+totem-wifi firewall-sync        # ajusta ufw a las IPs permitidas (root; lo lanza systemd)
+totem-wifi allowlist            # puerto e IPs permitidas
 totem-wifi version
 ```
 
@@ -177,10 +219,17 @@ totem-wifi version
   `allowed_clients`** (regla con `-RemoteAddress`), arrancar el servicio y abrir
   `http://localhost:8080/admin` en el navegador.
 - `install.sh` equivalente: usuario de sistema `totem`, `/opt/totem-wifi/totem-wifi`,
-  `/etc/totem-wifi/config.json` (640, `root:totem`), unidad systemd con
-  `ProtectSystem=strict`, `ProtectHome=yes`, `NoNewPrivileges=yes`, `ReadWritePaths=/var/lib/totem-wifi`.
+  `/etc/totem-wifi/config.json` (**600, `totem:totem`**: `/admin` tiene que poder guardarlo), unidad
+  systemd con `ProtectSystem=strict`, `ProtectHome=yes`, `NoNewPrivileges=yes`,
+  `ReadWritePaths=/var/lib/totem-wifi /etc/totem-wifi`. Opciones `--unifi-url`, `--totems`,
+  `--admin-ips` y `--no-ufw`. Si hay ufw, instala `totem-wifi-firewall.{path,service}`.
+- Las releases de GitHub se crean a mano desde la web (esta sesión no puede subir etiquetas ni crear
+  releases): `make release VERSION=x.y.z` y se adjuntan los 4 ficheros de `dist/`.
 
-## 6. Orden de trabajo sugerido
+## 6. Orden de trabajo seguido (histórico)
+
+Así se construyó la versión 1.0; se conserva como referencia. Los cambios posteriores están en
+`CHANGELOG.md`.
 
 1. `go mod init`, `config` con valores por defecto y tests de validación.
 2. Cliente `unifi` real + mock, con tests sobre `httptest` que comprueben cabecera `X-API-KEY`, cuerpo

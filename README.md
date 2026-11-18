@@ -1,19 +1,25 @@
 # Tótem Wi-Fi
 
-Un programa que muestra en un tótem (una pantalla con navegador) un botón **«Obtener código»**. Al
-pulsarlo, pide a UniFi un **voucher del hotspot** y lo muestra en grande junto a un **código QR** para
-unirse a la red `WifiPublica`. El ciudadano se conecta, abre el navegador y escribe el código en
-el portal cautivo de UniFi.
+Una aplicación que convierte cualquier pantalla con navegador en un **tótem de Wi-Fi gratuita**. El
+ciudadano acepta las condiciones de uso, se conecta a la red escaneando un **QR**, pulsa **«Solicitar
+código»** y recibe en pantalla un **voucher del hotspot de UniFi**, que escribe en el portal cautivo
+de su móvil, ordenador o tablet.
+
+![Pantalla de pasos del quiosco](docs/img/quiosco-pasos.png)
 
 - Es **un solo ejecutable**: no hay que instalar Python, Node, bases de datos ni nada más.
 - Funciona **sin Internet**: fuentes, estilos y QR van dentro del ejecutable.
 - La **API key de UniFi solo la conoce este servidor**: los tótems nunca la ven.
+- Todo se configura desde **`/admin`**: servidor UniFi, red, duración y límites de los códigos,
+  textos, condiciones de uso, logotipo y fondo, equipos permitidos e invitados conectados.
 - Tras instalarlo arranca en **modo simulación**: da códigos falsos y muestra una franja amarilla
   «MODO PRUEBA» hasta que se configure UniFi.
 
 ---
 
 ## Índice
+
+**Instalar**
 
 1. [Qué hay en el paquete](#1-qué-hay-en-el-paquete)
 2. [Instalación en Ubuntu Server](#2-instalación-en-ubuntu-server)
@@ -22,15 +28,29 @@ el portal cautivo de UniFi.
 5. [Crear la API key en UniFi](#5-crear-la-api-key-en-unifi)
 6. [Pasar de simulación a real](#6-pasar-de-simulación-a-real)
 7. [Configurar los tótems](#7-configurar-los-tótems)
-8. [Ver el log](#8-ver-el-log)
-9. [Cambiar (rotar) la API key](#9-cambiar-rotar-la-api-key)
-10. [Si UniFi cambia de certificado](#10-si-unifi-cambia-de-certificado)
-11. [Diagnóstico de problemas](#11-diagnóstico-de-problemas)
-12. [Actualizar a una versión nueva](#12-actualizar-a-una-versión-nueva)
-13. [Desinstalar](#13-desinstalar)
-14. [Referencia de la configuración](#14-referencia-de-la-configuración)
-15. [Línea de comandos](#15-línea-de-comandos)
-16. [Para desarrolladores](#16-para-desarrolladores)
+
+**Personalizar y usar**
+
+8. [La pantalla del quiosco](#8-la-pantalla-del-quiosco)
+9. [Textos de la pantalla y condiciones de uso](#9-textos-de-la-pantalla-y-condiciones-de-uso)
+10. [Logotipo y fondo](#10-logotipo-y-fondo)
+11. [Invitados conectados](#11-invitados-conectados)
+12. [Caducidad de los códigos sin usar](#12-caducidad-de-los-códigos-sin-usar)
+
+**Mantenimiento**
+
+13. [Ver el log](#13-ver-el-log)
+14. [Cambiar (rotar) la API key](#14-cambiar-rotar-la-api-key)
+15. [Si UniFi cambia de certificado](#15-si-unifi-cambia-de-certificado)
+16. [Diagnóstico de problemas](#16-diagnóstico-de-problemas)
+17. [Actualizar a una versión nueva](#17-actualizar-a-una-versión-nueva)
+18. [Desinstalar](#18-desinstalar)
+
+**Referencia**
+
+19. [Referencia de la configuración](#19-referencia-de-la-configuración)
+20. [Línea de comandos](#20-línea-de-comandos)
+21. [Para desarrolladores](#21-para-desarrolladores)
 
 ---
 
@@ -43,6 +63,24 @@ el portal cautivo de UniFi.
 | `totem-wifi_<versión>_linux_arm64.tar.gz` | Ubuntu en ARM (por ejemplo, Raspberry Pi 4/5 de 64 bits) | ídem |
 
 `SHA256SUMS.txt` permite comprobar que el paquete ha llegado íntegro.
+
+**Descarga:** los paquetes están en la página **Releases** del repositorio de GitHub. Si el servidor
+tiene salida a Internet, se pueden descargar directamente (sustituya `USUARIO/REPOSITORIO` y la
+etiqueta de la versión):
+
+```bash
+wget https://github.com/USUARIO/REPOSITORIO/releases/download/v1.4.1/totem-wifi_1.4.1_linux_amd64.tar.gz
+```
+
+```bash
+wget https://github.com/USUARIO/REPOSITORIO/releases/download/v1.4.1/SHA256SUMS.txt
+```
+
+```bash
+sha256sum -c --ignore-missing SHA256SUMS.txt
+```
+
+Si no tiene Internet, descárguelos en su PC y cópielos con `scp` (ver la sección siguiente).
 
 Dónde queda cada cosa una vez instalado:
 
@@ -66,17 +104,17 @@ y atiende a **sus** tótems. Los pasos son los mismos en todas; solo cambian los
 1. Copie el `.tar.gz` al servidor (por ejemplo, con `scp` desde su PC):
 
    ```bash
-   scp totem-wifi_1.0.0_linux_amd64.tar.gz usuario@IP_DEL_SERVIDOR:
+   scp totem-wifi_1.4.1_linux_amd64.tar.gz usuario@IP_DEL_SERVIDOR:
    ```
 
 2. En el servidor, descomprímalo y entre en la carpeta:
 
    ```bash
-   tar xzf totem-wifi_1.0.0_linux_amd64.tar.gz
+   tar xzf totem-wifi_1.4.1_linux_amd64.tar.gz
    ```
 
    ```bash
-   cd totem-wifi_1.0.0_linux_amd64
+   cd totem-wifi_1.4.1_linux_amd64
    ```
 
 3. Instale indicando los datos de la sede. Todos son opcionales y se pueden cambiar después en
@@ -147,7 +185,7 @@ o Windows Server.
 3. Vaya a la carpeta descomprimida (cambie la ruta por la suya):
 
    ```powershell
-   cd "$env:USERPROFILE\Downloads\totem-wifi_1.0.0_windows_amd64"
+   cd "$env:USERPROFILE\Downloads\totem-wifi_1.4.1_windows_amd64"
    ```
 
 4. Ejecute el instalador. Copia el programa, registra el servicio, abre el puerto 8080 en el
@@ -184,6 +222,8 @@ el propio servidor** (lista `admin_allowed_clients`, que por defecto es `127.0.0
   ```
 
 - **Windows**: el instalador ya la abre en el navegador.
+
+![Administración: estado y prueba de conexión](docs/img/admin-estado.png)
 
 La primera vez pedirá **crear la contraseña** de administración (mínimo 10 caracteres). Después verá
 el panel con el estado y todos los ajustes.
@@ -276,7 +316,7 @@ sudo /opt/totem-wifi/totem-wifi check
 ```
 
 `check` termina con «Todo correcto» o indica en qué capa falla (ver
-[11. Diagnóstico](#11-diagnóstico-de-problemas)). No modifica la configuración.
+[16. Diagnóstico](#16-diagnóstico-de-problemas)). No modifica la configuración.
 
 También se puede ver la huella de un servidor sin abrir `/admin`:
 
@@ -306,7 +346,11 @@ Con Edge, cambie la ruta por `"C:\Program Files (x86)\Microsoft\Edge\Application
 chromium --kiosk http://IP_SERVIDOR:8080/ --incognito --noerrdialogs --disable-pinch --overscroll-history-navigation=0
 ```
 
-**Lo que ve el ciudadano:**
+---
+
+## 8. La pantalla del quiosco
+
+![Pantalla de inicio](docs/img/quiosco-inicio.png)
 
 1. **Inicio**: título, red Wi-Fi y, si están activadas, las condiciones de uso con su casilla. Pulsa
    **Empezar**.
@@ -322,6 +366,12 @@ chromium --kiosk http://IP_SERVIDOR:8080/ --incognito --noerrdialogs --disable-p
    código, vuelve sola al inicio.
 3. Al terminar la cuenta atrás o pulsar **He terminado**, vuelve al inicio y el código desaparece.
 
+![Pantalla de pasos con el código](docs/img/quiosco-pasos.png)
+
+En un tótem vertical, los tres pasos aparecen uno debajo de otro:
+
+<img src="docs/img/quiosco-vertical.png" alt="Pantalla de pasos en vertical" width="270">
+
 El código solo se genera al pulsar «Solicitar código», cuando la persona ya está conectada a la red
 y viendo la página de acceso.
 
@@ -330,7 +380,37 @@ terminar la cuenta atrás y **se recarga sola** cuando se guarda un cambio en `/
 logotipo, fondo…; lo comprueba cada minuto y solo en la pantalla de inicio, nunca con un código a la
 vista) y, además, cada día a las 04:00.
 
-### Logotipo y fondo
+---
+
+## 9. Textos de la pantalla y condiciones de uso
+
+En `/admin` → **Textos de la pantalla** se cambian sin tocar ficheros:
+
+| Campo | Dónde se ve |
+|---|---|
+| **Título** | Texto grande de la pantalla de inicio (máx. 60 caracteres). |
+| **Nombre en la cabecera** | Arriba a la derecha y en la cabecera de `/admin`. Vacío = el título. |
+| **Nombre de la organización** | Arriba a la izquierda, solo si no hay logotipo. |
+| **Texto de introducción** | Bajo el título (máx. 400 caracteres). Vacío = el texto por defecto. |
+| **Condiciones de uso** | Texto sin formato (máx. 20 000 caracteres); deje una línea en blanco entre párrafos. |
+
+Si marca **«Mostrar condiciones de uso antes de obtener el código»**:
+
+- La pantalla muestra la casilla **«He leído y acepto las condiciones de uso»** y un desplegable
+  **«Ver condiciones»** con el texto, que se puede desplazar con el dedo.
+- **«Empezar»** queda atenuado hasta marcar la casilla; si se pulsa antes, aparece un aviso.
+- Tras entregar un código, la casilla vuelve a quedar sin marcar para la siguiente persona.
+- El servidor también lo comprueba: sin aceptar no entrega código.
+- Cada código entregado queda en el log con la **versión** de las condiciones aceptadas
+  (`condiciones_aceptadas=84a03f5a`). La versión actual se ve en `/admin` bajo el texto y cambia en
+  cuanto se edita, así que se puede saber qué texto estaba vigente en cada momento.
+
+> El portal cautivo de UniFi también puede mostrar condiciones de uso. Si ya las tiene activadas
+> allí, valore si hace falta mostrarlas dos veces.
+
+---
+
+## 10. Logotipo y fondo
 
 En `/admin` → **Logotipo y fondo**:
 
@@ -357,33 +437,11 @@ En `/admin` → **Logotipo y fondo**:
 - Las imágenes copiadas a mano en la carpeta de datos (`logo.svg` o `logo.png`), como en las
   versiones anteriores, siguen funcionando.
 
-### Textos de la pantalla y condiciones de uso
+---
 
-En `/admin` → **Textos de la pantalla** se cambian sin tocar ficheros:
+## 11. Invitados conectados
 
-| Campo | Dónde se ve |
-|---|---|
-| **Título** | Texto grande de la pantalla de inicio (máx. 60 caracteres). |
-| **Nombre en la cabecera** | Arriba a la derecha y en la cabecera de `/admin`. Vacío = el título. |
-| **Nombre de la organización** | Arriba a la izquierda, solo si no hay logotipo. |
-| **Texto de introducción** | Bajo el título (máx. 400 caracteres). Vacío = el texto por defecto. |
-| **Condiciones de uso** | Texto sin formato (máx. 20 000 caracteres); deje una línea en blanco entre párrafos. |
-
-Si marca **«Mostrar condiciones de uso antes de obtener el código»**:
-
-- La pantalla muestra la casilla **«He leído y acepto las condiciones de uso»** y un desplegable
-  **«Ver condiciones»** con el texto, que se puede desplazar con el dedo.
-- **«Obtener código»** queda atenuado hasta marcar la casilla; si se pulsa antes, aparece un aviso.
-- Tras entregar un código, la casilla vuelve a quedar sin marcar para la siguiente persona.
-- El servidor también lo comprueba: sin aceptar no entrega código.
-- Cada código entregado queda en el log con la **versión** de las condiciones aceptadas
-  (`condiciones_aceptadas=84a03f5a`). La versión actual se ve en `/admin` bajo el texto y cambia en
-  cuanto se edita, así que se puede saber qué texto estaba vigente en cada momento.
-
-> El portal cautivo de UniFi también puede mostrar condiciones de uso. Si ya las tiene activadas
-> allí, valore si hace falta mostrarlas dos veces.
-
-### Invitados conectados
+![Pestaña de invitados conectados](docs/img/admin-invitados.png)
 
 En `/admin`, la pestaña **Invitados conectados** muestra los dispositivos que han entrado por el portal
 cautivo: nombre del dispositivo, IP, MAC, desde cuándo están conectados y hasta cuándo tienen acceso.
@@ -398,14 +456,18 @@ cautivo: nombre del dispositivo, IP, MAC, desde cuándo están conectados y hast
   creados a mano en UniFi no se tocan.
 - Por defecto no se muestran los dispositivos conectados a la red que **aún no han escrito el
   código**; el enlace «Mostrar también … pendientes de código» los añade a la lista.
-- Desconectar retira el acceso del dispositivo. Si su código sigue vigente, la persona **puede volver
-  a entrar escribiéndolo** en el portal (salvo tras «Desconectar todos» con la invalidación marcada).
+- Desconectar retira el acceso del dispositivo y **no puede volver a entrar con el mismo código**
+  (comprobado con «Dispositivos por código» = 1). Si ese ajuste es mayor que 1, otros dispositivos
+  podrían usar las plazas que queden del código; «Desconectar todos» con la invalidación marcada
+  lo evita.
 - Cada desconexión queda en el log con la MAC, la IP del dispositivo y la IP del administrador.
 - Si al desconectar aparece un error 403, el usuario de UniFi que creó la API key no tiene permiso
   para gestionar invitados: dele permiso de gestión en Network (ver
   [5](#5-crear-la-api-key-en-unifi)).
 
-### Caducidad de los códigos sin usar
+---
+
+## 12. Caducidad de los códigos sin usar
 
 La duración de un código (por ejemplo, 4 horas) empieza a contar **cuando se escribe en el portal**.
 Un código que se entrega y **nadie usa no caducaría nunca**: quien lo fotografiara podría usarlo días
@@ -425,7 +487,7 @@ generarse: la aplicación lo revisa **cada minuto** y los borra en UniFi.
 
 ---
 
-## 8. Ver el log
+## 13. Ver el log
 
 Se escribe una línea por cada voucher (IP del tótem, código **enmascarado** `*****-67890`, SSID y
 minutos), por cada error de UniFi y por cada acción de administración. La API key **nunca** se
@@ -457,7 +519,7 @@ curl http://localhost:8080/healthz
 
 ---
 
-## 9. Cambiar (rotar) la API key
+## 14. Cambiar (rotar) la API key
 
 1. En UniFi (*Network → Settings → Control Plane → Integrations*) cree una clave **nueva**.
 2. En `/admin`, pegue la nueva en **API key** y pulse **Guardar**.
@@ -468,7 +530,7 @@ El cambio es inmediato: no hace falta reiniciar el servicio.
 
 ---
 
-## 10. Si UniFi cambia de certificado
+## 15. Si UniFi cambia de certificado
 
 Si UniFi OS Server se reinstala o renueva su certificado, el quiosco dirá «Ahora mismo no podemos darte
 un código…» y el log mostrará:
@@ -482,14 +544,14 @@ Si el cambio es legítimo: `/admin` → **«Obtener huella del certificado»** �
 
 ---
 
-## 11. Diagnóstico de problemas
+## 16. Diagnóstico de problemas
 
 Vaya **por capas**, en este orden. `totem-wifi check` y «Probar conexión con UniFi» indican la capa:
 
 | Capa | Síntoma | Qué hacer |
 |---|---|---|
 | **Conexión TCP** | «No hay conexión con https://…:11443» | ¿Es correcta la IP? ¿Está encendido UniFi OS Server? ¿Algún cortafuegos bloquea el puerto 11443 entre este servidor y UniFi? Pruebe `Test-NetConnection 198.51.100.20 -Port 11443` (Windows) o `nc -vz 198.51.100.20 11443` (Ubuntu). |
-| **Certificado** | «huella del certificado distinta» | Ver [10](#10-si-unifi-cambia-de-certificado). |
+| **Certificado** | «huella del certificado distinta» | Ver [15](#15-si-unifi-cambia-de-certificado). |
 | **Clave / rol** | HTTP 401 | Clave mal copiada o borrada en UniFi: cree otra. |
 | | HTTP 403 | El usuario que creó la clave no tiene permisos suficientes: ver [5](#5-crear-la-api-key-en-unifi) (hace falta permiso de gestión en Network; «Hotspot» y «Solo lectura» no bastan). También pasa si la clave es de **otro** servidor. |
 | **Sitio** | HTTP 404 o «no se encuentra el sitio default» | Deje vacío **ID del sitio** y pulse «Probar conexión» para detectarlo. |
@@ -522,7 +584,9 @@ Otros problemas frecuentes:
 
 ---
 
-## 12. Actualizar a una versión nueva
+## 17. Actualizar a una versión nueva
+
+Las novedades de cada versión están en [`CHANGELOG.md`](CHANGELOG.md).
 
 Descomprima el paquete nuevo y ejecute **el mismo instalador** que la primera vez. Para el servicio,
 sustituye el programa y lo vuelve a arrancar **conservando la configuración y el contador**.
@@ -550,7 +614,7 @@ Los tótems recogen la versión nueva en la recarga de las 04:00 (o al reiniciar
 
 ---
 
-## 13. Desinstalar
+## 18. Desinstalar
 
 Quita el servicio, el ayudante y las reglas «Totem Wi-Fi» del cortafuegos, y el programa. La configuración y los datos se conservan
 salvo que se indique lo contrario.
@@ -581,7 +645,7 @@ sudo ./uninstall.sh --purge
 
 ---
 
-## 14. Referencia de la configuración
+## 19. Referencia de la configuración
 
 Todo se puede cambiar desde `/admin`. Si edita `config.json` a mano, pare antes el servicio y
 arránquelo después; un campo mal escrito impide arrancar y el error dice cuál es.
@@ -625,7 +689,7 @@ Las frases que falten se muestran en castellano.
 
 ---
 
-## 15. Línea de comandos
+## 20. Línea de comandos
 
 ```text
 totem-wifi                       ejecuta en primer plano (pruebas)
@@ -649,7 +713,7 @@ instalado (`C:\ProgramData\TotemWifi\` o `/etc/totem-wifi/`).
 
 ---
 
-## 16. Para desarrolladores
+## 21. Para desarrolladores
 
 Requisitos: Go 1.23 o superior y `make` (los paquetes se generan con `zip`, `tar` y `sha256sum`).
 Sin CGO: todo compila de forma cruzada desde cualquier sistema.

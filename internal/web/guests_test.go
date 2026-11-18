@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"totem-wifi/internal/voucher"
 )
 
 func idsEnPagina(body string) []string {
@@ -50,7 +52,7 @@ func TestDesconectarInvitados(t *testing.T) {
 		t.Errorf("sin CSRF: %d", w.Code)
 	}
 	r := n.api("/admin/api/guests/disconnect", url.Values{"ids": {ids[0] + "," + ids[1]}})
-	if !r.OK || !strings.Contains(r.Message, "2 invitados desconectados") || !strings.Contains(r.Message, "pueden volver a entrar") {
+	if !r.OK || !strings.Contains(r.Message, "2 invitados desconectados") || !strings.Contains(r.Message, "No pueden volver a entrar con el mismo código.") {
 		t.Fatalf("desconectar dos: %+v", r)
 	}
 	body := n.hacer("GET", "/admin/invitados", nil, nil).Body.String()
@@ -88,5 +90,18 @@ func TestDesconectarTodosPideContraseña(t *testing.T) {
 	}
 	if r := n.api("/admin/api/guests/disconnect-all", url.Values{"password": {"contraseña-larga"}}); r.OK || !strings.Contains(r.Message, "Demasiados intentos") {
 		t.Errorf("bloqueo por intentos: %+v", r)
+	}
+}
+
+func TestResumenSegunDispositivosPorCodigo(t *testing.T) {
+	res := voucher.DisconnectResult{Done: 2}
+	if m := resumen(res, false, 1); !strings.Contains(m, "No pueden volver a entrar con el mismo código.") || strings.Contains(m, "plazas") {
+		t.Errorf("con 1 dispositivo: %q", m)
+	}
+	if m := resumen(res, false, 3); !strings.Contains(m, "plazas que queden") {
+		t.Errorf("con 3 dispositivos: %q", m)
+	}
+	if m := resumen(voucher.DisconnectResult{Done: 2, Invalidated: 5}, true, 3); strings.Contains(m, "plazas") || !strings.Contains(m, "5 códigos del tótem invalidados") {
+		t.Errorf("con invalidación: %q", m)
 	}
 }
