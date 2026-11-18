@@ -178,6 +178,10 @@ func runInit(configPath string) int {
 //
 //	port 8080
 //	addr 192.0.2.0/24
+//	admin 192.0.2.50
+//
+// Las líneas «admin» repiten los equipos remotos de administración, para que
+// los instaladores muestren cómo abrir /admin al terminar.
 func runAllowlist(configPath string) int {
 	st, _, err := config.Load(configPath)
 	if err != nil {
@@ -199,6 +203,17 @@ func runAllowlist(configPath string) int {
 			} else {
 				fmt.Println("addr", p)
 			}
+		}
+	}
+	al, _ := config.ParseAllowlist(c.AdminAllowedClients)
+	for _, p := range al {
+		if p.Addr().IsLoopback() {
+			continue
+		}
+		if p.IsSingleIP() {
+			fmt.Println("admin", p.Addr())
+		} else {
+			fmt.Println("admin", p)
 		}
 	}
 	return 0

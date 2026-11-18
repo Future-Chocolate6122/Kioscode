@@ -59,7 +59,11 @@ New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
 # S-1-5-18 = SYSTEM, S-1-5-32-544 = Administradores (independiente del idioma de Windows)
 & icacls.exe $DataDir /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' | Out-Null
 if ($LASTEXITCODE -ne 0) { throw 'No se han podido ajustar los permisos de la carpeta de datos.' }
-if (-not (Test-Path $Cfg)) {
+if (Test-Path $Cfg) {
+    # Actualización: copia de la configuración anterior por si hubiera que volver atrás.
+    Copy-Item -Path $Cfg -Destination "$Cfg.bak" -Force
+    Write-Host "    Copia de la configuración anterior: $Cfg.bak"
+} else {
     & $Exe -config $Cfg -data $DataDir init
     if ($LASTEXITCODE -ne 0) { throw 'No se ha podido crear config.json.' }
 }

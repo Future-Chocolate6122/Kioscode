@@ -272,6 +272,10 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
 - **1.4.1** — corregido el aviso tras desconectar invitados (no pueden volver a entrar con el mismo
   código); favicon en `/admin`; README reorganizado con capturas, `CHANGELOG.md` y `CLAUDE.md` al día.
 
+- **1.4.2** — los instaladores guardan `config.json.bak` al actualizar; `install.sh` muestra al
+  terminar la dirección de `/admin` (`totem-wifi allowlist` añade líneas `admin`). README con enlaces
+  de descarga reales, `--admin-ips` en el ejemplo y tabla de diagnóstico unificada.
+
 **Comportamiento de la API a tener en cuenta:**
 
 - Los vouchers sin usar **no caducan**: `timeLimitMinutes` cuenta desde el primer uso.
@@ -297,13 +301,13 @@ inactivo.
   tótems (solo estaba abierto para el equipo de administración).
 - Desconectar a un invitado: **no puede volver a entrar con el mismo código** (con «Dispositivos
   por código» = 1).
+- systemd lanza el ayudante del cortafuegos al guardar en `/admin` (`totem-wifi-firewall.path`).
 
 **Sin probar todavía:**
 
-- Que systemd lance el ayudante del cortafuegos al guardar en `/admin` (en las pruebas de desarrollo
-  se lanzó a mano). Si `/admin` se queda en «Aplicando…»: `systemctl status totem-wifi-firewall`.
 - Si borrar en UniFi un voucher ya activado desconecta a quien lo usa (el diseño no depende de ello).
-- `install.ps1` / `uninstall.ps1` (no había PowerShell en el entorno de desarrollo).
+- `install.ps1` / `uninstall.ps1` (no había PowerShell en el entorno de desarrollo). Pendiente de
+  probar en un Windows real más adelante.
 
 **Desviaciones respecto a `CLAUDE.md` (prevalecen sobre él):**
 

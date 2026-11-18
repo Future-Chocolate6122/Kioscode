@@ -60,6 +60,11 @@ install -d -m 0755 "$APP_DIR"
 install -m 0755 "$SRC" "$BIN"
 
 echo "3/6 Configuración en $CFG_DIR y datos en $DATA_DIR"
+if [ -f "$CFG" ]; then
+  # Actualización: copia de la configuración anterior por si hubiera que volver atrás.
+  cp -p "$CFG" "$CFG.bak"
+  echo "    Copia de la configuración anterior: $CFG.bak"
+fi
 # config.json contiene la API key y el hash de la contraseña: solo lo leen el
 # servicio (usuario totem) y root. El directorio es del servicio porque /admin
 # guarda los cambios en él.
@@ -137,22 +142,40 @@ else
 fi
 
 PORT=8080
+ADMINS=()
 while read -r k v; do
-  [ "$k" = port ] && PORT="$v"
+  case "$k" in
+    port)  PORT="$v" ;;
+    admin) ADMINS+=("$v") ;;
+  esac
 done < <("$BIN" -config "$CFG" allowlist)
+IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+IP=${IP:-IP_DE_ESTE_SERVIDOR}
 
 cat <<FIN
 
 Instalación terminada (modo simulación hasta que configure UniFi en /admin).
 
-  Administración:  http://localhost:$PORT/admin
-  Quiosco:         http://IP_DE_ESTE_SERVIDOR:$PORT/
+  Quiosco:         http://$IP:$PORT/
   Cortafuegos:     $FW_STATE
-
-Si este servidor no tiene navegador, abra la administración desde su PC con un
-túnel SSH y luego visite http://localhost:$PORT/admin en su navegador:
-
-  ssh -L $PORT:localhost:$PORT usuario@IP_DE_ESTE_SERVIDOR
-
-Log:  journalctl -u $UNIT -f    o    $DATA_DIR/totem-wifi.log
 FIN
+if [ "${#ADMINS[@]}" -gt 0 ]; then
+  cat <<FIN
+  Administración:  http://$IP:$PORT/admin
+                   (desde: ${ADMINS[*]}, o http://localhost:$PORT/admin en este servidor)
+
+FIN
+else
+  cat <<FIN
+  Administración:  http://localhost:$PORT/admin (solo desde este servidor)
+
+No se ha indicado --admin-ips. Si este servidor no tiene navegador, abra un túnel
+SSH desde su PC y visite http://localhost:$PORT/admin en su navegador:
+
+  ssh -L $PORT:localhost:$PORT usuario@$IP
+
+O vuelva a ejecutar el instalador con --admin-ips IP_DE_SU_PC.
+
+FIN
+fi
+echo "Log:  journalctl -u $UNIT -f    o    $DATA_DIR/totem-wifi.log"

@@ -262,7 +262,9 @@ Haz un commit por paso, con mensaje en castellano que diga qué se ha añadido.
   ejemplos y tests usa solo IPs de documentación (`192.0.2.x`, `198.51.100.x`, `203.0.113.x`) o
   `127.0.0.1`, y nombres genéricos («Sede A», `WifiPublica`, «Organización»). Única excepción
   aprobada: la URL del propio repositorio de GitHub en los enlaces de descarga del `README.md`. La
-  documentación no habla de sedes: la aplicación se conecta a un UniFi OS Server y basta. Antes de cada commit,
+  documentación para el administrador (`README.md`, `CHANGELOG.md`, textos de `/admin` y de los
+  instaladores) no habla de sedes: la aplicación se conecta a un UniFi OS Server y basta.
+  `CONTEXTO.md` es contexto interno y puede mencionarlas. Antes de cada commit,
   pasa `git grep -n -i -E "192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|10\.[0-9]+\." -- . ':!CLAUDE.md'`
   y revisa cualquier coincidencia que no sea una IP de documentación.
 - Al diagnosticar problemas con UniFi, ve por capas: ¿llega TCP a 11443? → ¿coincide la huella? →
