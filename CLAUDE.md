@@ -39,7 +39,7 @@ totem-wifi/
 ├── CONTEXTO.md
 ├── README.md                 ← guía de instalación y uso para el administrador (en castellano)
 ├── CHANGELOG.md              ← novedades de cada versión
-├── LICENSE                   ← MIT
+├── LICENSE                   ← MIT + avisos completos de terceros (lo comprueba `make licenses`)
 ├── licencias/                ← licencias de terceros que acompañan al binario (ver LEEME.md)
 ├── docs/img/                 ← capturas para el README (modo real con UniFi simulado; sin datos reales)
 ├── go.mod / go.sum
@@ -228,6 +228,8 @@ totem-wifi version
 - Las releases de GitHub se crean a mano desde la web (esta sesión no puede subir etiquetas ni crear
   releases): `make release VERSION=x.y.z` y se adjuntan los 4 ficheros de `dist/`.
 - En cada versión nueva, actualiza los enlaces de descarga de `README.md` §2 (`.../download/vX.Y.Z/...`).
+- Al añadir o actualizar una dependencia, copia su licencia a `licencias/` y al final de `LICENSE`:
+  `make release` se detiene si algún módulo del ejecutable no aparece en `LICENSE`.
 
 ## 6. Orden de trabajo seguido (histórico)
 

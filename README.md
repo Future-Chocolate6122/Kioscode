@@ -711,7 +711,15 @@ y administración; los estáticos van embebidos), `internal/i18n` (textos) y `de
 Tótem Wi-Fi se distribuye bajo la **licencia MIT** (fichero [`LICENSE`](LICENSE)): se puede usar,
 copiar, modificar y redistribuir libremente, conservando el aviso de copyright.
 
-El ejecutable incluye componentes de terceros (la biblioteca estándar de Go, `go-qrcode`,
-`kardianos/service` y `x/crypto`) y las fuentes Montserrat, Raleway y Open Sans (SIL Open Font
-License 1.1). Sus licencias están en la carpeta [`licencias/`](licencias/LEEME.md) del repositorio y
-de cada paquete.
+El ejecutable incluye componentes de terceros. Sus licencias y avisos de copyright aparecen
+completos al final de `LICENSE` y, por separado, en la carpeta [`licencias/`](licencias/LEEME.md) del
+repositorio y de cada paquete:
+
+| Componente | Para qué | Licencia |
+|---|---|---|
+| Biblioteca estándar de Go | Todo el programa | BSD de 3 cláusulas |
+| `golang.org/x/crypto` | Cifrado de la contraseña de `/admin` (bcrypt) | BSD de 3 cláusulas |
+| `golang.org/x/sys` | Servicio de Windows (solo en el paquete de Windows) | BSD de 3 cláusulas |
+| `github.com/skip2/go-qrcode` | Generación del QR | MIT |
+| `github.com/kardianos/service` | Servicio de Windows y de systemd | zlib |
+| Montserrat, Raleway y Open Sans | Fuentes del quiosco | SIL Open Font License 1.1 |

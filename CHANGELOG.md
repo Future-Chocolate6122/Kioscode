@@ -7,9 +7,11 @@ posterior.
 ## 1.4.3
 
 ### Novedades
-- **Licencia MIT** (`LICENSE`). Los paquetes incluyen también, en `licencias/`, las licencias de los
-  componentes de terceros que lleva el programa (Go, go-qrcode, kardianos/service y x/crypto) junto
-  a las de las fuentes.
+- **Licencia MIT** (`LICENSE`), que incluye al final las licencias y avisos de copyright de todos
+  los componentes de terceros que lleva el programa: Go, `x/crypto`, `x/sys` (solo Windows),
+  `go-qrcode`, `kardianos/service` y las fuentes Montserrat, Raleway y Open Sans. También van por
+  separado en la carpeta `licencias/` de cada paquete.
+- `make release` comprueba que cada módulo que lleva el ejecutable aparece en `LICENSE`.
 
 ### Notas
 - Sin cambios en el programa ni en la configuración.

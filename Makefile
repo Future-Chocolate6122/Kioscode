@@ -2,6 +2,7 @@
 #   make build       binario para esta plataforma (./totem-wifi o .\totem-wifi.exe)
 #   make build-all   dist/ para Windows amd64, Linux amd64 y Linux arm64
 #   make release     además, paquetes .zip / .tar.gz listos para copiar a la máquina destino
+#   make licenses    comprueba que cada módulo que lleva el ejecutable aparece en LICENSE
 #   make test        pruebas;  make vet  análisis estático;  make run  arranca en modo desarrollo
 
 GO      ?= go
@@ -15,7 +16,7 @@ ifeq ($(OS),Windows_NT)
   EXE := .exe
 endif
 
-.PHONY: build build-all release test vet run clean
+.PHONY: build build-all licenses release test vet run clean
 
 build:
 	$(BUILD) -o totem-wifi$(EXE) $(PKG)
@@ -28,7 +29,19 @@ build-all:
 
 # Cada paquete contiene el ejecutable con su nombre definitivo, los scripts de
 # deploy/ de su sistema, el README, la licencia y las de terceros (licencias/).
-release: build-all
+# Cada módulo que va dentro de los ejecutables (go version -m) debe aparecer en
+# LICENSE con su aviso; si falta alguno, no se genera la release.
+licenses: build-all
+	@set -e; falta=0; \
+	for b in $(DIST)/totem-wifi_windows_amd64.exe $(DIST)/totem-wifi_linux_amd64 $(DIST)/totem-wifi_linux_arm64; do \
+	  for m in $$($(GO) version -m $$b | awk '$$1=="dep"{print $$2}'); do \
+	    if ! grep -qF "$$m" LICENSE; then echo "FALTA en LICENSE: $$m ($$b)"; falta=1; fi; \
+	  done; \
+	done; \
+	if [ $$falta -ne 0 ]; then echo "Añada su licencia a LICENSE y a licencias/ (ver licencias/LEEME.md)."; exit 1; fi; \
+	echo "Licencias: todos los módulos de los ejecutables aparecen en LICENSE."
+
+release: licenses
 	@set -e; \
 	rm -rf $(DIST)/pkg; \
 	w=$(DIST)/pkg/totem-wifi_$(VERSION)_windows_amd64; \

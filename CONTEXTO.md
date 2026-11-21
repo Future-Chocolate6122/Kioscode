@@ -276,8 +276,10 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
   terminar la dirección de `/admin` (`totem-wifi allowlist` añade líneas `admin`). README con enlaces
   de descarga reales, `--admin-ips` en el ejemplo y tabla de diagnóstico unificada.
 
-- **1.4.3** — licencia MIT (`LICENSE`, titular: el usuario de GitHub) y licencias de terceros en
-  `licencias/`, incluidas en cada paquete. Sin cambios en el programa.
+- **1.4.3** — licencia MIT (`LICENSE`, titular: el usuario de GitHub) con los avisos completos de
+  terceros al final (Go, x/crypto, x/sys —solo Windows—, go-qrcode, kardianos/service y fuentes
+  OFL); también en `licencias/`. `make licenses` (parte de `make release`) falla si un módulo de
+  `go version -m` no aparece en `LICENSE`. Sin cambios en el programa.
 
 **Comportamiento de la API a tener en cuenta:**
 
