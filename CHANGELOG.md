@@ -4,6 +4,16 @@ Formato: las novedades de cada versión, de la más reciente a la más antigua. 
 haga siempre una copia de `config.json`: una versión anterior no reconoce los campos que añade una
 posterior.
 
+## 1.4.3
+
+### Novedades
+- **Licencia MIT** (`LICENSE`). Los paquetes incluyen también, en `licencias/`, las licencias de los
+  componentes de terceros que lleva el programa (Go, go-qrcode, kardianos/service y x/crypto) junto
+  a las de las fuentes.
+
+### Notas
+- Sin cambios en el programa ni en la configuración.
+
 ## 1.4.2
 
 ### Novedades

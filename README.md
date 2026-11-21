@@ -82,16 +82,16 @@ Dónde queda cada cosa una vez instalado:
 
 ## 2. Instalación en Ubuntu Server
 
-1. Descargue el paquete en el servidor. Los enlaces de la versión actual (1.4.2) son estos; para otra
-   versión, cambie `1.4.2` por la que corresponda (todas están en la
+1. Descargue el paquete en el servidor. Los enlaces de la versión actual (1.4.3) son estos; para otra
+   versión, cambie `1.4.3` por la que corresponda (todas están en la
    [página de versiones](https://github.com/Future-Chocolate6122/Unifi_Totem/releases)):
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.2/totem-wifi_1.4.2_linux_amd64.tar.gz
+   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.3/totem-wifi_1.4.3_linux_amd64.tar.gz
    ```
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.2/SHA256SUMS.txt
+   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.3/SHA256SUMS.txt
    ```
 
    Compruebe que ha llegado íntegro (debe decir `OK`):
@@ -105,17 +105,17 @@ Dónde queda cada cosa una vez instalado:
    Si el servidor no tiene salida a Internet, descárguelo en su PC y cópielo con `scp`:
 
    ```bash
-   scp totem-wifi_1.4.2_linux_amd64.tar.gz usuario@IP_DEL_SERVIDOR:
+   scp totem-wifi_1.4.3_linux_amd64.tar.gz usuario@IP_DEL_SERVIDOR:
    ```
 
 2. En el servidor, descomprímalo y entre en la carpeta:
 
    ```bash
-   tar xzf totem-wifi_1.4.2_linux_amd64.tar.gz
+   tar xzf totem-wifi_1.4.3_linux_amd64.tar.gz
    ```
 
    ```bash
-   cd totem-wifi_1.4.2_linux_amd64
+   cd totem-wifi_1.4.3_linux_amd64
    ```
 
 3. Instale indicando los datos de su red. Se pueden cambiar después en `/admin`:
@@ -183,7 +183,7 @@ Server.
 3. Vaya a la carpeta descomprimida (cambie la ruta por la suya):
 
    ```powershell
-   cd "$env:USERPROFILE\Downloads\totem-wifi_1.4.2_windows_amd64"
+   cd "$env:USERPROFILE\Downloads\totem-wifi_1.4.3_windows_amd64"
    ```
 
 4. Ejecute el instalador. Copia el programa, registra el servicio, abre el puerto 8080 en el

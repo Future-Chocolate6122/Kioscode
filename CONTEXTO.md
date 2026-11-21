@@ -276,6 +276,9 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
   terminar la dirección de `/admin` (`totem-wifi allowlist` añade líneas `admin`). README con enlaces
   de descarga reales, `--admin-ips` en el ejemplo y tabla de diagnóstico unificada.
 
+- **1.4.3** — licencia MIT (`LICENSE`, titular: el usuario de GitHub) y licencias de terceros en
+  `licencias/`, incluidas en cada paquete. Sin cambios en el programa.
+
 **Comportamiento de la API a tener en cuenta:**
 
 - Los vouchers sin usar **no caducan**: `timeLimitMinutes` cuenta desde el primer uso.
