@@ -51,6 +51,7 @@ de su móvil, ordenador o tablet.
 19. [Referencia de la configuración](#19-referencia-de-la-configuración)
 20. [Línea de comandos](#20-línea-de-comandos)
 21. [Para desarrolladores](#21-para-desarrolladores)
+22. [Licencia](#22-licencia)
 
 ---
 
@@ -703,5 +704,14 @@ Estructura: `cmd/totem-wifi` (arranque, comandos y servicio del sistema), `inter
 `internal/voucher` (cooldown, límite diario, formato del código), `internal/web` (servidor, quiosco
 y administración; los estáticos van embebidos), `internal/i18n` (textos) y `deploy/` (instaladores).
 
-Las fuentes Montserrat, Raleway y Open Sans se distribuyen bajo la SIL Open Font License 1.1
-(`internal/web/static/fonts/OFL-*.txt`; también en la carpeta `licencias/` de cada paquete).
+---
+
+## 22. Licencia
+
+Tótem Wi-Fi se distribuye bajo la **licencia MIT** (fichero [`LICENSE`](LICENSE)): se puede usar,
+copiar, modificar y redistribuir libremente, conservando el aviso de copyright.
+
+El ejecutable incluye componentes de terceros (la biblioteca estándar de Go, `go-qrcode`,
+`kardianos/service` y `x/crypto`) y las fuentes Montserrat, Raleway y Open Sans (SIL Open Font
+License 1.1). Sus licencias están en la carpeta [`licencias/`](licencias/LEEME.md) del repositorio y
+de cada paquete.

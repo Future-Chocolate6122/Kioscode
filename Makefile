@@ -27,25 +27,25 @@ build-all:
 	GOOS=linux   GOARCH=arm64 $(BUILD) -o $(DIST)/totem-wifi_linux_arm64 $(PKG)
 
 # Cada paquete contiene el ejecutable con su nombre definitivo, los scripts de
-# deploy/ de su sistema, el README y las licencias de las fuentes.
+# deploy/ de su sistema, el README, la licencia y las de terceros (licencias/).
 release: build-all
 	@set -e; \
 	rm -rf $(DIST)/pkg; \
 	w=$(DIST)/pkg/totem-wifi_$(VERSION)_windows_amd64; \
 	mkdir -p $$w/licencias; \
 	cp $(DIST)/totem-wifi_windows_amd64.exe $$w/totem-wifi.exe; \
-	cp deploy/windows/*.ps1 README.md CHANGELOG.md $$w/; \
+	cp deploy/windows/*.ps1 README.md CHANGELOG.md LICENSE $$w/; \
 	mkdir -p $$w/docs && cp -r docs/img $$w/docs/; \
-	cp internal/web/static/fonts/OFL-*.txt $$w/licencias/; \
+	cp internal/web/static/fonts/OFL-*.txt licencias/* $$w/licencias/; \
 	(cd $(DIST)/pkg && rm -f ../totem-wifi_$(VERSION)_windows_amd64.zip && zip -qr ../totem-wifi_$(VERSION)_windows_amd64.zip totem-wifi_$(VERSION)_windows_amd64); \
 	for arch in amd64 arm64; do \
 	  l=$(DIST)/pkg/totem-wifi_$(VERSION)_linux_$$arch; \
 	  mkdir -p $$l/licencias; \
 	  cp $(DIST)/totem-wifi_linux_$$arch $$l/totem-wifi; \
-	  cp deploy/linux/*.sh README.md CHANGELOG.md $$l/; \
+	  cp deploy/linux/*.sh README.md CHANGELOG.md LICENSE $$l/; \
 	  mkdir -p $$l/docs && cp -r docs/img $$l/docs/; \
 	  chmod 0755 $$l/totem-wifi $$l/*.sh; \
-	  cp internal/web/static/fonts/OFL-*.txt $$l/licencias/; \
+	  cp internal/web/static/fonts/OFL-*.txt licencias/* $$l/licencias/; \
 	  tar -C $(DIST)/pkg -czf $(DIST)/totem-wifi_$(VERSION)_linux_$$arch.tar.gz totem-wifi_$(VERSION)_linux_$$arch; \
 	done; \
 	rm -rf $(DIST)/pkg; \
