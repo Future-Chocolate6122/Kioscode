@@ -64,7 +64,7 @@ de su móvil, ordenador o tablet.
 | `totem-wifi_<versión>_linux_arm64.tar.gz` | Ubuntu en ARM (por ejemplo, Raspberry Pi 4/5 de 64 bits) | ídem |
 
 `SHA256SUMS.txt` permite comprobar que el paquete ha llegado íntegro. Todos están en la página de
-versiones: <https://github.com/Future-Chocolate6122/Unifi_Totem/releases>.
+versiones: <https://github.com/Future-Chocolate6122/totem-wifi/releases>.
 
 Dónde queda cada cosa una vez instalado:
 
@@ -84,14 +84,14 @@ Dónde queda cada cosa una vez instalado:
 
 1. Descargue el paquete en el servidor. Los enlaces de la versión actual (1.4.3) son estos; para otra
    versión, cambie `1.4.3` por la que corresponda (todas están en la
-   [página de versiones](https://github.com/Future-Chocolate6122/Unifi_Totem/releases)):
+   [página de versiones](https://github.com/Future-Chocolate6122/totem-wifi/releases)):
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.3/totem-wifi_1.4.3_linux_amd64.tar.gz
+   wget https://github.com/Future-Chocolate6122/totem-wifi/releases/download/v1.4.3/totem-wifi_1.4.3_linux_amd64.tar.gz
    ```
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/Unifi_Totem/releases/download/v1.4.3/SHA256SUMS.txt
+   wget https://github.com/Future-Chocolate6122/totem-wifi/releases/download/v1.4.3/SHA256SUMS.txt
    ```
 
    Compruebe que ha llegado íntegro (debe decir `OK`):
