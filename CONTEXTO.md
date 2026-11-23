@@ -281,6 +281,14 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
   OFL); también en `licencias/`. `make licenses` (parte de `make release`) falla si un módulo de
   `go version -m` no aparece en `LICENSE`. Sin cambios en el programa.
 
+- **1.5.0** — temas del quiosco (`kiosk.theme`: `claro` por defecto y `banda`), elegibles en
+  `/admin` → *Apariencia* con miniaturas (`static/tema-*.png`, capturas de la app real a 480×270).
+  Legibilidad: azul de texto `#00618A`, cuerpo `#333`, fondos `#DCE6EC` (claro) y `#EEF2F5` con
+  banda (banda). Textos reducidos: fuera `header_text` (se acepta al leer y se ignora), la red y la
+  validez de la pantalla de inicio y el pie; `kiosk.intro` vacía por defecto (máx. 120). La
+  aplicación aún no está en producción (decisión del usuario: no hace falta compatibilidad con las
+  instalaciones de prueba más allá de que carguen).
+
 **Comportamiento de la API a tener en cuenta:**
 
 - Los vouchers sin usar **no caducan**: `timeLimitMinutes` cuenta desde el primer uso.
@@ -323,7 +331,9 @@ inactivo.
 | SSID en mayúsculas | El SSID se muestra tal cual | Debe coincidir con la lista de redes del móvil |
 | `allowed_clients` vacía = solo localhost | Además, localhost **siempre** está permitido | El tótem puede ser el propio servidor |
 | Comandos de `CLAUDE.md` §4 | Añadidos `restart`, `init`, `set`, `firewall-sync`, `allowlist` y la opción `-data` | Instalación por sede y cortafuegos |
-| Respuesta de `/api/voucher` | Añade `valid_for` («Válido durante 4 horas») | Se muestra bajo el código |
+| Respuesta de `/api/voucher` | Añade `valid_for` («Válido 4 horas») y `use_within` («úsalo en menos de 15 minutos») | Se muestran en una línea bajo el código |
+| Paleta cerrada (solo las variables de la tabla) | Añadidas `--azul-texto`, `--azul-pulsado`, `--texto`, `--gris-espera(-borde)`, `--gris-barra`, `--fondo-claro`, `--fondo-banda` | Legibilidad: `--azul` sobre blanco da 3,1 : 1; se reserva para iconos y detalles |
+| Cabecera con el nombre del servicio a la derecha | Solo logotipo u organización | Repetía el título; decisión del usuario (v1.5) |
 | `Referrer-Policy` no especificada | `same-origin` | Con `no-referrer`, Chrome envía `Origin: null` y los formularios de `/admin` fallan |
 
 No se pudo consultar el OpenAPI oficial (dominio bloqueado en el entorno de desarrollo): el cliente

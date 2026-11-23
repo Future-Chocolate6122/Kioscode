@@ -4,6 +4,31 @@ Formato: las novedades de cada versión, de la más reciente a la más antigua. 
 haga siempre una copia de `config.json`: una versión anterior no reconoce los campos que añade una
 posterior.
 
+## 1.5.0
+
+### Novedades
+- **Temas de la pantalla**: en `/admin` → *Apariencia* se elige entre **Claro** (por defecto) y
+  **Banda azul**, con una miniatura de cada uno. Los tótems cambian en menos de un minuto.
+- **Mejor legibilidad**: texto y botones en un azul más oscuro (contraste ≈ 6,8 : 1, antes 3,1 : 1),
+  cuerpo en gris oscuro sin letra fina, letra más grande en los pasos y fondo que separa las
+  tarjetas. El paso 3 ya no se ve desvaído mientras espera.
+- **Menos texto en pantalla**:
+  - Inicio: título, casilla de condiciones con su desplegable y botón «Empezar», en una tarjeta.
+    Desaparecen el nombre repetido en la cabecera, la red (ya está en el paso 1), la validez (va
+    junto al código) y el pie.
+  - Pasos: frases más cortas; la validez y la caducidad, en una sola línea junto al código.
+
+### Cambios en `/admin`
+- Desaparece **«Nombre en la cabecera»**: la cabecera muestra solo el logotipo o el nombre de la
+  organización, y la de `/admin` usa el título.
+- **«Frase bajo el título»** (antes «Texto de introducción»): opcional, vacía por defecto (no se
+  muestra nada) y de 120 caracteres como máximo.
+
+### Notas
+- Las configuraciones anteriores siguen cargando: `header_text` se ignora y, sin tema, se usa
+  «Claro». Una introducción de más de 120 caracteres hay que acortarla en `config.json`, o el
+  servicio no arrancará.
+
 ## 1.4.3
 
 ### Novedades

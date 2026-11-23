@@ -11,7 +11,7 @@ func TestCastellano(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := tx.T("validez", "duracion", "4 horas"); got != "Válido durante 4 horas" {
+	if got := tx.T("validez", "duracion", "4 horas"); got != "Válido 4 horas" {
 		t.Error(got)
 	}
 	if tx.T("no_existe") != "no_existe" {

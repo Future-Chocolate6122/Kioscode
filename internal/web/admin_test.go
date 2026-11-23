@@ -477,21 +477,24 @@ func TestAdminTextosDeLaPantalla(t *testing.T) {
 	if !strings.Contains(body, "Textos de la pantalla") || !strings.Contains(body, `name="kiosk_terms_text"`) {
 		t.Fatal("falta la sección de textos en /admin")
 	}
+	if strings.Contains(body, "kiosk_header_text") {
+		t.Error("el campo «Nombre en la cabecera» ya no existe")
+	}
 	form := formularioActual(e.cfg.Get(), n.csrf)
-	form.Set("kiosk_header_text", "Servicio de Wi-Fi")
-	form.Set("kiosk_intro", "Hola.\r\nSegunda línea.")
+	form.Set("kiosk_title", "Servicio de Wi-Fi")
+	form.Set("kiosk_intro", "Internet gratis en 3 pasos")
 	form.Set("kiosk_terms_enabled", "1")
 	form.Set("kiosk_terms_text", strings.Repeat("Condición con tildes: áéíóú. ", 600)) // ~18 000 caracteres
 	if w := n.hacer("POST", "/admin", form, nil); w.Code != 303 {
 		t.Fatalf("guardar textos: %d %s", w.Code, w.Body)
 	}
 	k := e.cfg.Get().Kiosk
-	if k.HeaderText != "Servicio de Wi-Fi" || k.Intro != "Hola.\nSegunda línea." || !k.TermsEnabled || len([]rune(k.TermsText)) < 17000 {
-		t.Errorf("no se han guardado los textos: %+v", k.HeaderText)
+	if k.Title != "Servicio de Wi-Fi" || k.Intro != "Internet gratis en 3 pasos" || !k.TermsEnabled || len([]rune(k.TermsText)) < 17000 {
+		t.Errorf("no se han guardado los textos: %q / %q", k.Title, k.Intro)
 	}
 	body = n.hacer("GET", "/admin", nil, nil).Body.String()
 	if !strings.Contains(body, "Servicio de Wi-Fi · Administración") || !strings.Contains(body, k.TermsVersion()) {
-		t.Error("la cabecera de /admin debe usar el nombre configurado y mostrarse la versión de las condiciones")
+		t.Error("la cabecera de /admin debe usar el título y mostrarse la versión de las condiciones")
 	}
 	// Activar las condiciones sin texto no se permite.
 	form.Set("kiosk_terms_text", "  ")
@@ -514,5 +517,49 @@ func TestAdminCaducidadSinUso(t *testing.T) {
 	form.Set("voucher_unused_expire_minutes", "99999")
 	if w := n.hacer("POST", "/admin", form, nil); w.Code != 400 {
 		t.Errorf("fuera de rango: %d", w.Code)
+	}
+}
+
+func TestAdminTema(t *testing.T) {
+	e := nuevoEntorno(t, nil)
+	n := entrar(t, e)
+	body := n.hacer("GET", "/admin", nil, nil).Body.String()
+	for _, want := range []string{`name="kiosk_theme" value="claro" checked`, `name="kiosk_theme" value="banda"`, "/static/tema-banda.png", "Banda azul"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("falta %q en el selector de tema", want)
+		}
+	}
+	antes := e.peticion("GET", "/api/version", "127.0.0.1", "", nil).Body.String()
+	form := formularioActual(e.cfg.Get(), n.csrf)
+	form.Set("kiosk_theme", "banda")
+	if w := n.hacer("POST", "/admin", form, nil); w.Code != 303 {
+		t.Fatalf("guardar tema: %d %s", w.Code, w.Body)
+	}
+	if e.cfg.Get().Kiosk.Theme != "banda" {
+		t.Fatalf("tema guardado: %q", e.cfg.Get().Kiosk.Theme)
+	}
+	if e.peticion("GET", "/api/version", "127.0.0.1", "", nil).Body.String() == antes {
+		t.Error("cambiar el tema debe hacer que los tótems recarguen")
+	}
+	if !strings.Contains(e.peticion("GET", "/", "127.0.0.1", "", nil).Body.String(), `class="tema-banda`) {
+		t.Error("el quiosco debe usar el tema elegido")
+	}
+	// Un formulario sin el campo conserva el tema; un valor desconocido usa el de por defecto.
+	form = formularioActual(e.cfg.Get(), n.csrf)
+	form.Del("kiosk_theme")
+	n.hacer("POST", "/admin", form, nil)
+	if e.cfg.Get().Kiosk.Theme != "banda" {
+		t.Error("sin el campo debe conservarse el tema")
+	}
+	form.Set("kiosk_theme", "inventado")
+	n.hacer("POST", "/admin", form, nil)
+	if e.cfg.Get().Kiosk.Theme != config.DefaultTheme {
+		t.Errorf("tema desconocido: %q", e.cfg.Get().Kiosk.Theme)
+	}
+	// Las miniaturas existen.
+	for _, th := range config.Themes {
+		if w := e.peticion("GET", "/static/tema-"+th.ID+".png", "127.0.0.1", "", nil); w.Code != 200 {
+			t.Errorf("miniatura del tema %s: %d", th.ID, w.Code)
+		}
 	}
 }

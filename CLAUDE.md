@@ -4,7 +4,7 @@ Lee primero `CONTEXTO.md`: describe la red, los dos servidores UniFi, la API y l
 ciudadano. Este fichero dice **cómo** construir la aplicación. Responde y comenta el código **en
 castellano**.
 
-> **Estado:** la aplicación está terminada y en producción (versión 1.4.x). Las novedades de cada
+> **Estado:** la aplicación está terminada y en pruebas, aún no en producción (versión 1.5.x). Las novedades de cada
 > versión están en `CHANGELOG.md` y las decisiones, pruebas en real y desviaciones en
 > `CONTEXTO.md` §7–§9. Ante cualquier contradicción, **`CONTEXTO.md` §9 prevalece** sobre este
 > fichero. Los cambios nuevos se hacen sobre lo existente: no rehagas lo que ya funciona.
@@ -122,10 +122,11 @@ totem-wifi/
 ### Pantalla del quiosco (`index.html`)
 
 - Una sola página, sin recargas. Pantallas: `inicio` → `pasos` → `inicio` (desde la v1.4).
-  - `inicio`: título, red, condiciones de uso (si están activadas) y botón «Empezar».
+  - `inicio`: título (y la frase opcional `kiosk.intro`) y una tarjeta con las condiciones de uso
+    (si están activadas), el selector de red (si hay varias) y el botón «Empezar». Poco texto.
   - `pasos`: los tres pasos a la vista (horizontal: tres columnas con la central más ancha;
     vertical: apilados): 1. Conéctate a la red (QR), 2. Solicita tu código (botón; el código
-    aparece ahí), 3. Escribe el código en tu móvil, ordenador o tablet. El paso 2 pasa por
+    aparece ahí), 3. Escribe el código (en tu dispositivo y pulsa «Conectar»). El paso 2 pasa por
     `antes` → `cargando` → `codigo`; la espera entre códigos se muestra como cuenta atrás en el
     propio botón y los demás errores, en rojo en ese paso. 2 minutos sin actividad → `inicio`.
 - El código solo se genera al pulsar «Solicitar código».
@@ -141,7 +142,9 @@ El quiosco debe parecer un **servicio de una administración pública**: sobrio,
 cuadradas, con una paleta azul institucional. La organización concreta no se nombra en el código: su
 nombre se lee de `kiosk.organization` y su logotipo de `kiosk.logo_path`.
 
-**Paleta** (define estas variables CSS en `app.css` y usa solo estas):
+**Paleta** (define estas variables CSS en `app.css` y usa solo estas; desde la v1.5, `CONTEXTO.md`
+§9 añade un azul de texto, un gris de cuerpo y los fondos de los temas, porque `--azul` sobre blanco
+no llega al contraste mínimo para texto):
 
 | Variable | Valor | Uso en el quiosco |
 |---|---|---|
@@ -169,9 +172,12 @@ en `internal/web/static/fonts/`, embebidas en el binario; **ningún `<link>` a f
 
 **Formas y composición:**
 
-- Cabecera blanca de ~90 px de alto con el **logotipo a la izquierda** (si lo hay) y, a la derecha,
-  el nombre del servicio en Raleway mayúsculas gris (`--gris-nav`). Fina sombra debajo
-  (`0 0 2px rgba(0,0,0,.5)`).
+- Cabecera blanca de ~90 px de alto con el **logotipo a la izquierda** (o el nombre de la
+  organización). Fina sombra debajo (`0 0 2px rgba(0,0,0,.5)`).
+- **Temas** (`kiosk.theme`, elegibles en `/admin` → *Apariencia*): `claro` (fondo gris azulado) y
+  `banda` (banda azul oscuro detrás del título y de la parte alta de los pasos). Un tema nuevo =
+  sus reglas `.tema-<id>` en `app.css`, su entrada en `config.Themes` y su miniatura
+  `static/tema-<id>.png` (480×270).
 - Todo **cuadrado o casi**: radios de 0–4 px en tarjetas y botones (0 px en tarjetas, 2 px en
   botones). Nada de pastillas redondeadas ni degradados.
 - Tarjeta central blanca sobre fondo `--gris-fondo`, con sombra amplia y suave
@@ -187,7 +193,7 @@ en `internal/web/static/fonts/`, embebidas en el binario; **ningún `<link>` a f
 
 **Logotipo y nombre:** no incrustes ningún logotipo ni nombre de organización en el código. La app
 lee `logo.svg`/`logo.png` del directorio de datos (`kiosk.logo_path`) y el nombre de
-`kiosk.organization`. Si ambos están vacíos, la cabecera muestra solo el título del servicio.
+`kiosk.organization`. Si ambos están vacíos, la cabecera queda en blanco.
 
 **Comprobación:** la pantalla debe leerse como un servicio público serio, sin que nada en ella (ni en
 el repositorio) identifique a qué organización pertenece.

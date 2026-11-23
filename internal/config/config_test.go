@@ -194,18 +194,14 @@ func TestGetDevuelveCopia(t *testing.T) {
 
 func TestTextosYCondiciones(t *testing.T) {
 	c := Default()
-	if c.Kiosk.TermsEnabled || c.Kiosk.HeaderName() != c.Kiosk.Title || c.Kiosk.TermsVersion() != "" {
-		t.Error("por defecto: sin condiciones y la cabecera muestra el título")
+	if c.Kiosk.TermsEnabled || c.Kiosk.Intro != "" || c.Kiosk.TermsVersion() != "" {
+		t.Error("por defecto: sin condiciones ni frase bajo el título")
 	}
-	c.Kiosk.HeaderText = "  Servicio de Wi-Fi  "
 	c.Kiosk.Intro = "Línea 1  \r\nLínea 2\r\n"
 	c.Kiosk.TermsEnabled = true
 	c.Kiosk.TermsText = "\r\n1. Uso responsable.\r\n\r\n2. Sin garantías.  \r\n"
 	if err := c.Validate(); err != nil {
 		t.Fatal(err)
-	}
-	if c.Kiosk.HeaderName() != "Servicio de Wi-Fi" {
-		t.Errorf("cabecera: %q", c.Kiosk.HeaderName())
 	}
 	if c.Kiosk.Intro != "Línea 1\nLínea 2" || c.Kiosk.TermsText != "1. Uso responsable.\n\n2. Sin garantías." {
 		t.Errorf("textos sin normalizar: %q / %q", c.Kiosk.Intro, c.Kiosk.TermsText)
@@ -224,7 +220,6 @@ func TestTextosLimites(t *testing.T) {
 	casos := map[string]func(*Config){
 		"condiciones vacías": func(c *Config) { c.Kiosk.TermsEnabled = true; c.Kiosk.TermsText = "  " },
 		"título largo":       func(c *Config) { c.Kiosk.Title = strings.Repeat("á", MaxTitleLen+1) },
-		"cabecera larga":     func(c *Config) { c.Kiosk.HeaderText = strings.Repeat("x", MaxTitleLen+1) },
 		"intro larga":        func(c *Config) { c.Kiosk.Intro = strings.Repeat("x", MaxIntroLen+1) },
 		"condiciones largas": func(c *Config) { c.Kiosk.TermsText = strings.Repeat("x", MaxTermsLen+1) },
 	}
@@ -274,5 +269,37 @@ func TestMigracionCaducidadSinUso(t *testing.T) {
 	data, _ := os.ReadFile(path)
 	if strings.Contains(string(data), "unused_cleanup_hours") || !strings.Contains(string(data), `"unused_expire_minutes": 180`) {
 		t.Errorf("fichero guardado: %s", data)
+	}
+}
+
+func TestTema(t *testing.T) {
+	c := Default()
+	if c.Kiosk.Theme != DefaultTheme || !ValidTheme("claro") || !ValidTheme("banda") || ValidTheme("rosa") {
+		t.Fatalf("temas: por defecto %q", c.Kiosk.Theme)
+	}
+	for entrada, want := range map[string]string{"banda": "banda", " BANDA ": "banda", "rosa": DefaultTheme, "": DefaultTheme} {
+		c := Default()
+		c.Kiosk.Theme = entrada
+		if err := c.Validate(); err != nil {
+			t.Fatal(err)
+		}
+		if c.Kiosk.Theme != want {
+			t.Errorf("tema %q → %q, se esperaba %q", entrada, c.Kiosk.Theme, want)
+		}
+	}
+}
+
+// Una configuración anterior a la v1.5 (con header_text y sin theme) sigue cargando.
+func TestConfiguracionAnteriorConCabecera(t *testing.T) {
+	c, err := Parse([]byte(`{"kiosk":{"title":"Wi-Fi gratuita","header_text":"Servicio antiguo"}}`))
+	if err != nil {
+		t.Fatalf("debe aceptar header_text: %v", err)
+	}
+	if c.Kiosk.Theme != DefaultTheme {
+		t.Errorf("sin tema debe usarse el de por defecto, no %q", c.Kiosk.Theme)
+	}
+	b, _ := json.Marshal(c)
+	if strings.Contains(string(b), "header_text") {
+		t.Error("header_text no debe volver a escribirse")
 	}
 }

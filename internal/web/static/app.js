@@ -139,9 +139,8 @@
     var cont = $('codigo-valor');
     while (cont.firstChild) cont.removeChild(cont.firstChild);
     cont.appendChild(document.createTextNode(d.formatted));
-    $('validez').textContent = d.valid_for || '';
-    $('caduca').textContent = d.use_within || '';
-    $('caduca').hidden = !d.use_within;
+    // Una sola línea: «Válido 4 horas · úsalo en menos de 15 minutos».
+    $('validez').textContent = [d.valid_for, d.use_within].filter(Boolean).join(' · ');
     ponerFase('codigo');
     iniciarCuenta(d.expires_in_seconds || cfg.display_seconds || 60);
   }
@@ -212,8 +211,6 @@
     var cont = $('codigo-valor');
     while (cont.firstChild) cont.removeChild(cont.firstChild);
     $('validez').textContent = '';
-    $('caduca').textContent = '';
-    $('caduca').hidden = true;
     $('cuenta-texto').textContent = '';
     $('qr').removeAttribute('src');
     ocultarError();

@@ -16,6 +16,18 @@
   --gris-boton: #EAEAEA;
   --blanco: #FFFFFF;
 
+  /* Legibilidad del quiosco (v1.5): el azul y el gris originales se quedan cortos de
+     contraste para texto (3,1 : 1). Para texto y botones se usa un azul más oscuro. */
+  --azul-texto: #00618A;      /* ≈ 6,8 : 1 sobre blanco */
+  --azul-pulsado: #004D6E;
+  --texto: #333333;           /* ≈ 12,6 : 1 */
+  --gris-espera: #7B878E;     /* paso que aún no toca: número e icono */
+  --gris-espera-borde: #B4C0C7;
+  --gris-barra: #D5DDE2;
+  /* Fondos de los temas */
+  --fondo-claro: #DCE6EC;     /* tema «Claro» */
+  --fondo-banda: #EEF2F5;     /* tema «Banda azul» (la banda es --azul-texto) */
+
   --fuente-titulo: "Montserrat", "Segoe UI", Roboto, Arial, sans-serif;
   --fuente-etiqueta: "Raleway", "Segoe UI", Roboto, Arial, sans-serif;
   --fuente-texto: "Open Sans", "Segoe UI", Roboto, Arial, sans-serif;
@@ -61,6 +73,10 @@ body:not(.admin) {
 }
 body:not(.admin) img { -webkit-user-drag: none; pointer-events: none; }
 
+/* ---- Temas (kiosk.theme): clase tema-<id> en el <body> ---- */
+body.tema-claro { background: var(--fondo-claro); }
+body.tema-banda { background: var(--fondo-banda); }
+
 /* Foto de fondo opcional con la capa blanca semitransparente del portal. */
 body.con-fondo { background: var(--gris-fondo) url(/background) center / cover no-repeat; }
 body.con-fondo::before {
@@ -68,6 +84,8 @@ body.con-fondo::before {
   background: rgba(255, 255, 255, .56);
 }
 body > * { position: relative; z-index: 1; }
+/* Por encima del contenido: la banda azul del tema «Banda azul» nunca los tapa. */
+body > .cabecera, body > .franja-prueba { z-index: 2; }
 
 .franja-prueba {
   background: var(--amarillo);
@@ -129,24 +147,41 @@ body > * { position: relative; z-index: 1; }
 .icono-grande path {
   fill: none; stroke-width: 2.5; stroke-linecap: square;
 }
-.icono-grande path { stroke: var(--azul); }
-.icono-grande .relleno { fill: var(--azul); }
+.icono-grande path { stroke: var(--azul-texto); }
+.icono-grande .relleno { fill: var(--azul-texto); }
 
 .titulo {
   font-family: var(--fuente-titulo);
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--azul);
+  color: var(--azul-texto);
   font-size: 72px;
   line-height: 1.1;
   letter-spacing: .02em;
-  margin: 0 0 24px;
+  margin: 0;
 }
 .intro {
-  font-weight: 300;
-  font-size: 30px;
+  font-size: 28px;
+  color: var(--texto);
   max-width: 900px;
-  margin: 0 0 48px;
+  margin: 12px 0 0;
+}
+.encabezado-inicio {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+}
+/* Casilla de las condiciones, selector de red y botón «Empezar», en una tarjeta blanca. */
+.tarjeta-inicio {
+  background: var(--blanco);
+  box-shadow: 0 0 30px rgba(0, 0, 0, .18);
+  padding: 40px 64px 48px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .etiqueta {
@@ -159,20 +194,10 @@ body > * { position: relative; z-index: 1; }
   font-size: 18px;
   margin-bottom: 8px;
 }
-.red { margin-bottom: 48px; }
-.ssid {
-  /* Sin mayúsculas: el SSID debe leerse igual que en la lista de redes del móvil. */
-  font-family: var(--fuente-titulo);
-  font-weight: 700;
-  color: var(--azul);
-  font-size: 40px;
-  letter-spacing: .03em;
-}
-
 .selector-red {
   border: 0;
   padding: 0;
-  margin: 0 0 48px;
+  margin: 0 0 32px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -193,7 +218,7 @@ body > * { position: relative; z-index: 1; }
   font-size: 28px;
   color: var(--gris-oscuro-2);
 }
-.opcion-red input:checked + span { border-color: var(--azul); color: var(--azul); }
+.opcion-red input:checked + span { border-color: var(--azul-texto); color: var(--azul-texto); }
 
 .boton {
   font-family: var(--fuente-etiqueta);
@@ -206,15 +231,15 @@ body > * { position: relative; z-index: 1; }
   transition: background-color .15s;
 }
 .boton-principal {
-  background: var(--azul);
+  background: var(--azul-texto);
   color: var(--blanco);
   min-height: 112px;
   min-width: 560px;
   padding: 0 64px;
   font-size: 40px;
 }
-.boton-principal:hover, .boton-principal:focus-visible { background: var(--azul-claro); outline: none; }
-.boton-principal:active { background: var(--azul-oscuro); }
+.boton-principal:hover, .boton-principal:focus-visible { background: var(--azul-oscuro); outline: none; }
+.boton-principal:active { background: var(--azul-pulsado); }
 .boton-secundario {
   background: var(--gris-boton);
   color: var(--gris-oscuro);
@@ -227,15 +252,15 @@ body > * { position: relative; z-index: 1; }
 .condiciones {
   width: 100%;
   max-width: 900px;
-  margin: 0 0 36px;
-  padding: 8px 0;
+  margin: 0 0 32px;
+  padding: 0;
 }
 .acepto {
   display: inline-flex;
   align-items: center;
   gap: 18px;
   font-size: 26px;
-  color: var(--gris-oscuro-2);
+  color: var(--texto);
   cursor: pointer;
   text-align: left;
 }
@@ -244,7 +269,7 @@ body > * { position: relative; z-index: 1; }
   height: 44px;
   flex: none;
   margin: 0;
-  accent-color: var(--azul);
+  accent-color: var(--azul-texto);
   cursor: pointer;
 }
 .ver-condiciones {
@@ -254,12 +279,14 @@ body > * { position: relative; z-index: 1; }
   padding: 0 20px;
   background: none;
   border: 0;
-  color: var(--azul);
+  color: var(--azul-texto);
   font-family: var(--fuente-etiqueta);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .1em;
-  font-size: 18px;
+  font-size: 20px;
+  text-decoration: underline;
+  text-underline-offset: 6px;
   cursor: pointer;
 }
 .ver-condiciones::after { content: " ▾"; }
@@ -279,12 +306,12 @@ body > * { position: relative; z-index: 1; }
   font-family: var(--fuente-titulo);
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--azul);
+  color: var(--azul-texto);
   font-size: 20px;
   letter-spacing: .04em;
   margin: 0 0 12px;
 }
-.texto-condiciones .texto { white-space: pre-line; font-size: 20px; line-height: 1.5; }
+.texto-condiciones .texto { white-space: pre-line; font-size: 20px; line-height: 1.5; color: var(--texto); }
 .aviso-aceptar { color: var(--rojo); font-size: 22px; margin: 14px 0 0; }
 .condiciones.resaltar .acepto { animation: resaltar .6s ease-in-out 2; }
 @keyframes resaltar { 50% { color: var(--rojo); } }
@@ -296,19 +323,15 @@ body:not(.admin) .boton[disabled] { opacity: 1; } /* en el quiosco el texto de e
 #btn-solicitar.inactivo { font-size: 28px; letter-spacing: .02em; text-transform: none; } /* texto de espera: más largo y con «s» de segundos */
 /* Con las condiciones abiertas se oculta el icono para que todo quepa en pantalla. */
 .condiciones-abiertas .icono-grande { display: none; }
-.condiciones-abiertas .intro { margin-bottom: 24px; }
 /* En horizontal no cabe todo: mientras se leen las condiciones se ocultan los textos secundarios. */
 @media (orientation: landscape) {
   .condiciones-abiertas .intro,
-  .condiciones-abiertas .red,
-  .condiciones-abiertas .selector-red,
-  .condiciones-abiertas .validez-inicio { display: none; }
-  .condiciones-abiertas .titulo { margin-bottom: 16px; }
+  .condiciones-abiertas .selector-red { display: none; }
+  .condiciones-abiertas .encabezado-inicio { margin-bottom: 24px; }
   .condiciones-abiertas .condiciones { margin-bottom: 24px; }
+  .condiciones-abiertas .tarjeta-inicio { padding-top: 28px; padding-bottom: 32px; }
   .texto-condiciones { max-height: 36vh; }
 }
-
-.validez-inicio { margin: 24px 0 0; font-size: 22px; color: var(--gris-nav); }
 
 /* ---- Pantalla de pasos ----
    Horizontal: tres columnas (el paso 2, donde aparece el código, es el más ancho).
@@ -332,9 +355,11 @@ body:not(.admin) .boton[disabled] { opacity: 1; } /* en el quiosco el texto de e
   text-align: center;
   min-width: 0;
 }
-.paso-tarjeta.activo { border-top-color: var(--azul); }
+.paso-tarjeta.activo { border-top-color: var(--azul-texto); }
 .paso-tarjeta.hecho { border-top-color: var(--azul-oscuro); }
-.paso-tarjeta.espera { opacity: .55; }
+/* El paso que aún no toca se distingue por el borde, el número y el icono en gris,
+   sin desvanecer el texto (sigue leyéndose bien). */
+.paso-tarjeta.espera { border-top-color: var(--gris-espera-borde); }
 .paso-cab { display: flex; align-items: center; gap: 14px; align-self: stretch; margin-bottom: 18px; }
 .paso-n {
   width: 46px; height: 46px; flex: none;
@@ -342,36 +367,40 @@ body:not(.admin) .boton[disabled] { opacity: 1; } /* en el quiosco el texto de e
   font-family: var(--fuente-etiqueta); font-weight: 700; font-size: 22px;
   color: var(--blanco); background: var(--gris-nav);
 }
-.paso-tarjeta.activo .paso-n { background: var(--azul); }
+.paso-tarjeta.activo .paso-n { background: var(--azul-texto); }
+.paso-tarjeta.espera .paso-n { background: var(--gris-espera); }
 .paso-tarjeta.hecho .paso-n { background: var(--azul-oscuro); }
 .paso-titulo {
   margin: 0;
   font-family: var(--fuente-titulo); font-weight: 700; text-transform: uppercase;
-  color: var(--azul); font-size: 24px; line-height: 1.15; text-align: left;
+  color: var(--azul-texto); font-size: 25px; line-height: 1.15; text-align: left;
 }
-.paso-tarjeta.espera .paso-titulo { color: var(--gris-nav); }
-.paso-tarjeta p { margin: 10px 0 0; font-size: 21px; line-height: 1.4; color: var(--gris-texto); }
+.paso-tarjeta.espera .paso-titulo { color: var(--gris-oscuro-2); }
+.paso-tarjeta p { margin: 10px 0 0; font-size: 24px; line-height: 1.4; color: var(--texto); }
 .paso-bloque { display: flex; flex-direction: column; align-items: center; align-self: stretch; }
 .paso-icono { width: 64px; height: 64px; margin: 6px 0 4px; }
-.paso-icono path, .paso-icono rect { fill: none; stroke: var(--azul); stroke-width: 2.5; }
-.paso-tarjeta.espera .paso-icono path, .paso-tarjeta.espera .paso-icono rect { stroke: var(--gris-nav); }
+.paso-icono path, .paso-icono rect { fill: none; stroke: var(--azul-texto); stroke-width: 2.5; }
+.paso-tarjeta.espera .paso-icono path, .paso-tarjeta.espera .paso-icono rect { stroke: var(--gris-espera); }
 .paso-qr { width: 230px; height: 230px; border: 4px solid var(--azul-claro); background: var(--blanco); }
-.paso-ssid { font-family: var(--fuente-titulo); font-weight: 700; color: var(--azul); font-size: 26px; overflow-wrap: anywhere; }
+.paso-ssid {
+  /* Sin mayúsculas: el SSID debe leerse igual que en la lista de redes del móvil. */
+  font-family: var(--fuente-titulo); font-weight: 700; color: var(--azul-texto);
+  font-size: 28px; margin-top: 10px; overflow-wrap: anywhere;
+}
 .paso-tarjeta .boton-principal { min-width: 0; width: 100%; max-width: 560px; min-height: 104px; font-size: 34px; margin-top: 22px; }
-.paso-nota { font-size: 18px !important; color: var(--gris-nav) !important; }
 .error-paso { color: var(--rojo) !important; font-weight: 700; font-size: 22px !important; }
 .pie-pasos { display: flex; justify-content: flex-end; width: 100%; margin-top: 22px; }
 
 /* Cargando (dentro del paso 2) */
 .cargador { display: flex; gap: 18px; margin: 40px 0 24px; }
 .cargador span {
-  width: 28px; height: 28px; background: var(--azul);
+  width: 28px; height: 28px; background: var(--azul-texto);
   animation: latido 1.2s infinite ease-in-out both;
 }
 .cargador span:nth-child(2) { animation-delay: .2s; }
 .cargador span:nth-child(3) { animation-delay: .4s; }
 @keyframes latido { 0%, 80%, 100% { opacity: .2; transform: scale(.7); } 40% { opacity: 1; transform: scale(1); } }
-.mensaje { font-size: 28px !important; font-weight: 300; margin: 0; }
+.mensaje { font-size: 28px !important; margin: 0; }
 
 /* Código (dentro del paso 2) */
 .codigo {
@@ -386,21 +415,34 @@ body:not(.admin) .boton[disabled] { opacity: 1; } /* en el quiosco el texto de e
   font-variant-numeric: tabular-nums;
   margin: 10px 0 6px;
 }
-.validez { font-size: 22px; margin: 12px 0 0; color: var(--gris-texto); }
-.caduca { font-size: 22px; font-weight: 700; margin: 10px 0 0; color: var(--azul-oscuro) !important; }
-.cuenta { align-self: stretch; margin-top: 18px; text-align: left; }
-#cuenta-texto { color: var(--azul); font-weight: 700; font-size: 20px; }
-.barra { height: 8px; background: var(--gris-boton); margin-top: 8px; }
-#cuenta-barra { height: 100%; width: 100%; background: var(--azul); transition: width .25s linear; }
+.paso-tarjeta .validez { font-size: 24px; font-weight: 700; margin: 14px 0 0; }
+.cuenta { align-self: stretch; margin-top: 22px; text-align: left; }
+#cuenta-texto { color: var(--texto); font-size: 22px; }
+.barra { height: 10px; background: var(--gris-barra); margin-top: 8px; }
+#cuenta-barra { height: 100%; width: 100%; background: var(--azul-texto); transition: width .25s linear; }
 
-.pie {
-  flex: none;
-  pointer-events: none; /* es solo texto: nunca debe tapar un botón */
-  text-align: center;
-  color: var(--gris-nav);
-  font-size: 18px;
-  padding: 16px 24px 24px;
+/* ---- Tema «Banda azul»: banda de --azul-texto a todo lo ancho, detrás del título de
+   inicio y de la parte alta de los pasos. Se dibuja con un ::before muy ancho detrás del
+   contenido (la cabecera queda por encima). ---- */
+.tema-banda .encabezado-inicio::before,
+.tema-banda .guia::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -100vmax;
+  right: -100vmax;
+  top: -100vmax;
+  background: var(--azul-texto);
 }
+.tema-banda .encabezado-inicio::before { bottom: -80px; } /* la banda llega a media tarjeta */
+.tema-banda .guia { position: relative; }
+.tema-banda .guia::before { height: calc(100vmax + 45%); }
+.tema-banda .encabezado-inicio .titulo,
+.tema-banda .encabezado-inicio .intro { color: var(--blanco); }
+.tema-banda .icono-grande path { stroke: var(--blanco); }
+.tema-banda .icono-grande .relleno { fill: var(--blanco); }
+.tema-banda .paso-tarjeta,
+.tema-banda .tarjeta-inicio { box-shadow: 0 0 30px rgba(0, 0, 0, .25); }
 
 /* ---- Pantalla vertical ---- */
 @media (orientation: portrait) {
@@ -425,12 +467,15 @@ body:not(.admin) .boton[disabled] { opacity: 1; } /* en el quiosco el texto de e
   .contenido { padding: 24px 48px; }
   .icono-grande { display: none; }
   .titulo { font-size: 56px; margin-bottom: 12px; }
-  .intro { font-size: 24px; margin-bottom: 24px; }
-  .red, .selector-red { margin-bottom: 28px; }
+  .intro { font-size: 24px; }
+  .encabezado-inicio { margin-bottom: 24px; }
+  .tarjeta-inicio { padding: 24px 40px 28px; }
+  .selector-red { margin-bottom: 24px; }
   .paso-tarjeta { padding: 18px 20px 22px; }
   .paso-cab { margin-bottom: 10px; }
   .paso-titulo { font-size: 19px; }
-  .paso-tarjeta p { font-size: 17px; }
+  .paso-tarjeta p { font-size: 19px; }
+  .paso-tarjeta .validez { font-size: 19px; }
   .paso-qr { width: 170px; height: 170px; }
   .paso-tarjeta .boton-principal { min-height: 80px; font-size: 26px; }
   .pie-pasos { margin-top: 14px; }
@@ -582,3 +627,16 @@ body.admin { font-size: 16px; }
 .sin-resultados { color: var(--gris-nav); }
 
 .codigo-prueba { font-weight: 700; font-size: 32px; letter-spacing: .08em; color: var(--gris-oscuro); }
+
+/* Selector de tema del quiosco (Apariencia) */
+.temas { border: 0; padding: 0; margin: 0 0 20px; display: flex; flex-wrap: wrap; gap: 14px 20px; }
+.temas legend { font-weight: 700; color: var(--gris-oscuro-2); margin-bottom: 10px; padding: 0; }
+.temas small { flex-basis: 100%; }
+.tema { display: flex; flex-direction: column; gap: 6px; cursor: pointer; }
+.tema input { position: absolute; opacity: 0; pointer-events: none; }
+.tema img { display: block; width: 240px; height: 135px; border: 3px solid var(--gris-boton); }
+.tema span { font-weight: 700; color: var(--gris-oscuro-2); }
+.tema input:checked ~ img { border-color: var(--azul-texto); }
+.tema input:checked ~ span { color: var(--azul-texto); }
+.tema input:checked ~ span::before { content: "✓ "; }
+.tema input:focus-visible ~ img { outline: 3px solid var(--azul-claro); outline-offset: 2px; }

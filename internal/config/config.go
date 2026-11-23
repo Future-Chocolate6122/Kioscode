@@ -73,9 +73,13 @@ type Voucher struct {
 type Kiosk struct {
 	Title        string `json:"title"`
 	Organization string `json:"organization"`
-	// Textos editables desde /admin (vacío = texto por defecto del idioma).
-	HeaderText string `json:"header_text"` // nombre del servicio en la cabecera; vacío = título
-	Intro      string `json:"intro"`       // texto bajo el título de la pantalla de inicio
+	// Intro: frase opcional bajo el título de la pantalla de inicio (vacío = no se muestra).
+	Intro string `json:"intro"`
+	// Theme: aspecto del quiosco (ver Themes). Vacío o desconocido = DefaultTheme.
+	Theme string `json:"theme"`
+	// Obsoleto (hasta la v1.4): nombre en la cabecera. Se acepta al leer para que las
+	// configuraciones anteriores sigan cargando, pero no se usa ni se vuelve a escribir.
+	LegacyHeaderText string `json:"header_text,omitempty"`
 	// Condiciones de uso: si están activadas, el ciudadano debe aceptarlas antes de obtener el código.
 	TermsEnabled    bool   `json:"terms_enabled"`
 	TermsText       string `json:"terms_text"`
@@ -108,6 +112,7 @@ func Default() Config {
 		},
 		Kiosk: Kiosk{
 			Title:           "Wi-Fi gratuita",
+			Theme:           DefaultTheme,
 			DisplaySeconds:  60,
 			CooldownSeconds: 20,
 			DailyLimit:      300,
@@ -116,24 +121,36 @@ func Default() Config {
 	}
 }
 
+// Temas del quiosco que se pueden elegir en /admin. La clave es el valor de kiosk.theme y
+// la clase CSS del <body> (tema-<clave>); el valor, el nombre que se ve en /admin.
+var Themes = []struct{ ID, Name string }{
+	{"claro", "Claro"},
+	{"banda", "Banda azul"},
+}
+
+// DefaultTheme es el tema de una instalación nueva o de una configuración sin tema válido.
+const DefaultTheme = "claro"
+
+// ValidTheme indica si id es uno de los temas disponibles.
+func ValidTheme(id string) bool {
+	for _, t := range Themes {
+		if t.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
 // Límites de longitud de los textos editables (en caracteres).
 const (
 	MaxDataMB = 1048576 // máximo de dataUsageLimitMBytes en la Integration API
 	// MaxUnusedExpireMinutes: caducidad máxima de los códigos sin usar (7 días).
 	MaxUnusedExpireMinutes = 7 * 24 * 60
 	MaxTitleLen            = 60
-	MaxIntroLen            = 400
+	MaxIntroLen            = 120 // una frase: la pantalla de inicio debe tener poco texto
 	MaxTermsLen            = 20000
 	termsVerSize           = 8
 )
-
-// HeaderName es el nombre del servicio que se muestra en la cabecera.
-func (k Kiosk) HeaderName() string {
-	if k.HeaderText != "" {
-		return k.HeaderText
-	}
-	return k.Title
-}
 
 // TermsVersion identifica el texto de las condiciones (8 cifras hexadecimales de su
 // SHA-256). Cambia en cuanto se edita el texto y se anota en el log de cada código.
@@ -275,13 +292,15 @@ func (c *Config) Validate() error {
 	if c.Kiosk.Title == "" {
 		add("kiosk.title: no puede estar vacío")
 	}
-	c.Kiosk.HeaderText = strings.TrimSpace(c.Kiosk.HeaderText)
 	c.Kiosk.Intro = cleanText(c.Kiosk.Intro)
 	c.Kiosk.TermsText = cleanText(c.Kiosk.TermsText)
-	for name, v := range map[string]string{"kiosk.title": c.Kiosk.Title, "kiosk.header_text": c.Kiosk.HeaderText} {
-		if utf8.RuneCountInString(v) > MaxTitleLen {
-			add("%s: como máximo %d caracteres", name, MaxTitleLen)
-		}
+	if utf8.RuneCountInString(c.Kiosk.Title) > MaxTitleLen {
+		add("kiosk.title: como máximo %d caracteres", MaxTitleLen)
+	}
+	// Un tema desconocido (o una configuración anterior sin tema) usa el de por defecto.
+	c.Kiosk.Theme = strings.ToLower(strings.TrimSpace(c.Kiosk.Theme))
+	if !ValidTheme(c.Kiosk.Theme) {
+		c.Kiosk.Theme = DefaultTheme
 	}
 	if utf8.RuneCountInString(c.Kiosk.Intro) > MaxIntroLen {
 		add("kiosk.intro: como máximo %d caracteres", MaxIntroLen)
@@ -419,6 +438,7 @@ func Parse(data []byte) (Config, error) {
 		return Config{}, fmt.Errorf("JSON no válido: %w", err)
 	}
 	migrateCleanup(data, &cfg)
+	cfg.Kiosk.LegacyHeaderText = ""
 	if err := cfg.Validate(); err != nil {
 		return Config{}, err
 	}

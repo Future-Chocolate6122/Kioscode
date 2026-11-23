@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="/static/app.css?v={{.Version}}">
 <script src="/static/app.js?v={{.Version}}" defer></script>
 </head>
-<body class="{{if .Mock}}modo-prueba{{end}}{{if .HasBackground}} con-fondo{{end}}"
+<body class="tema-{{.Theme}}{{if .Mock}} modo-prueba{{end}}{{if .HasBackground}} con-fondo{{end}}"
       data-config="{{.ClientConfig}}" data-ssid="{{.MainSSID}}">
 
 {{if .Mock}}<div class="franja-prueba" role="status">{{.T.modo_prueba}}</div>{{end}}
@@ -17,54 +17,51 @@
   <div class="logo">
     {{if .HasLogo}}<img src="/logo?v={{.Rev}}" alt="{{.Organization}}">{{else if .Organization}}<span class="logo-texto">{{.Organization}}</span>{{end}}
   </div>
-  <div class="servicio">{{.HeaderName}}</div>
 </header>
 
 <main class="contenido">
 
   <!-- Estado «inicio» -->
   <section id="inicio" class="pantalla activa" aria-live="polite">
-    <svg class="icono-grande" viewBox="0 0 48 48" aria-hidden="true">
-      <path d="M4 18a28 28 0 0 1 40 0M10 25a19 19 0 0 1 28 0M16 32a10 10 0 0 1 16 0"/>
-      <circle cx="24" cy="38" r="2.5" class="relleno"/>
-    </svg>
-    <h1 class="titulo">{{.Title}}</h1>
-    <p class="intro">{{.Intro}}</p>
+    <div class="encabezado-inicio">
+      <svg class="icono-grande" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M4 18a28 28 0 0 1 40 0M10 25a19 19 0 0 1 28 0M16 32a10 10 0 0 1 16 0"/>
+        <circle cx="24" cy="38" r="2.5" class="relleno"/>
+      </svg>
+      <h1 class="titulo">{{.Title}}</h1>
+      {{if .Intro}}<p class="intro">{{.Intro}}</p>{{end}}
+    </div>
 
-    {{if gt (len .SSIDs) 1}}
-    <fieldset class="selector-red">
-      <legend class="etiqueta">{{.T.elige_red}}</legend>
-      {{range $i, $s := .SSIDs}}
-      <label class="opcion-red">
-        <input type="radio" name="ssid" value="{{$s}}"{{if eq $i 0}} checked{{end}}>
-        <span>{{$s}}</span>
-      </label>
+    <div class="tarjeta-inicio">
+      {{if gt (len .SSIDs) 1}}
+      <fieldset class="selector-red">
+        <legend class="etiqueta">{{.T.elige_red}}</legend>
+        {{range $i, $s := .SSIDs}}
+        <label class="opcion-red">
+          <input type="radio" name="ssid" value="{{$s}}"{{if eq $i 0}} checked{{end}}>
+          <span>{{$s}}</span>
+        </label>
+        {{end}}
+      </fieldset>
       {{end}}
-    </fieldset>
-    {{else}}
-    <div class="red">
-      <span class="etiqueta">{{.T.red}}</span>
-      <span class="ssid">{{.MainSSID}}</span>
-    </div>
-    {{end}}
 
-    {{if .TermsEnabled}}
-    <div class="condiciones" id="condiciones">
-      <label class="acepto">
-        <input type="checkbox" id="acepto">
-        <span>{{.T.acepto}}</span>
-      </label>
-      <button type="button" class="ver-condiciones" id="btn-condiciones" aria-expanded="false" aria-controls="texto-condiciones">{{.T.ver_condiciones}}</button>
-      <div class="texto-condiciones" id="texto-condiciones" hidden>
-        <h2 class="titulo-condiciones">{{.T.condiciones_titulo}}</h2>
-        <div class="texto">{{.TermsText}}</div>
+      {{if .TermsEnabled}}
+      <div class="condiciones" id="condiciones">
+        <label class="acepto">
+          <input type="checkbox" id="acepto">
+          <span>{{.T.acepto}}</span>
+        </label>
+        <button type="button" class="ver-condiciones" id="btn-condiciones" aria-expanded="false" aria-controls="texto-condiciones">{{.T.ver_condiciones}}</button>
+        <div class="texto-condiciones" id="texto-condiciones" hidden>
+          <h2 class="titulo-condiciones">{{.T.condiciones_titulo}}</h2>
+          <div class="texto">{{.TermsText}}</div>
+        </div>
+        <p class="aviso-aceptar" id="aviso-aceptar" hidden>{{.T.aviso_aceptar}}</p>
       </div>
-      <p class="aviso-aceptar" id="aviso-aceptar" hidden>{{.T.aviso_aceptar}}</p>
-    </div>
-    {{end}}
+      {{end}}
 
-    <button id="btn-empezar" type="button" class="boton boton-principal{{if .TermsEnabled}} inactivo{{end}}"{{if .TermsEnabled}} aria-disabled="true"{{end}}>{{.T.boton_empezar}}</button>
-    <p class="validez-inicio">{{.Validity}}</p>
+      <button id="btn-empezar" type="button" class="boton boton-principal{{if .TermsEnabled}} inactivo{{end}}"{{if .TermsEnabled}} aria-disabled="true"{{end}}>{{.T.boton_empezar}}</button>
+    </div>
   </section>
 
   <!-- Estado «pasos»: los tres pasos en una sola pantalla.
@@ -74,9 +71,8 @@
       <div class="paso-tarjeta activo" id="paso-1">
         <div class="paso-cab"><span class="paso-n">1</span><h2 class="paso-titulo">{{.T.paso1_titulo}}</h2></div>
         <img id="qr" class="paso-qr" alt="QR">
-        <p>{{.T.paso1_qr}}</p>
         <div class="paso-ssid" id="paso-ssid">{{.MainSSID}}</div>
-        <p>{{.T.paso1_espera}}</p>
+        <p>{{.T.paso1_qr}}</p>
       </div>
 
       <div class="paso-tarjeta activo principal" id="paso-2">
@@ -86,7 +82,6 @@
           <p>{{.T.paso2_texto}}</p>
           <p class="error-paso" id="error-texto" role="alert" hidden></p>
           <button id="btn-solicitar" type="button" class="boton boton-principal">{{.T.boton_solicitar}}</button>
-          <p class="paso-nota">{{.T.paso2_nota}}</p>
         </div>
         <div id="paso2-cargando" class="paso-bloque" hidden>
           <div class="cargador" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -95,7 +90,6 @@
         <div id="paso2-codigo" class="paso-bloque" hidden>
           <div id="codigo-valor" class="codigo"></div>
           <p id="validez" class="validez"></p>
-          <p id="caduca" class="caduca" hidden></p>
           <div class="cuenta">
             <span id="cuenta-texto"></span>
             <div class="barra"><div id="cuenta-barra"></div></div>
@@ -107,7 +101,6 @@
         <div class="paso-cab"><span class="paso-n">3</span><h2 class="paso-titulo">{{.T.paso3_titulo}}</h2></div>
         <svg class="paso-icono" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="13" width="40" height="22" rx="1"/><path d="M10 19h2M16 19h2M22 19h2M28 19h2M34 19h4M10 24h2M16 24h2M22 24h2M28 24h2M34 24h4M14 29h20"/></svg>
         <p>{{.T.paso3_texto}}</p>
-        <p>{{.T.paso3_listo}}</p>
       </div>
     </div>
     <div class="pie-pasos">
@@ -117,6 +110,5 @@
 
 </main>
 
-<footer class="pie">{{.T.pie}}</footer>
 </body>
 </html>

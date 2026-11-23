@@ -11,7 +11,7 @@ de su móvil, ordenador o tablet.
 - Funciona **sin Internet**: fuentes, estilos y QR van dentro del ejecutable.
 - La **API key de UniFi solo la conoce este servidor**: los tótems nunca la ven.
 - Todo se configura desde **`/admin`**: servidor UniFi, red, duración y límites de los códigos,
-  textos, condiciones de uso, logotipo y fondo, equipos permitidos e invitados conectados.
+  textos, condiciones de uso, tema, logotipo y fondo, equipos permitidos e invitados conectados.
 - Tras instalarlo arranca en **modo simulación**: da códigos falsos y muestra una franja amarilla
   «MODO PRUEBA» hasta que se configure UniFi.
 
@@ -33,7 +33,7 @@ de su móvil, ordenador o tablet.
 
 8. [La pantalla del quiosco](#8-la-pantalla-del-quiosco)
 9. [Textos de la pantalla y condiciones de uso](#9-textos-de-la-pantalla-y-condiciones-de-uso)
-10. [Logotipo y fondo](#10-logotipo-y-fondo)
+10. [Apariencia: tema, logotipo y fondo](#10-apariencia-tema-logotipo-y-fondo)
 11. [Invitados conectados](#11-invitados-conectados)
 12. [Caducidad de los códigos sin usar](#12-caducidad-de-los-códigos-sin-usar)
 
@@ -345,13 +345,16 @@ chromium --kiosk http://IP_SERVIDOR:8080/ --incognito --noerrdialogs --disable-p
 
 ![Pantalla de inicio](docs/img/quiosco-inicio.png)
 
-1. **Inicio**: título, red Wi-Fi y, si están activadas, las condiciones de uso con su casilla. Pulsa
-   **Empezar**.
+1. **Inicio**: el título (y, si se ha escrito, una frase corta debajo) y una tarjeta con la casilla
+   de las condiciones de uso, si están activadas, y el botón **Empezar**. Si hay varias redes, la
+   tarjeta incluye el selector de red.
 2. **Pantalla de pasos** (en horizontal, tres columnas; en vertical, uno debajo de otro):
    - **1. Conéctate a la red**: QR de la red y su nombre, por si prefiere buscarla a mano.
-   - **2. Solicita tu código**: cuando ve la página de acceso en su móvil, pulsa **Solicitar
-     código** y el código aparece ahí mismo, en grande, con su validez y la cuenta atrás.
-   - **3. Escribe el código y conéctate**: en su móvil, ordenador o tablet.
+   - **2. Solicita tu código**: cuando se abre la página de acceso en su móvil, pulsa **Solicitar
+     código** y el código aparece ahí mismo, en grande, con su validez («Válido 4 horas · úsalo en
+     menos de 15 minutos») y la cuenta atrás.
+   - **3. Escribe el código**: en su dispositivo, y pulsa «Conectar».
+   Estos textos son fijos, cortos a propósito; los que se pueden cambiar están en el punto 9.
    Si el tótem acaba de dar un código y aún no ha pasado la espera entre códigos (20 s por
    defecto), el propio botón muestra «Podrás solicitar tu código en N s» y se reactiva solo. Si no
    puede darse un código por otro motivo (límite diario, UniFi no responde), el aviso aparece en el
@@ -369,7 +372,7 @@ El código solo se genera al pulsar «Solicitar código», cuando la persona ya 
 y viendo la página de acceso.
 
 La pantalla bloquea el menú contextual, la selección, el zoom y el arrastre, borra el código al
-terminar la cuenta atrás y **se recarga sola** cuando se guarda un cambio en `/admin` (textos,
+terminar la cuenta atrás y **se recarga sola** cuando se guarda un cambio en `/admin` (textos, tema,
 logotipo, fondo…; lo comprueba cada minuto y solo en la pantalla de inicio, nunca con un código a la
 vista) y, además, cada día a las 04:00.
 
@@ -381,10 +384,9 @@ En `/admin` → **Textos de la pantalla** se cambian sin tocar ficheros:
 
 | Campo | Dónde se ve |
 |---|---|
-| **Título** | Texto grande de la pantalla de inicio (máx. 60 caracteres). |
-| **Nombre en la cabecera** | Arriba a la derecha y en la cabecera de `/admin`. Vacío = el título. |
-| **Nombre de la organización** | Arriba a la izquierda, solo si no hay logotipo. |
-| **Texto de introducción** | Bajo el título (máx. 400 caracteres). Vacío = el texto por defecto. |
+| **Título** | Texto grande de la pantalla de inicio, título de la pestaña y cabecera de `/admin` (máx. 60 caracteres). |
+| **Nombre de la organización** | Arriba a la izquierda, solo si no hay logotipo (si lo hay, es su texto alternativo). |
+| **Frase bajo el título** | Opcional: una frase corta bajo el título (máx. 120 caracteres). Vacía = no se muestra nada. |
 | **Condiciones de uso** | Texto sin formato (máx. 20 000 caracteres); deje una línea en blanco entre párrafos. |
 
 Si marca **«Mostrar condiciones de uso antes de obtener el código»**:
@@ -403,9 +405,22 @@ Si marca **«Mostrar condiciones de uso antes de obtener el código»**:
 
 ---
 
-## 10. Logotipo y fondo
+## 10. Apariencia: tema, logotipo y fondo
 
-En `/admin` → **Logotipo y fondo**:
+En `/admin` → **Apariencia** se elige el **tema** de la pantalla, pulsando su miniatura y después
+**Guardar**. Los tótems cambian en menos de un minuto.
+
+| Tema | Cómo es |
+|---|---|
+| **Claro** (por defecto) | Fondo gris azulado con tarjetas blancas. El más sobrio. |
+| **Banda azul** | Una banda azul oscuro a todo lo ancho detrás del título y de la parte alta de los pasos, con el título en blanco. Se distingue mejor de lejos. |
+
+![Tema «Banda azul»](docs/img/quiosco-tema-banda.png)
+
+Los dos temas usan los mismos textos y colores de texto de alto contraste. Con foto de fondo, en el
+tema «Banda azul» la banda tapa la parte de arriba de la foto.
+
+Para el **logotipo y la foto de fondo**, en el mismo bloque:
 
 1. Pulse **Examinar / Seleccionar archivo** bajo «Logotipo» o «Foto de fondo» y elija la imagen.
 2. Pulse **Subir logotipo** o **Subir fondo**. La imagen se guarda en el servidor y queda
@@ -469,7 +484,7 @@ generarse: la aplicación lo revisa **cada minuto** y los borra en UniFi.
 
 - El plazo se cambia en `/admin` → *Red y voucher* → **Caducidad de los códigos sin usar
   (minutos)**; 0 lo desactiva.
-- El quiosco lo avisa junto al código: «Tienes 15 minutos para usarlo; si no, caducará.»
+- El quiosco lo avisa junto al código: «Válido 4 horas · úsalo en menos de 15 minutos».
 - No afecta a quien ya está conectado ni a los códigos creados a mano en UniFi: solo se borran los
   del tótem que **nunca** se han usado.
 - Cada vez que se borra alguno queda en el log
@@ -644,8 +659,8 @@ arránquelo después; un campo mal escrito impide arrancar y el error dice cuál
 | `voucher.rx_kbps` / `tx_kbps` | `0` | Velocidad de bajada / subida (0 = sin límite; si no, 2–100 000). |
 | `kiosk.title` | `Wi-Fi gratuita` | Título de la pantalla. |
 | `kiosk.organization` | vacío | Nombre de la organización, en la cabecera cuando no hay logo. |
-| `kiosk.header_text` | vacío | Nombre del servicio en la cabecera (vacío = el título). |
-| `kiosk.intro` | vacío | Texto de introducción (vacío = el texto por defecto del idioma). |
+| `kiosk.intro` | vacío | Frase opcional bajo el título (máx. 120 caracteres; vacía = no se muestra). |
+| `kiosk.theme` | `claro` | Tema de la pantalla: `claro` o `banda` (otro valor = `claro`). |
 | `kiosk.terms_enabled` | `false` | Pedir que se acepten las condiciones de uso antes de dar el código. |
 | `kiosk.terms_text` | vacío | Texto de las condiciones de uso (obligatorio si `terms_enabled` es `true`). |
 | `kiosk.display_seconds` | `60` | Segundos que el código permanece en pantalla. |

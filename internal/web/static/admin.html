@@ -159,16 +159,13 @@
       <div class="rejilla">
         <div class="campo"><label for="title">Título</label>
           <input id="title" type="text" name="kiosk_title" value="{{.Cfg.Kiosk.Title}}" required maxlength="{{.MaxTitleLen}}">
-          <small>Texto grande de la pantalla de inicio y título de la página.</small></div>
-        <div class="campo"><label for="header">Nombre en la cabecera</label>
-          <input id="header" type="text" name="kiosk_header_text" value="{{.Cfg.Kiosk.HeaderText}}" maxlength="{{.MaxTitleLen}}" placeholder="vacío = el título">
-          <small>Arriba a la derecha, y en la cabecera de esta página.</small></div>
+          <small>Texto grande de la pantalla de inicio, título de la pestaña y cabecera de esta página.</small></div>
         <div class="campo"><label for="org">Nombre de la organización</label>
           <input id="org" type="text" name="kiosk_organization" value="{{.Cfg.Kiosk.Organization}}" placeholder="se muestra en la cabecera si no hay logo">
-          <small>Arriba a la izquierda, solo si no hay logotipo.</small></div>
-        <div class="campo ancho"><label for="intro">Texto de introducción</label>
-          <textarea id="intro" name="kiosk_intro" maxlength="{{.MaxIntroLen}}" placeholder="{{.DefaultIntro}}">{{.Cfg.Kiosk.Intro}}</textarea>
-          <small>Bajo el título. Vacío = el texto por defecto (el que se ve en gris). Máximo {{.MaxIntroLen}} caracteres.</small></div>
+          <small>Arriba a la izquierda, solo si no hay logotipo (si lo hay, es su texto alternativo).</small></div>
+        <div class="campo ancho"><label for="intro">Frase bajo el título (opcional)</label>
+          <input id="intro" type="text" name="kiosk_intro" value="{{.Cfg.Kiosk.Intro}}" maxlength="{{.MaxIntroLen}}" placeholder="Por ejemplo: Internet gratis en 3 pasos">
+          <small>Vacío = no se muestra nada. Una frase corta: máximo {{.MaxIntroLen}} caracteres.</small></div>
         <div class="campo ancho">
           <label class="casilla"><input type="checkbox" name="kiosk_terms_enabled" value="1"{{if .Cfg.Kiosk.TermsEnabled}} checked{{end}}> Mostrar condiciones de uso antes de obtener el código</label>
           <small>El ciudadano tendrá que marcar «He leído y acepto las condiciones de uso». Puede leerlas en un desplegable de la propia pantalla.</small>
@@ -180,7 +177,18 @@
     </section>
 
     <section class="bloque">
-      <h2>Logotipo y fondo</h2>
+      <h2>Apariencia</h2>
+      <fieldset class="temas">
+        <legend>Tema de la pantalla</legend>
+        {{range .Themes}}
+        <label class="tema">
+          <input type="radio" name="kiosk_theme" value="{{.ID}}"{{if eq .ID $.Cfg.Kiosk.Theme}} checked{{end}}>
+          <img src="/static/tema-{{.ID}}.png?v={{$.Version}}" alt="" width="240" height="135">
+          <span>{{.Name}}</span>
+        </label>
+        {{end}}
+        <small>Los tótems cambian de tema en menos de un minuto tras guardar.</small>
+      </fieldset>
       <div class="rejilla">
         <div class="campo">
           <label for="logo">Logotipo</label>

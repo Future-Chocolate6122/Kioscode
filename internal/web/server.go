@@ -162,8 +162,8 @@ func (s *Server) texts(c config.Config) i18n.Texts {
 
 type indexData struct {
 	Organization  string
-	HeaderName    string // nombre del servicio en la cabecera
-	Intro         string
+	Intro         string // frase opcional bajo el título (vacía = no se muestra)
+	Theme         string // tema del quiosco: clase tema-<Theme> del <body>
 	TermsEnabled  bool
 	TermsText     string
 	Lang          string
@@ -174,7 +174,6 @@ type indexData struct {
 	HasLogo       bool
 	HasBackground bool
 	T             i18n.Texts
-	Validity      string
 	ClientConfig  string // JSON para app.js, en un atributo data-
 	Version       string
 	Rev           string // huella de lo que se ve en pantalla (recarga automática)
@@ -206,8 +205,8 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		Lang:          c.Kiosk.Language,
 		Title:         c.Kiosk.Title,
 		Organization:  c.Kiosk.Organization,
-		HeaderName:    c.Kiosk.HeaderName(),
-		Intro:         firstNonEmpty(c.Kiosk.Intro, t["intro"]),
+		Intro:         c.Kiosk.Intro,
+		Theme:         c.Kiosk.Theme,
 		TermsEnabled:  c.Kiosk.TermsEnabled,
 		TermsText:     c.Kiosk.TermsText,
 		Mock:          c.UniFi.Mock,
@@ -216,7 +215,6 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		HasLogo:       s.logoPath(c) != "",
 		HasBackground: s.backgroundPath(c) != "",
 		T:             t,
-		Validity:      t.T("validez", "duracion", t.Duration(c.Voucher.Minutes)),
 		ClientConfig:  string(clientCfg),
 		Version:       s.version,
 		Rev:           rev,
@@ -238,7 +236,7 @@ func (s *Server) kioskRevision(c config.Config) string {
 	fmt.Fprintf(h, "%s|%v|", s.version, c.UniFi.Mock)
 	json.NewEncoder(h).Encode(c.Kiosk)       //nolint:errcheck
 	json.NewEncoder(h).Encode(c.SSIDs())     //nolint:errcheck
-	fmt.Fprintf(h, "%d|", c.Voucher.Minutes) // aparece en «Válido durante…»
+	fmt.Fprintf(h, "%d|", c.Voucher.Minutes) // aparece en «Válido…» junto al código
 	for _, p := range []string{s.logoPath(c), s.backgroundPath(c)} {
 		if fi, err := os.Stat(p); err == nil {
 			fmt.Fprintf(h, "%s|%d|%d|", p, fi.Size(), fi.ModTime().UnixNano())
@@ -252,19 +250,12 @@ func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"rev": s.kioskRevision(s.cfg.Get())})
 }
 
-// useWithin redacta el aviso «Tienes X para usarlo…» (vacío si los códigos no caducan).
+// useWithin redacta el aviso «úsalo en menos de X» (vacío si los códigos no caducan).
 func useWithin(t i18n.Texts, minutes int) string {
 	if minutes <= 0 {
 		return ""
 	}
 	return t.T("caducidad_sin_uso", "duracion", t.Duration(minutes))
-}
-
-func firstNonEmpty(a, b string) string {
-	if a != "" {
-		return a
-	}
-	return b
 }
 
 // sameOrigin rechaza peticiones enviadas desde páginas de otro origen

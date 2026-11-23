@@ -77,7 +77,7 @@ func TestIndexMock(t *testing.T) {
 		t.Fatalf("GET / = %d", w.Code)
 	}
 	b := w.Body.String()
-	for _, want := range []string{"MODO PRUEBA", "WifiPublica", "Empezar", "Conéctate a la red", "Solicitar código", "Escribe el código en tu móvil, ordenador o tablet", `id="paso-ssid">WifiPublica<`, "/static/app.css"} {
+	for _, want := range []string{"MODO PRUEBA", "WifiPublica", "Empezar", "Conéctate a la red", "Solicitar código", "Escribe el código", "pulsa «Conectar»", `id="paso-ssid">WifiPublica<`, "/static/app.css", `class="tema-claro`} {
 		if !strings.Contains(b, want) {
 			t.Errorf("la página no contiene %q", want)
 		}
@@ -285,20 +285,25 @@ func TestNingunaRespuestaFiltraLaClave(t *testing.T) {
 
 func TestTextosEditablesEnPantalla(t *testing.T) {
 	e := nuevoEntorno(t, func(c *config.Config) {
-		c.Kiosk.HeaderText = "Servicio de Wi-Fi"
-		c.Kiosk.Intro = "Introducción propia de la sede."
+		c.Kiosk.Title = "Internet libre"
+		c.Kiosk.Organization = "Organización"
+		c.Kiosk.Intro = "Internet gratis en 3 pasos"
 	})
 	b := e.peticion("GET", "/", "127.0.0.1", "", nil).Body.String()
-	if !strings.Contains(b, `<div class="servicio">Servicio de Wi-Fi</div>`) || !strings.Contains(b, "Introducción propia de la sede.") {
-		t.Error("no se muestran la cabecera o la introducción configuradas")
+	for _, want := range []string{`<h1 class="titulo">Internet libre</h1>`, "<title>Internet libre</title>", `<span class="logo-texto">Organización</span>`, `<p class="intro">Internet gratis en 3 pasos</p>`} {
+		if !strings.Contains(b, want) {
+			t.Errorf("falta el texto configurado %q", want)
+		}
 	}
 	if strings.Contains(b, `id="acepto"`) || strings.Contains(b, "inactivo") {
 		t.Error("sin condiciones activadas no debe haber casilla ni botón inactivo")
 	}
-	// Sin introducción propia se usa la del idioma.
-	e2 := nuevoEntorno(t, nil)
-	if !strings.Contains(e2.peticion("GET", "/", "127.0.0.1", "", nil).Body.String(), "Conéctate gratis a Internet") {
-		t.Error("falta la introducción por defecto")
+	// Sin frase propia no se muestra ninguna; ni pie, ni nombre repetido en la cabecera.
+	b = nuevoEntorno(t, nil).peticion("GET", "/", "127.0.0.1", "", nil).Body.String()
+	for _, no := range []string{`class="intro"`, `class="servicio"`, `class="pie"`, "Servicio público"} {
+		if strings.Contains(b, no) {
+			t.Errorf("no debería aparecer %q", no)
+		}
 	}
 }
 
@@ -340,13 +345,13 @@ func TestAvisoCaducidadSinUso(t *testing.T) {
 	var r voucherResponse
 	w := e.peticion("POST", "/api/voucher", "127.0.0.1", "{}", jsonHdr)
 	json.Unmarshal(w.Body.Bytes(), &r)
-	if r.UseWithin != "Tienes 15 minutos para usarlo; si no, caducará." {
-		t.Errorf("aviso: %q", r.UseWithin)
+	if r.ValidFor != "Válido 4 horas" || r.UseWithin != "úsalo en menos de 15 minutos" {
+		t.Errorf("validez y aviso: %q / %q", r.ValidFor, r.UseWithin)
 	}
 	e2 := nuevoEntorno(t, func(c *config.Config) { c.Voucher.UnusedExpireMinutes = 90 })
 	w = e2.peticion("POST", "/api/voucher", "127.0.0.1", "{}", jsonHdr)
 	json.Unmarshal(w.Body.Bytes(), &r)
-	if r.UseWithin != "Tienes 1 hora y 30 minutos para usarlo; si no, caducará." {
+	if r.UseWithin != "úsalo en menos de 1 hora y 30 minutos" {
 		t.Errorf("aviso con 90 min: %q", r.UseWithin)
 	}
 	e3 := nuevoEntorno(t, func(c *config.Config) { c.Voucher.UnusedExpireMinutes = 0 })

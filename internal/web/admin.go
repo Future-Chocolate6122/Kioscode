@@ -295,8 +295,8 @@ type adminData struct {
 	Warnings   []string
 	// Textos de la pantalla
 	MaxTitleLen, MaxIntroLen, MaxTermsLen int
-	DefaultIntro                          string
 	TermsVersion                          string
+	Themes                                []themeOption // selector de tema del quiosco
 
 	// Biblioteca de imágenes
 	Images                  []imageInfo
@@ -312,6 +312,9 @@ type adminData struct {
 	ConfirmAccess bool         // mostrar el campo de confirmación con contraseña
 	Firewall      firewallView // estado de ufw (solo Linux con el ayudante)
 }
+
+// themeOption es una opción del selector de tema (con su miniatura en /static/).
+type themeOption struct{ ID, Name string }
 
 // firewallView resume firewall-status.json para el panel.
 type firewallView struct {
@@ -364,9 +367,11 @@ func (s *Server) apiFirewall(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) render(w http.ResponseWriter, status int, d adminData) {
 	c := s.cfg.Get()
-	d.Title = c.Kiosk.HeaderName()
+	d.Title = c.Kiosk.Title
 	d.MaxTitleLen, d.MaxIntroLen, d.MaxTermsLen = config.MaxTitleLen, config.MaxIntroLen, config.MaxTermsLen
-	d.DefaultIntro = s.texts(c)["intro"]
+	for _, t := range config.Themes {
+		d.Themes = append(d.Themes, themeOption{ID: t.ID, Name: t.Name})
+	}
 	d.TermsVersion = c.Kiosk.TermsVersion()
 	d.Version = s.version
 	d.HasLogo = s.logoPath(c) != ""
@@ -598,8 +603,10 @@ func formToConfig(r *http.Request, base config.Config) (config.Config, []string)
 	num("voucher_unused_expire_minutes", "Caducidad de los códigos sin usar", &c.Voucher.UnusedExpireMinutes)
 
 	c.Kiosk.Title = r.FormValue("kiosk_title")
-	c.Kiosk.HeaderText = r.FormValue("kiosk_header_text")
 	c.Kiosk.Intro = r.FormValue("kiosk_intro")
+	if v := r.FormValue("kiosk_theme"); v != "" { // sin el campo, se conserva el tema actual
+		c.Kiosk.Theme = v
+	}
 	c.Kiosk.TermsEnabled = r.FormValue("kiosk_terms_enabled") == "1"
 	c.Kiosk.TermsText = r.FormValue("kiosk_terms_text")
 	c.Kiosk.Organization = strings.TrimSpace(r.FormValue("kiosk_organization"))
