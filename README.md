@@ -1,6 +1,6 @@
 # Tótem Wi-Fi
 
-Una aplicación que convierte cualquier pantalla con navegador en un **tótem de Wi-Fi gratuita**. El
+Una aplicación que convierte cualquier pantalla con navegador en un **tótem de Wi-Fi gratuita** compatible con UniFi OS Server y UniFi Network Application. El
 ciudadano acepta las condiciones de uso, se conecta a la red escaneando un **QR**, pulsa **«Solicitar
 código»** y recibe en pantalla un **voucher del hotspot de UniFi**, que escribe en el portal cautivo
 de su móvil, ordenador o tablet.
