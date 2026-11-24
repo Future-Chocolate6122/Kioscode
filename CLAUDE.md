@@ -1,17 +1,18 @@
-# Instrucciones para Claude Code: proyecto «Tótem Wi-Fi»
+# Instrucciones para Claude Code: proyecto «Kioscode»
 
 Lee primero `CONTEXTO.md`: describe la red, los dos servidores UniFi, la API y lo que debe ver el
 ciudadano. Este fichero dice **cómo** construir la aplicación. Responde y comenta el código **en
 castellano**.
 
-> **Estado:** la aplicación está terminada y en pruebas, aún no en producción (versión 1.5.x). Las novedades de cada
+> **Estado:** la aplicación está terminada y en pruebas, aún no en producción (versión 2.x). Hasta la 1.4
+> se llamaba «Tótem Wi-Fi»; en GitHub se presenta como «Kioscode para UniFi». Las novedades de cada
 > versión están en `CHANGELOG.md` y las decisiones, pruebas en real y desviaciones en
 > `CONTEXTO.md` §7–§9. Ante cualquier contradicción, **`CONTEXTO.md` §9 prevalece** sobre este
 > fichero. Los cambios nuevos se hacen sobre lo existente: no rehagas lo que ya funciona.
 
 ## 1. Objetivo en una frase
 
-Un único ejecutable (`totem-wifi.exe` / `totem-wifi`) que sirve una web de quiosco, pide vouchers del
+Un único ejecutable (`kioscode.exe` / `kioscode`) que sirve una web de quiosco, pide vouchers del
 hotspot a UniFi OS Server por su Integration API y los muestra con un QR Wi-Fi. Sin instalar nada más
 en la máquina.
 
@@ -34,7 +35,7 @@ commit. **Nunca** CGO: rompería la compilación cruzada y la promesa de «un so
 ## 3. Estructura del repositorio
 
 ```
-totem-wifi/
+kioscode/   (repositorio: totem-wifi)
 ├── CLAUDE.md                 ← este fichero
 ├── CONTEXTO.md
 ├── README.md                 ← guía de instalación y uso para el administrador (en castellano)
@@ -42,9 +43,10 @@ totem-wifi/
 ├── LICENSE                   ← MIT + avisos completos de terceros (lo comprueba `make licenses`)
 ├── licencias/                ← licencias de terceros que acompañan al binario (ver LEEME.md)
 ├── docs/img/                 ← capturas para el README (modo real con UniFi simulado; sin datos reales)
+├── docs/marca/               ← logotipo de Kioscode (SVG) y su guía de uso (LOGO.md)
 ├── go.mod / go.sum
 ├── Makefile                  ← build, build-all, test, run, release
-├── cmd/totem-wifi/main.go    ← flags, arranque, instalación como servicio
+├── cmd/kioscode/main.go      ← flags, arranque, instalación como servicio
 ├── internal/
 │   ├── config/               ← carga/validación/guardado de config.json; valores por defecto
 │   ├── unifi/                ← cliente de la Integration API + cliente mock; anclaje del certificado
@@ -59,9 +61,9 @@ totem-wifi/
 │   │       └── fonts/        ← Montserrat, Raleway y Open Sans en .woff2 (ver «Estilo visual»)
 │   └── i18n/                 ← textos en castellano (es.json) y mecanismo para añadir idiomas
 ├── deploy/
-│   ├── windows/install.ps1   ← crea %ProgramData%\TotemWifi, copia el exe, registra el servicio, abre el firewall
+│   ├── windows/install.ps1   ← crea %ProgramData%\Kioscode, copia el exe, registra el servicio, abre el firewall
 │   ├── windows/uninstall.ps1
-│   ├── linux/install.sh      ← /opt/totem-wifi + /etc/totem-wifi + unidad systemd + ayudante de ufw
+│   ├── linux/install.sh      ← /opt/kioscode + /etc/kioscode + unidad systemd + ayudante de ufw
 │   └── linux/uninstall.sh
 └── dist/                     ← salida de `make release` (ignorado en git)
 ```
@@ -102,7 +104,7 @@ totem-wifi/
 - La **API key** solo se lee del servidor. No aparece en ninguna respuesta HTTP, ni en `/admin`
   (mostrar «configurada: sí/no» y un campo para sustituirla).
 - **Logs** a stdout/stderr (el gestor de servicios los recoge) y, además, a un fichero rotado
-  `totem-wifi.log` en el directorio de datos. Una línea por voucher creado (IP del tótem, código
+  `kioscode.log` en el directorio de datos. Una línea por voucher creado (IP del tótem, código
   enmascarado `*****-67890`, SSID, minutos) y por error de UniFi (código HTTP y cuerpo recortado).
 - **Primer arranque**: si `config.json` no existe, se crea con los valores por defecto de
   `CONTEXTO.md` §6. Si `admin_password_hash` está vacío, `/admin` muestra un formulario para crear
@@ -117,7 +119,7 @@ totem-wifi/
   Comprobado en real: un dispositivo desconectado no puede volver a entrar con el mismo código
   (con «Dispositivos por código» = 1).
 - **Cambiar las IPs permitidas o el puerto** en `/admin` exige volver a escribir la contraseña; el
-  ayudante `totem-wifi firewall-sync` (systemd `.path`) ajusta ufw tocando solo sus reglas.
+  ayudante `kioscode firewall-sync` (systemd `.path`) ajusta ufw tocando solo sus reglas.
 
 ### Pantalla del quiosco (`index.html`)
 
@@ -191,6 +193,10 @@ en `internal/web/static/fonts/`, embebidas en el binario; **ningún `<link>` a f
   configurable (`kiosk.background_image`), con una capa blanca semitransparente encima
   (`rgba(255,255,255,.56)`) para que el código siga leyéndose.
 
+**Marca de la aplicación:** el logotipo de Kioscode (`docs/marca/`, guía en `LOGO.md`) solo aparece en
+`/admin` (cabecera, `static/kioscode-logo.svg`, 24 px de alto) y en el favicon (`static/favicon.svg` y
+sus PNG). Nunca en la pantalla del quiosco, que es de la organización.
+
 **Logotipo y nombre:** no incrustes ningún logotipo ni nombre de organización en el código. La app
 lee `logo.svg`/`logo.png` del directorio de datos (`kiosk.logo_path`) y el nombre de
 `kiosk.organization`. Si ambos están vacíos, la cabecera queda en blanco.
@@ -201,36 +207,36 @@ el repositorio) identifique a qué organización pertenece.
 ### Línea de comandos
 
 ```
-totem-wifi                      # ejecuta en primer plano (desarrollo)
-totem-wifi -config RUTA         # fichero de configuración alternativo
-totem-wifi -data DIR            # directorio de datos (state.json, log, imágenes)
-totem-wifi install | uninstall | start | stop | restart | status   # servicio del SO (administrador/root)
-totem-wifi fingerprint HOST:PUERTO   # imprime la huella SHA-256 del certificado de un servidor
-totem-wifi check                # prueba la configuración y la conexión con UniFi; sale con código ≠0 si falla
-totem-wifi init                 # crea config.json con los valores por defecto
-totem-wifi set -unifi-url URL -totems LISTA -admin-ips LISTA   # UniFi, tótems y administración (lo usa install.sh)
-totem-wifi firewall-sync        # ajusta ufw a las IPs permitidas (root; lo lanza systemd)
-totem-wifi allowlist            # puerto e IPs permitidas
-totem-wifi version
+kioscode                      # ejecuta en primer plano (desarrollo)
+kioscode -config RUTA         # fichero de configuración alternativo
+kioscode -data DIR            # directorio de datos (state.json, log, imágenes)
+kioscode install | uninstall | start | stop | restart | status   # servicio del SO (administrador/root)
+kioscode fingerprint HOST:PUERTO   # imprime la huella SHA-256 del certificado de un servidor
+kioscode check                # prueba la configuración y la conexión con UniFi; sale con código ≠0 si falla
+kioscode init                 # crea config.json con los valores por defecto
+kioscode set -unifi-url URL -totems LISTA -admin-ips LISTA   # UniFi, tótems y administración (lo usa install.sh)
+kioscode firewall-sync        # ajusta ufw a las IPs permitidas (root; lo lanza systemd)
+kioscode allowlist            # puerto e IPs permitidas
+kioscode version
 ```
 
 ## 5. Compilación y entrega
 
 - `make build` → binario para la plataforma actual.
-- `make build-all` → `dist/totem-wifi_windows_amd64.exe`, `dist/totem-wifi_linux_amd64`,
-  `dist/totem-wifi_linux_arm64`, con `CGO_ENABLED=0 -ldflags="-s -w -X main.version=…"`.
+- `make build-all` → `dist/kioscode_windows_amd64.exe`, `dist/kioscode_linux_amd64`,
+  `dist/kioscode_linux_arm64`, con `CGO_ENABLED=0 -ldflags="-s -w -X main.version=…"`.
 - `make release` → además empaqueta cada binario con sus scripts de `deploy/` y el `README.md` en un
   `.zip` (Windows) o `.tar.gz` (Linux). **Eso es lo que se copia a la máquina destino.**
 - Los scripts de instalación no descargan nada de Internet.
-- `install.ps1` debe: crear `%ProgramData%\TotemWifi`, copiar el exe a `%ProgramFiles%\TotemWifi`,
-  ejecutar `totem-wifi install`, abrir el puerto en el Firewall de Windows **solo para las IPs de
+- `install.ps1` debe: crear `%ProgramData%\Kioscode`, copiar el exe a `%ProgramFiles%\Kioscode`,
+  ejecutar `kioscode install`, abrir el puerto en el Firewall de Windows **solo para las IPs de
   `allowed_clients`** (regla con `-RemoteAddress`), arrancar el servicio y abrir
   `http://localhost:8080/admin` en el navegador.
-- `install.sh` equivalente: usuario de sistema `totem`, `/opt/totem-wifi/totem-wifi`,
-  `/etc/totem-wifi/config.json` (**600, `totem:totem`**: `/admin` tiene que poder guardarlo), unidad
+- `install.sh` equivalente: usuario de sistema `kioscode`, `/opt/kioscode/kioscode`,
+  `/etc/kioscode/config.json` (**600, `kioscode:kioscode`**: `/admin` tiene que poder guardarlo), unidad
   systemd con `ProtectSystem=strict`, `ProtectHome=yes`, `NoNewPrivileges=yes`,
-  `ReadWritePaths=/var/lib/totem-wifi /etc/totem-wifi`. Opciones `--unifi-url`, `--totems`,
-  `--admin-ips` y `--no-ufw`. Si hay ufw, instala `totem-wifi-firewall.{path,service}`.
+  `ReadWritePaths=/var/lib/kioscode /etc/kioscode`. Opciones `--unifi-url`, `--totems`,
+  `--admin-ips` y `--no-ufw`. Si hay ufw, instala `kioscode-firewall.{path,service}`.
 - Las releases de GitHub se crean a mano desde la web (esta sesión no puede subir etiquetas ni crear
   releases): `make release VERSION=x.y.z` y se adjuntan los 4 ficheros de `dist/`.
 - En cada versión nueva, actualiza los enlaces de descarga de `README.md` §2 (`.../download/vX.Y.Z/...`).
@@ -248,7 +254,7 @@ Así se construyó la versión 1.0; se conserva como referencia. Los cambios pos
 3. Servicio `voucher` (cooldown, límite diario, persistencia) con tests de reloj inyectado.
 4. Servidor `web` con la pantalla del quiosco en modo mock. Hito: se puede abrir `http://localhost:8080/`
    y obtener un código falso.
-5. `/admin` y anclaje del certificado. Hito: `totem-wifi check` pasa contra un UniFi real.
+5. `/admin` y anclaje del certificado. Hito: `kioscode check` pasa contra un UniFi real.
 6. Servicio del SO, scripts de `deploy/`, `Makefile`, `README.md`.
 7. Pasada final: `go vet`, `staticcheck` si está disponible, `go test ./...`, y una revisión de que
    ninguna respuesta HTTP filtra la API key ni rutas internas.

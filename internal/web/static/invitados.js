@@ -1,4 +1,4 @@
-// Tótem Wi-Fi · página de invitados conectados (sin dependencias).
+// Kioscode · página de invitados conectados (sin dependencias).
 // Búsqueda, orden por columna, paginación y desconexión de uno, varios o todos.
 (function () {
   'use strict';

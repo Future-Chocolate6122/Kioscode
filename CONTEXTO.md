@@ -1,10 +1,10 @@
-# Contexto: aplicación «Tótem Wi-Fi» (generador de códigos de acceso)
+# Contexto: aplicación «Kioscode» (generador de códigos de acceso)
 
 > Este documento está **anonimizado**: no contiene nombres reales de la organización, de sus sedes
 > ni direcciones IP de producción. Las IP que aparecen son de documentación (RFC 5737) y se
 > sustituyen en `/admin` en cada instalación.
 
-_Versión 1.1 · 12 de noviembre de 2026 · Sustituye al diseño FastAPI + nginx del documento «despliegue-totem-wifi.md»_
+_Versión 1.1 · 12 de noviembre de 2026 · Sustituye al diseño FastAPI + nginx del documento «despliegue-kioscode.md»_
 
 > **v1.1:** la aplicación ya está construida (ver §9). Se han cerrado las decisiones pendientes
 > (§8) y se documentan las desviaciones respecto a `CLAUDE.md`, que **prevalecen** sobre él.
@@ -74,7 +74,7 @@ código. Nada más.
 - ⚠️ La clave hereda los permisos del usuario que la crea. Hay que crearla con un **administrador
   local** (no cuenta de ui.com). El rol «Hotspot» **no** da acceso a la Integration API; hace falta
   un rol con gestión de la red.
-- Recomendación adoptada: un **usuario local dedicado** por servidor (p. ej. `totem-api`), con acceso
+- Recomendación adoptada: un **usuario local dedicado** por servidor (p. ej. `kioscode-api`), con acceso
   **solo a Network** y el permiso más bajo que permita gestionar la red (suele llamarse «Full
   Management» o «Admin»; «Hotspot» y «Solo lectura» no sirven). Los nombres exactos de los roles en
   5.1.42 **no están verificados**: si «Probar conexión» da 403, el permiso se queda corto.
@@ -90,7 +90,7 @@ código. Nada más.
   Content-Type: application/json
   {
     "count": 1,                      // opcional, por defecto 1
-    "name": "Totem",                 // OBLIGATORIO: nota visible en UniFi
+    "name": "Kioscode",                 // OBLIGATORIO: nota visible en UniFi
     "timeLimitMinutes": 240,         // OBLIGATORIO: 1..1000000
     "authorizedGuestLimit": 1,       // opcional: dispositivos por voucher
     "dataUsageLimitMBytes": 1024,    // opcional
@@ -147,8 +147,8 @@ Formato del QR Wi-Fi (estándar que entienden Android e iOS):
 
 ## 6. Configuración
 
-Fichero `config.json` junto al ejecutable (o en `%ProgramData%\TotemWifi\` / `/etc/totem-wifi/` cuando
-se instala como servicio; en Ubuntu, los datos —contador, log, logo— van en `/var/lib/totem-wifi/`).
+Fichero `config.json` junto al ejecutable (o en `%ProgramData%\Kioscode\` / `/etc/kioscode/` cuando
+se instala como servicio; en Ubuntu, los datos —contador, log, logo— van en `/var/lib/kioscode/`).
 Se crea solo con valores por defecto la primera vez. Todo se puede cambiar desde `/admin`. Campos:
 
 ```jsonc
@@ -168,7 +168,7 @@ Se crea solo con valores por defecto la primera vez. Todo se puede cambiar desde
     "ssid": "WifiPublica",            // ejemplo; se cambia en /admin
     "ssid_password": "",              // vacío = red abierta con portal
     "extra_ssids": [],                // [{"ssid":"…","password":"…"}]; si hay alguno, la web muestra selector
-    "note": "Totem",
+    "note": "Kioscode",
     "minutes": 240,
     "guest_limit": 1,
     "data_mb": 0,                     // 0 = sin límite
@@ -209,9 +209,9 @@ fichero con permisos solo para el servicio/administrador.
   (`install.sh --unifi-url … --totems … --admin-ips …`) y se cambian después en `/admin`.
 - **Todo lo variable es configurable desde `/admin`**: servidor UniFi, API key, huella, IPs de los
   tótems y de administración, SSID, duración y límites del voucher, cooldown y límite diario.
-- **Cortafuegos (opción A):** un ayudante `totem-wifi firewall-sync`, lanzado como root por systemd
-  (`totem-wifi-firewall.path` vigila `config.json`), mantiene ufw con el puerto abierto **solo** a las
-  IPs permitidas. Solo toca reglas con el comentario «Totem Wi-Fi», nunca activa/desactiva ufw,
+- **Cortafuegos (opción A):** un ayudante `kioscode firewall-sync`, lanzado como root por systemd
+  (`kioscode-firewall.path` vigila `config.json`), mantiene ufw con el puerto abierto **solo** a las
+  IPs permitidas. Solo toca reglas con el comentario «Kioscode», nunca activa/desactiva ufw,
   rechaza puertos < 1024. El servicio web **sigue sin privilegios**.
 - **Cambiar las IPs permitidas o el puerto exige volver a escribir la contraseña de `/admin`.** Se
   descartó pedir credenciales de Ubuntu en la web (viajarían sin cifrar y romperían la separación de
@@ -273,7 +273,7 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
   código); favicon en `/admin`; README reorganizado con capturas, `CHANGELOG.md` y `CLAUDE.md` al día.
 
 - **1.4.2** — los instaladores guardan `config.json.bak` al actualizar; `install.sh` muestra al
-  terminar la dirección de `/admin` (`totem-wifi allowlist` añade líneas `admin`). README con enlaces
+  terminar la dirección de `/admin` (`kioscode allowlist` añade líneas `admin`). README con enlaces
   de descarga reales, `--admin-ips` en el ejemplo y tabla de diagnóstico unificada.
 
 - **1.4.3** — licencia MIT (`LICENSE`, titular: el usuario de GitHub) con los avisos completos de
@@ -281,7 +281,13 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
   OFL); también en `licencias/`. `make licenses` (parte de `make release`) falla si un módulo de
   `go version -m` no aparece en `LICENSE`. Sin cambios en el programa.
 
-- **1.5.0** — temas del quiosco (`kiosk.theme`: `claro` por defecto y `banda`), elegibles en
+- **2.0.0** — **la aplicación pasa a llamarse Kioscode** (decisión del usuario; en GitHub, «Kioscode
+  para UniFi»; el repositorio sigue siendo `totem-wifi`). Cambian ejecutable, módulo Go, servicio,
+  carpetas, usuario del sistema, log, ayudante y reglas del cortafuegos («Kioscode», hexadecimal
+  `4b696f73636f6465` en `user.rules`) y la nota por defecto de los vouchers. Sin migración automática
+  desde 1.x (no estaba en producción): se desinstala la 1.x con su `uninstall.sh`. Logotipo del
+  usuario en `docs/marca/` (guía en `LOGO.md`); en `/admin` y en el favicon. Además, lo preparado
+  como 1.5.0 (que no se publicó): temas del quiosco (`kiosk.theme`: `claro` por defecto y `banda`), elegibles en
   `/admin` → *Apariencia* con miniaturas (`static/tema-*.png`, capturas de la app real a 480×270).
   Legibilidad: azul de texto `#00618A`, cuerpo `#333`, fondos `#DCE6EC` (claro) y `#EEF2F5` con
   banda (banda). Textos reducidos: fuera `header_text` (se acepta al leer y se ignora), la red y la
@@ -314,7 +320,7 @@ inactivo.
   tótems (solo estaba abierto para el equipo de administración).
 - Desconectar a un invitado: **no puede volver a entrar con el mismo código** (con «Dispositivos
   por código» = 1).
-- systemd lanza el ayudante del cortafuegos al guardar en `/admin` (`totem-wifi-firewall.path`).
+- systemd lanza el ayudante del cortafuegos al guardar en `/admin` (`kioscode-firewall.path`).
 
 **Sin probar todavía:**
 
@@ -326,7 +332,7 @@ inactivo.
 
 | `CLAUDE.md` dice | Se ha hecho | Motivo |
 |---|---|---|
-| `config.json` 640 `root:totem`; `ReadWritePaths=/var/lib/totem-wifi` | `config.json` 600 `totem:totem`; `ReadWritePaths` incluye también `/etc/totem-wifi` | `/admin` tiene que poder guardar la configuración |
+| `config.json` 640 `root:totem`; `ReadWritePaths=/var/lib/kioscode` | `config.json` 600 `kioscode:kioscode`; `ReadWritePaths` incluye también `/etc/kioscode` | `/admin` tiene que poder guardar la configuración |
 | `install.sh` con «ufw opcional» | Ayudante de ufw instalado por defecto si hay ufw (`--no-ufw` para omitirlo) | Decisión del usuario (opción A, §7) |
 | SSID en mayúsculas | El SSID se muestra tal cual | Debe coincidir con la lista de redes del móvil |
 | `allowed_clients` vacía = solo localhost | Además, localhost **siempre** está permitido | El tótem puede ser el propio servidor |

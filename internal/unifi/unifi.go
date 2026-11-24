@@ -69,7 +69,7 @@ type Client interface {
 // Errores reconocibles para poder dar mensajes por capas.
 var (
 	ErrNoFingerprint = errors.New("falta la huella del certificado de UniFi (unifi.cert_sha256): " +
-		"obténgala en /admin con «Obtener huella del certificado» o con «totem-wifi fingerprint HOST:PUERTO»")
+		"obténgala en /admin con «Obtener huella del certificado» o con «kioscode fingerprint HOST:PUERTO»")
 	ErrNoAPIKey  = errors.New("falta la API key de UniFi (unifi.api_key): créela en Network → Settings → Control Plane → Integrations")
 	ErrNoSite    = errors.New("no se encuentra el sitio «default» en UniFi: indique unifi.site_id a mano")
 	ErrBadAnswer = errors.New("respuesta de UniFi no reconocida")

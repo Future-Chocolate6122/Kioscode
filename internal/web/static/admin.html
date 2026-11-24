@@ -17,7 +17,7 @@
   <div class="logo">
     {{if .HasLogo}}<img src="/logo" alt="{{.LogoText}}">{{else if .LogoText}}<span class="logo-texto">{{.LogoText}}</span>{{end}}
   </div>
-  <div class="servicio">{{.Title}} · Administración</div>
+  <div class="servicio marca-app"><img src="/static/kioscode-logo.svg?v={{.Version}}" alt="Kioscode" width="153" height="24"><span>Administración</span></div>
 </header>
 
 <main class="admin-main">
@@ -97,7 +97,7 @@
             <summary>¿Cómo crear la clave?</summary>
             <p>La clave tiene los mismos permisos que el usuario de UniFi que la crea. Lo recomendable es un usuario solo para el tótem:</p>
             <ol>
-              <li>En UniFi OS Server, en <b>Admins &amp; Users</b>, cree un administrador <b>local</b> (por ejemplo <code>totem-api</code>), no una cuenta de ui.com, con una contraseña larga.</li>
+              <li>En UniFi OS Server, en <b>Admins &amp; Users</b>, cree un administrador <b>local</b> (por ejemplo <code>kioscode-api</code>), no una cuenta de ui.com, con una contraseña larga.</li>
               <li>Dele acceso <b>solo a la aplicación Network</b>, sin Protect, Access ni otras.</li>
               <li>En Network, dele el permiso más bajo que permita <b>administrar</b> la red (suele llamarse «Full Management» o «Admin»). No sirven «Hotspot» ni «Solo lectura» (<i>View Only</i>): crear vouchers requiere permiso de escritura.</li>
               <li>Entre en UniFi con ese usuario y cree la clave en <b>Network → Settings → Control Plane → Integrations</b>. Cópiela: UniFi solo la muestra una vez.</li>

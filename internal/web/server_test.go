@@ -13,9 +13,9 @@ import (
 	"strings"
 	"testing"
 
-	"totem-wifi/internal/config"
-	"totem-wifi/internal/unifi"
-	"totem-wifi/internal/voucher"
+	"kioscode/internal/config"
+	"kioscode/internal/unifi"
+	"kioscode/internal/voucher"
 )
 
 const claveSecreta = "API-KEY-QUE-NUNCA-DEBE-SALIR"

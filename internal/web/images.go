@@ -23,7 +23,7 @@ import (
 	"sort"
 	"strings"
 
-	"totem-wifi/internal/config"
+	"kioscode/internal/config"
 )
 
 const (

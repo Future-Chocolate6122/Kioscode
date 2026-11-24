@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"totem-wifi/internal/config"
-	"totem-wifi/internal/unifi"
+	"kioscode/internal/config"
+	"kioscode/internal/unifi"
 )
 
 // paralelo es cuántas peticiones simultáneas se hacen a UniFi en las operaciones por lotes.

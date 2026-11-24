@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Desinstala Tótem Wi-Fi.
+# Desinstala Kioscode.
 #
 #   sudo ./uninstall.sh           quita el servicio y el ejecutable; conserva configuración y datos
-#   sudo ./uninstall.sh --purge   además borra /etc/totem-wifi, /var/lib/totem-wifi y el usuario totem
+#   sudo ./uninstall.sh --purge   además borra /etc/kioscode, /var/lib/kioscode y el usuario kioscode
 set -euo pipefail
 
-APP_DIR=/opt/totem-wifi
-CFG_DIR=/etc/totem-wifi
-DATA_DIR=/var/lib/totem-wifi
-BIN="$APP_DIR/totem-wifi"
-UNIT=TotemWifi
+APP_DIR=/opt/kioscode
+CFG_DIR=/etc/kioscode
+DATA_DIR=/var/lib/kioscode
+BIN="$APP_DIR/kioscode"
+UNIT=Kioscode
 PURGE=0
 [ "${1:-}" = "--purge" ] && PURGE=1
 
@@ -30,7 +30,7 @@ if systemctl list-unit-files "$UNIT.service" >/dev/null 2>&1 && [ -f "/etc/syste
   echo "Servicio eliminado."
 fi
 
-FW_UNIT=totem-wifi-firewall
+FW_UNIT=kioscode-firewall
 if [ -f "/etc/systemd/system/$FW_UNIT.path" ]; then
   systemctl disable --now "$FW_UNIT.path" >/dev/null 2>&1 || true
   rm -f "/etc/systemd/system/$FW_UNIT.path" "/etc/systemd/system/$FW_UNIT.service"
@@ -38,10 +38,10 @@ if [ -f "/etc/systemd/system/$FW_UNIT.path" ]; then
   echo "Ayudante del cortafuegos eliminado."
 fi
 
-# Quita las reglas «Totem Wi-Fi» de ufw. Se leen de los ficheros de reglas
+# Quita las reglas «Kioscode» de ufw. Se leen de los ficheros de reglas
 # (funciona también con ufw desactivado); el comentario va en hexadecimal.
 if command -v ufw >/dev/null 2>&1; then
-  grep -h '^### tuple ### allow tcp .* comment=546f74656d2057692d4669$' \
+  grep -h '^### tuple ### allow tcp .* comment=4b696f73636f6465$' \
       /etc/ufw/user.rules /etc/ufw/user6.rules 2>/dev/null | awk '{print $9, $6}' |
     while read -r src port; do
       LC_ALL=C ufw delete allow from "$src" to any port "$port" proto tcp >/dev/null && echo "Regla de ufw eliminada: $src → $port/tcp"
@@ -53,8 +53,8 @@ echo "Ejecutable eliminado ($APP_DIR)."
 
 if [ "$PURGE" -eq 1 ]; then
   rm -rf "$CFG_DIR" "$DATA_DIR"
-  id totem >/dev/null 2>&1 && userdel totem
-  echo "Configuración, datos y usuario «totem» eliminados."
+  id kioscode >/dev/null 2>&1 && userdel kioscode
+  echo "Configuración, datos y usuario «kioscode» eliminados."
 else
   echo "Se conservan $CFG_DIR y $DATA_DIR (use --purge para borrarlos)."
 fi

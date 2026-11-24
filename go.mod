@@ -1,4 +1,4 @@
-module totem-wifi
+module kioscode
 
 go 1.23
 

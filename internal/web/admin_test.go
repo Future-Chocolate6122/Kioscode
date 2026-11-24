@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"totem-wifi/internal/config"
-	"totem-wifi/internal/firewall"
-	"totem-wifi/internal/unifi"
+	"kioscode/internal/config"
+	"kioscode/internal/firewall"
+	"kioscode/internal/unifi"
 )
 
 // navegador simula un navegador de administración (cookie + token CSRF).
@@ -493,8 +493,11 @@ func TestAdminTextosDeLaPantalla(t *testing.T) {
 		t.Errorf("no se han guardado los textos: %q / %q", k.Title, k.Intro)
 	}
 	body = n.hacer("GET", "/admin", nil, nil).Body.String()
-	if !strings.Contains(body, "Servicio de Wi-Fi · Administración") || !strings.Contains(body, k.TermsVersion()) {
-		t.Error("la cabecera de /admin debe usar el título y mostrarse la versión de las condiciones")
+	if !strings.Contains(body, "<title>Administración · Servicio de Wi-Fi</title>") || !strings.Contains(body, k.TermsVersion()) {
+		t.Error("la pestaña de /admin debe usar el título y mostrarse la versión de las condiciones")
+	}
+	if !strings.Contains(body, `src="/static/kioscode-logo.svg`) || !strings.Contains(body, `alt="Kioscode"`) {
+		t.Error("la cabecera de /admin debe mostrar el logotipo de Kioscode")
 	}
 	// Activar las condiciones sin texto no se permite.
 	form.Set("kiosk_terms_text", "  ")

@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"totem-wifi/internal/config"
-	"totem-wifi/internal/unifi"
+	"kioscode/internal/config"
+	"kioscode/internal/unifi"
 )
 
 // reloj controlable desde los tests.
@@ -114,7 +114,7 @@ func TestIssueBasico(t *testing.T) {
 	if res.Formatted != "12345-67890" || res.SSID != "WifiPublica" || res.Minutes != 240 || res.Mock {
 		t.Errorf("resultado inesperado: %+v", res)
 	}
-	if f.site != "site-1" || f.ultimo.Name != "Totem" || f.ultimo.TimeLimitMinutes != 240 || f.ultimo.GuestLimit != 1 {
+	if f.site != "site-1" || f.ultimo.Name != "Kioscode" || f.ultimo.TimeLimitMinutes != 240 || f.ultimo.GuestLimit != 1 {
 		t.Errorf("petición a UniFi inesperada: site=%s %+v", f.site, f.ultimo)
 	}
 	l := buf.String()

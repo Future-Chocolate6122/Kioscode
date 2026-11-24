@@ -1,4 +1,4 @@
-// Tótem Wi-Fi · acciones de la página de administración (sin dependencias).
+// Kioscode · acciones de la página de administración (sin dependencias).
 (function () {
   'use strict';
   var meta = document.querySelector('meta[name="csrf"]');
@@ -67,7 +67,7 @@
         if (d.state === 'pendiente' && intentos > 0) {
           setTimeout(function () { consultarCortafuegos(intentos - 1); }, 2000);
         } else if (d.state === 'pendiente') {
-          fwTexto.textContent = 'El cortafuegos no se ha actualizado. Compruebe en el servidor: systemctl status totem-wifi-firewall';
+          fwTexto.textContent = 'El cortafuegos no se ha actualizado. Compruebe en el servidor: systemctl status kioscode-firewall';
           fwTexto.classList.add('mal');
         }
       })

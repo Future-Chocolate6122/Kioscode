@@ -8,7 +8,7 @@ import (
 
 // La plantilla de la unidad systemd debe compilar y llevar el endurecimiento pedido.
 func TestUnidadSystemd(t *testing.T) {
-	unit := strings.ReplaceAll(systemdUnit, "@RW@", "/var/lib/totem-wifi /etc/totem-wifi")
+	unit := strings.ReplaceAll(systemdUnit, "@RW@", "/var/lib/kioscode /etc/kioscode")
 	tf := template.FuncMap{
 		"cmd":       func(s string) string { return `"` + s + `"` },
 		"cmdEscape": func(s string) string { return s },
@@ -19,19 +19,19 @@ func TestUnidadSystemd(t *testing.T) {
 	}
 	var b strings.Builder
 	err = tmpl.Execute(&b, map[string]any{
-		"Description": "Tótem Wi-Fi",
-		"Path":        "/opt/totem-wifi/totem-wifi",
-		"Arguments":   []string{"-config", "/etc/totem-wifi/config.json", "-data", "/var/lib/totem-wifi"},
-		"UserName":    "totem",
+		"Description": "Kioscode",
+		"Path":        "/opt/kioscode/kioscode",
+		"Arguments":   []string{"-config", "/etc/kioscode/config.json", "-data", "/var/lib/kioscode"},
+		"UserName":    "kioscode",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	out := b.String()
 	for _, want := range []string{
-		`ExecStart=/opt/totem-wifi/totem-wifi "-config" "/etc/totem-wifi/config.json" "-data" "/var/lib/totem-wifi"`,
-		"User=totem", "ProtectSystem=strict", "ProtectHome=yes", "NoNewPrivileges=yes",
-		"ReadWritePaths=/var/lib/totem-wifi /etc/totem-wifi", "Restart=always", "WantedBy=multi-user.target",
+		`ExecStart=/opt/kioscode/kioscode "-config" "/etc/kioscode/config.json" "-data" "/var/lib/kioscode"`,
+		"User=kioscode", "ProtectSystem=strict", "ProtectHome=yes", "NoNewPrivileges=yes",
+		"ReadWritePaths=/var/lib/kioscode /etc/kioscode", "Restart=always", "WantedBy=multi-user.target",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("falta %q en la unidad:\n%s", want, out)
@@ -45,7 +45,7 @@ func TestResolvePathsConFlags(t *testing.T) {
 		t.Errorf("%s %s", cp, dd)
 	}
 	cp, dd = resolvePaths("", "", true)
-	if cp != "/etc/totem-wifi/config.json" || dd != "/var/lib/totem-wifi" {
+	if cp != "/etc/kioscode/config.json" || dd != "/var/lib/kioscode" {
 		t.Errorf("rutas de servicio en Linux: %s %s", cp, dd)
 	}
 }

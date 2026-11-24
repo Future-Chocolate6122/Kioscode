@@ -105,7 +105,7 @@ func Default() Config {
 		Voucher: Voucher{
 			SSID:                "WifiPublica",
 			ExtraSSIDs:          []SSID{},
-			Note:                "Totem",
+			Note:                "Kioscode",
 			Minutes:             240,
 			GuestLimit:          1,
 			UnusedExpireMinutes: 15,

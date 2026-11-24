@@ -1,6 +1,6 @@
 dist/
-/totem-wifi
-/totem-wifi.exe
+/kioscode
+/kioscode.exe
 dev/
 *.log
 config.json

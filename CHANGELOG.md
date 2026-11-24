@@ -1,10 +1,24 @@
 # Historial de versiones
 
+Kioscode se llamaba **Tótem Wi-Fi** hasta la versión 1.4.
+
 Formato: las novedades de cada versión, de la más reciente a la más antigua. Antes de actualizar,
 haga siempre una copia de `config.json`: una versión anterior no reconoce los campos que añade una
 posterior.
 
-## 1.5.0
+## 2.0.0
+
+### Nuevo nombre: Kioscode
+- La aplicación pasa a llamarse **Kioscode**, con su propio logotipo (la «K modular», en
+  `docs/marca/`). El logotipo aparece en la cabecera de `/admin` y en el favicon; en la pantalla del
+  quiosco sigue mostrándose solo el de la organización.
+- Cambian con el nombre: el ejecutable (`kioscode`), el servicio (`Kioscode`), las carpetas
+  (`/opt/kioscode`, `/etc/kioscode`, `/var/lib/kioscode`; en Windows, `Kioscode`), el usuario del
+  sistema (`kioscode`), el log (`kioscode.log`), el ayudante del cortafuegos (`kioscode-firewall`),
+  el nombre de las reglas de ufw y del Firewall de Windows («Kioscode») y la nota por defecto de los
+  vouchers en UniFi («Kioscode»).
+- **No se actualiza encima de Tótem Wi-Fi**: desinstale antes la versión 1.x con su propio
+  `uninstall.sh` (ver README, punto 17).
 
 ### Novedades
 - **Temas de la pantalla**: en `/admin` → *Apariencia* se elige entre **Claro** (por defecto) y

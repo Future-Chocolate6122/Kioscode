@@ -17,7 +17,7 @@
   <div class="logo">
     {{if .HasLogo}}<img src="/logo" alt="{{.LogoText}}">{{else if .LogoText}}<span class="logo-texto">{{.LogoText}}</span>{{end}}
   </div>
-  <div class="servicio">{{.Title}} · Administración</div>
+  <div class="servicio marca-app"><img src="/static/kioscode-logo.svg?v={{.Version}}" alt="Kioscode" width="153" height="24"><span>Administración</span></div>
 </header>
 
 <main class="admin-main">

@@ -1,4 +1,4 @@
-// Tótem Wi-Fi: servidor de quiosco que entrega vouchers del hotspot de UniFi.
+// Kioscode: servidor de quiosco que entrega vouchers del hotspot de UniFi.
 package main
 
 import (
@@ -15,11 +15,11 @@ import (
 	"runtime"
 	"time"
 
-	"totem-wifi/internal/config"
-	"totem-wifi/internal/logfile"
-	"totem-wifi/internal/unifi"
-	"totem-wifi/internal/voucher"
-	"totem-wifi/internal/web"
+	"kioscode/internal/config"
+	"kioscode/internal/logfile"
+	"kioscode/internal/unifi"
+	"kioscode/internal/voucher"
+	"kioscode/internal/web"
 )
 
 // version se fija al compilar con -ldflags "-X main.version=…".
@@ -43,7 +43,7 @@ func (a *app) setup() error {
 		return fmt.Errorf("no se puede crear el directorio de datos %s: %w", a.dataDir, err)
 	}
 	var out io.Writer = os.Stderr
-	if lf, err := logfile.Open(filepath.Join(a.dataDir, "totem-wifi.log"), 5<<20, 5); err == nil {
+	if lf, err := logfile.Open(filepath.Join(a.dataDir, "kioscode.log"), 5<<20, 5); err == nil {
 		a.logFile = lf
 		out = io.MultiWriter(os.Stderr, lf)
 	} else {
@@ -87,7 +87,7 @@ func (a *app) start() error {
 		return fmt.Errorf("no se puede escuchar en %s (¿otro programa usa el puerto?): %w", a.srv.Addr, err)
 	}
 	c := a.cfg.Get()
-	a.logger.Printf("Tótem Wi-Fi %s escuchando en http://%s/ (configuración: %s, datos: %s)", version, a.srv.Addr, a.cfg.Path(), a.dataDir)
+	a.logger.Printf("Kioscode %s escuchando en http://%s/ (configuración: %s, datos: %s)", version, a.srv.Addr, a.cfg.Path(), a.dataDir)
 	a.startupCheck(c)
 	ctx, cancel := context.WithCancel(context.Background())
 	a.cancel = cancel
@@ -147,10 +147,10 @@ func systemPaths() (configPath, dataDir string) {
 		if pd == "" {
 			pd = `C:\ProgramData`
 		}
-		dir := filepath.Join(pd, "TotemWifi")
+		dir := filepath.Join(pd, "Kioscode")
 		return filepath.Join(dir, "config.json"), dir
 	}
-	return "/etc/totem-wifi/config.json", "/var/lib/totem-wifi"
+	return "/etc/kioscode/config.json", "/var/lib/kioscode"
 }
 
 // resolvePaths decide qué config.json y directorio de datos usar:
@@ -192,26 +192,26 @@ func fileExists(p string) bool {
 	return err == nil
 }
 
-const usage = `Tótem Wi-Fi %s: entrega vouchers del hotspot de UniFi en una web de quiosco.
+const usage = `Kioscode %s: entrega vouchers del hotspot de UniFi en una web de quiosco.
 
 Uso:
-  totem-wifi [-config RUTA] [-data DIR]   ejecuta en primer plano
-  totem-wifi install | uninstall | start | stop | status | restart
+  kioscode [-config RUTA] [-data DIR]   ejecuta en primer plano
+  kioscode install | uninstall | start | stop | status | restart
                                           servicio del sistema (requiere administrador/root)
-  totem-wifi fingerprint HOST:PUERTO      imprime la huella SHA-256 del certificado de un servidor
-  totem-wifi check                        prueba la configuración y la conexión con UniFi
-  totem-wifi init                         crea config.json con los valores por defecto
-  totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]
+  kioscode fingerprint HOST:PUERTO      imprime la huella SHA-256 del certificado de un servidor
+  kioscode check                        prueba la configuración y la conexión con UniFi
+  kioscode init                         crea config.json con los valores por defecto
+  kioscode set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]
                                           ajusta UniFi, tótems y administración (lo usa install.sh)
-  totem-wifi firewall-sync                ajusta ufw a las IPs permitidas (root; lo lanza systemd)
-  totem-wifi allowlist                    lista puerto e IPs permitidas
-  totem-wifi version                      muestra la versión
+  kioscode firewall-sync                ajusta ufw a las IPs permitidas (root; lo lanza systemd)
+  kioscode allowlist                    lista puerto e IPs permitidas
+  kioscode version                      muestra la versión
 
 Opciones:
 `
 
 func main() {
-	fs := flag.NewFlagSet("totem-wifi", flag.ExitOnError)
+	fs := flag.NewFlagSet("kioscode", flag.ExitOnError)
 	cfgFlag := fs.String("config", "", "ruta de config.json")
 	dataFlag := fs.String("data", "", "directorio de datos: state.json, log, logo (por defecto, el de config.json)")
 	var so setOptions
@@ -232,7 +232,7 @@ func main() {
 
 	switch cmd {
 	case "version":
-		fmt.Println("totem-wifi", version, runtime.GOOS+"/"+runtime.GOARCH)
+		fmt.Println("kioscode", version, runtime.GOOS+"/"+runtime.GOARCH)
 		return
 	case "fingerprint":
 		os.Exit(runFingerprint(rest))

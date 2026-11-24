@@ -18,11 +18,11 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"totem-wifi/internal/config"
-	"totem-wifi/internal/firewall"
-	"totem-wifi/internal/i18n"
-	"totem-wifi/internal/unifi"
-	"totem-wifi/internal/voucher"
+	"kioscode/internal/config"
+	"kioscode/internal/firewall"
+	"kioscode/internal/i18n"
+	"kioscode/internal/unifi"
+	"kioscode/internal/voucher"
 )
 
 const (

@@ -1,4 +1,4 @@
-// Tótem Wi-Fi · lógica de la pantalla del quiosco. Sin dependencias externas.
+// Kioscode · lógica de la pantalla del quiosco. Sin dependencias externas.
 //
 // Pantallas: inicio → pasos → inicio.
 //   inicio: condiciones de uso (si están activadas) y botón «Empezar».

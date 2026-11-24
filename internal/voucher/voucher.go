@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	"totem-wifi/internal/config"
-	"totem-wifi/internal/unifi"
+	"kioscode/internal/config"
+	"kioscode/internal/unifi"
 )
 
 // Errores que la web traduce a mensajes para el ciudadano.

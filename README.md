@@ -1,9 +1,27 @@
-# Tótem Wi-Fi
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/marca/kioscode-logo-white.svg">
+  <img src="docs/marca/kioscode-logo-color.svg" alt="Kioscode" height="48">
+</picture>
 
-Quiosco Wi-Fi de autoservicio para UniFi OS Server y UniFi Network Application. El
-ciudadano acepta las condiciones de uso, se conecta a la red escaneando un **QR**, pulsa **«Solicitar
-código»** y recibe en pantalla un **voucher del hotspot de UniFi**, que escribe en el portal cautivo
-de su móvil, ordenador o tablet.
+# Kioscode para UniFi
+
+**Quiosco Wi-Fi de autoservicio para UniFi OS Server y UniFi Network Application.**
+
+**Kioscode** convierte cualquier pantalla con navegador (un tótem táctil, un monitor en un
+mostrador) en un **punto de acceso a la Wi-Fi gratuita** donde el público consigue su código sin
+ayuda.
+
+**Qué hace:** se conecta a un servidor **UniFi OS Server** o **UniFi Network Application** a través
+de su API oficial (Integration API) y, cada vez que alguien lo pide en la pantalla, **genera un
+código de acceso, un voucher del hotspot de UniFi**, y lo muestra en grande. Esa persona lo escribe en
+el portal cautivo de su móvil, ordenador o tablet y ya navega.
+
+**Cómo lo vive el usuario:**
+
+1. Acepta las condiciones de uso (si están activadas) y pulsa **Empezar**.
+2. Escanea el **QR** para conectarse a la red Wi-Fi.
+3. Cuando se abre la página de acceso en su móvil, pulsa **Solicitar código** en la pantalla.
+4. Escribe el código en su dispositivo y pulsa «Conectar».
 
 ![Pantalla de pasos del quiosco](docs/img/quiosco-pasos.png)
 
@@ -14,6 +32,15 @@ de su móvil, ordenador o tablet.
   textos, condiciones de uso, tema, logotipo y fondo, equipos permitidos e invitados conectados.
 - Tras instalarlo arranca en **modo simulación**: da códigos falsos y muestra una franja amarilla
   «MODO PRUEBA» hasta que se configure UniFi.
+
+**Requisitos:** un UniFi OS Server o UniFi Network Application con la Integration API (aplicación
+Network 9.x o posterior), con un portal cautivo de vouchers en la red de invitados, y un equipo
+donde ejecutar Kioscode (recomendado: Ubuntu Server). Probado con UniFi OS Server 5.1 y Network 10.x.
+
+> Kioscode es un proyecto independiente: no es un producto de Ubiquiti ni está respaldado por ella.
+> UniFi es una marca registrada de Ubiquiti Inc.
+>
+> Hasta la versión 1.4 se llamaba **Tótem Wi-Fi**.
 
 ---
 
@@ -59,9 +86,9 @@ de su móvil, ordenador o tablet.
 
 | Paquete | Para | Contenido |
 |---|---|---|
-| `totem-wifi_<versión>_windows_amd64.zip` | Windows 10/11 o Windows Server de 64 bits | `totem-wifi.exe`, `install.ps1`, `uninstall.ps1`, este README |
-| `totem-wifi_<versión>_linux_amd64.tar.gz` | Ubuntu/Debian en PC o servidor normal | `totem-wifi`, `install.sh`, `uninstall.sh`, este README |
-| `totem-wifi_<versión>_linux_arm64.tar.gz` | Ubuntu en ARM (por ejemplo, Raspberry Pi 4/5 de 64 bits) | ídem |
+| `kioscode_<versión>_windows_amd64.zip` | Windows 10/11 o Windows Server de 64 bits | `kioscode.exe`, `install.ps1`, `uninstall.ps1`, este README |
+| `kioscode_<versión>_linux_amd64.tar.gz` | Ubuntu/Debian en PC o servidor normal | `kioscode`, `install.sh`, `uninstall.sh`, este README |
+| `kioscode_<versión>_linux_arm64.tar.gz` | Ubuntu en ARM (por ejemplo, Raspberry Pi 4/5 de 64 bits) | ídem |
 
 `SHA256SUMS.txt` permite comprobar que el paquete ha llegado íntegro. Todos están en la página de
 versiones: <https://github.com/Future-Chocolate6122/totem-wifi/releases>.
@@ -70,10 +97,10 @@ Dónde queda cada cosa una vez instalado:
 
 | | Windows | Ubuntu |
 |---|---|---|
-| Programa | `C:\Program Files\TotemWifi\totem-wifi.exe` | `/opt/totem-wifi/totem-wifi` |
-| Configuración (`config.json`) | `C:\ProgramData\TotemWifi\config.json` | `/etc/totem-wifi/config.json` |
-| Contador diario (`state.json`), log y logotipo | `C:\ProgramData\TotemWifi\` | `/var/lib/totem-wifi/` |
-| Nombre del servicio | `TotemWifi` | `TotemWifi` (systemd) |
+| Programa | `C:\Program Files\Kioscode\kioscode.exe` | `/opt/kioscode/kioscode` |
+| Configuración (`config.json`) | `C:\ProgramData\Kioscode\config.json` | `/etc/kioscode/config.json` |
+| Contador diario (`state.json`), log y logotipo | `C:\ProgramData\Kioscode\` | `/var/lib/kioscode/` |
+| Nombre del servicio | `Kioscode` | `Kioscode` (systemd) |
 
 > `config.json` contiene la API key y la contraseña de administración (cifrada). Los instaladores lo
 > dejan legible solo por el servicio y por los administradores del equipo.
@@ -82,16 +109,16 @@ Dónde queda cada cosa una vez instalado:
 
 ## 2. Instalación en Ubuntu Server
 
-1. Descargue el paquete en el servidor. Los enlaces de la versión actual (1.4.3) son estos; para otra
-   versión, cambie `1.4.3` por la que corresponda (todas están en la
+1. Descargue el paquete en el servidor. Los enlaces de la versión actual (2.0.0) son estos; para otra
+   versión, cambie `2.0.0` por la que corresponda (todas están en la
    [página de versiones](https://github.com/Future-Chocolate6122/totem-wifi/releases)):
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/totem-wifi/releases/download/v1.4.3/totem-wifi_1.4.3_linux_amd64.tar.gz
+   wget https://github.com/Future-Chocolate6122/totem-wifi/releases/download/v2.0.0/kioscode_2.0.0_linux_amd64.tar.gz
    ```
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/totem-wifi/releases/download/v1.4.3/SHA256SUMS.txt
+   wget https://github.com/Future-Chocolate6122/totem-wifi/releases/download/v2.0.0/SHA256SUMS.txt
    ```
 
    Compruebe que ha llegado íntegro (debe decir `OK`):
@@ -105,17 +132,17 @@ Dónde queda cada cosa una vez instalado:
    Si el servidor no tiene salida a Internet, descárguelo en su PC y cópielo con `scp`:
 
    ```bash
-   scp totem-wifi_1.4.3_linux_amd64.tar.gz usuario@IP_DEL_SERVIDOR:
+   scp kioscode_2.0.0_linux_amd64.tar.gz usuario@IP_DEL_SERVIDOR:
    ```
 
 2. En el servidor, descomprímalo y entre en la carpeta:
 
    ```bash
-   tar xzf totem-wifi_1.4.3_linux_amd64.tar.gz
+   tar xzf kioscode_2.0.0_linux_amd64.tar.gz
    ```
 
    ```bash
-   cd totem-wifi_1.4.3_linux_amd64
+   cd kioscode_2.0.0_linux_amd64
    ```
 
 3. Instale indicando los datos de su red. Se pueden cambiar después en `/admin`:
@@ -135,7 +162,7 @@ Dónde queda cada cosa una vez instalado:
    > navegador, así que sin esta opción solo podrá entrar con un túnel SSH (ver
    > [4. Primer acceso](#4-primer-acceso-a-la-administración)).
 
-   El instalador crea el usuario de sistema `totem`, copia el programa a `/opt/totem-wifi`, crea la
+   El instalador crea el usuario de sistema `kioscode`, copia el programa a `/opt/kioscode`, crea la
    configuración, registra el servicio systemd y lo arranca. Al terminar muestra la dirección del
    quiosco y la de `/admin`.
 
@@ -144,7 +171,7 @@ Dónde queda cada cosa una vez instalado:
 Comprobar que el servicio está en marcha:
 
 ```bash
-systemctl status TotemWifi
+systemctl status Kioscode
 ```
 
 ### Cortafuegos (ufw)
@@ -153,7 +180,7 @@ Si el servidor tiene ufw, el instalador añade un **ayudante** que mantiene el c
 vez que se guardan en `/admin` cambios en los equipos permitidos, abre el puerto 8080 **solo** a esos
 equipos. El resultado se ve en `/admin` → *Estado* → *Cortafuegos (ufw)*.
 
-- Solo crea y borra sus propias reglas, marcadas como «Totem Wi-Fi». Nunca toca las demás (SSH queda
+- Solo crea y borra sus propias reglas, marcadas como «Kioscode». Nunca toca las demás (SSH queda
   a salvo) y **nunca activa ni desactiva ufw**.
 - Si ufw está desactivado, deja las reglas preparadas y `/admin` lo indica. Para activarlo, permita
   antes SSH para no perder el acceso:
@@ -167,7 +194,7 @@ equipos. El resultado se ve en `/admin` → *Estado* → *Cortafuegos (ufw)*.
   ```
 
 - El servicio web sigue sin privilegios: el ayudante es un servicio aparte
-  (`totem-wifi-firewall`) que systemd lanza como root cuando cambia `config.json`.
+  (`kioscode-firewall`) que systemd lanza como root cuando cambia `config.json`.
 - Si no quiere que se gestione ufw, instale con `--no-ufw`.
 
 ---
@@ -183,7 +210,7 @@ Server.
 3. Vaya a la carpeta descomprimida (cambie la ruta por la suya):
 
    ```powershell
-   cd "$env:USERPROFILE\Downloads\totem-wifi_1.4.3_windows_amd64"
+   cd "$env:USERPROFILE\Downloads\kioscode_2.0.0_windows_amd64"
    ```
 
 4. Ejecute el instalador. Copia el programa, registra el servicio, abre el puerto 8080 en el
@@ -198,10 +225,10 @@ Server.
 Comprobar que el servicio está en marcha:
 
 ```powershell
-Get-Service TotemWifi
+Get-Service Kioscode
 ```
 
-> **Firewall.** En Windows la regla «Totem Wi-Fi (HTTP)» no se actualiza sola: se crea con las IPs
+> **Firewall.** En Windows la regla «Kioscode (HTTP)» no se actualiza sola: se crea con las IPs
 > que haya al instalar. Si después cambia las listas en `/admin`, vuelva a ejecutar `install.ps1`
 > (conserva toda la configuración).
 
@@ -257,14 +284,14 @@ dedicado solo al tótem, porque así se puede revocar sin afectar a nadie y en U
 el tótem:
 
 1. En UniFi OS Server, en **Admins & Users**, cree un administrador **local**, por ejemplo
-   `totem-api`. No use una cuenta de ui.com. Póngale una contraseña larga.
+   `kioscode-api`. No use una cuenta de ui.com. Póngale una contraseña larga.
 2. Dele acceso **solo a la aplicación Network**, sin Protect, Access ni otras.
 3. En Network, dele el permiso más bajo que permita **administrar** la red (suele llamarse
    «Full Management» o «Admin»). No sirven «Hotspot» ni «Solo lectura» (*View Only*): crear vouchers
    requiere permiso de escritura.
 4. Entre en UniFi con ese usuario y abra **Network → Settings → Control Plane → Integrations** (en
    algunas versiones, directamente *Integrations*). Cree una clave con un nombre reconocible, por
-   ejemplo «Tótem Wi-Fi», y **cópiela**: UniFi solo la muestra una vez.
+   ejemplo «Kioscode», y **cópiela**: UniFi solo la muestra una vez.
 5. Péguela en `/admin` (sección *UniFi OS Server*). Si «Probar conexión con UniFi» responde **403**,
    el permiso del usuario se queda corto.
 
@@ -299,13 +326,13 @@ Desde la consola se puede hacer la misma comprobación, capa por capa
 (Windows, en PowerShell como administrador):
 
 ```powershell
-& "C:\Program Files\TotemWifi\totem-wifi.exe" check
+& "C:\Program Files\Kioscode\kioscode.exe" check
 ```
 
 Ubuntu:
 
 ```bash
-sudo /opt/totem-wifi/totem-wifi check
+sudo /opt/kioscode/kioscode check
 ```
 
 `check` termina con «Todo correcto» o indica en qué capa falla (ver
@@ -314,7 +341,7 @@ sudo /opt/totem-wifi/totem-wifi check
 También se puede ver la huella de un servidor sin abrir `/admin`:
 
 ```bash
-totem-wifi fingerprint 198.51.100.20:11443
+kioscode fingerprint 198.51.100.20:11443
 ```
 
 ---
@@ -322,7 +349,7 @@ totem-wifi fingerprint 198.51.100.20:11443
 ## 7. Configurar los tótems
 
 En cada tótem basta un navegador Chrome o Edge en **modo quiosco** apuntando al servidor. Sustituya
-`IP_SERVIDOR` por la IP del equipo donde está instalado Tótem Wi-Fi (o `localhost` si el tótem es el
+`IP_SERVIDOR` por la IP del equipo donde está instalado Kioscode (o `localhost` si el tótem es el
 propio servidor), y asegúrese de que la IP del tótem está en **Equipos que pueden usar el quiosco**.
 
 **Windows** (cree un acceso directo en la carpeta *Inicio* del usuario del tótem con este destino):
@@ -440,7 +467,7 @@ Para el **logotipo y la foto de fondo**, en el mismo bloque:
   eventos o enlaces `javascript:`) se rechazan.
 - Si la imagen es pequeña para su uso, se avisa al subirla (puede verse borrosa o pixelada).
 - Caben hasta 30 imágenes; se guardan en `imagenes/` dentro de la carpeta de datos
-  (`/var/lib/totem-wifi/imagenes/`).
+  (`/var/lib/kioscode/imagenes/`).
 - Sin logotipo se muestra el **nombre de la organización** (o nada, si está vacío).
 - Las imágenes copiadas a mano en la carpeta de datos (`logo.svg` o `logo.png`), como en las
   versiones anteriores, siguen funcionando.
@@ -501,18 +528,18 @@ Se escribe una línea por cada voucher (IP del tótem, código **enmascarado** `
 minutos), por cada error de UniFi y por cada acción de administración. La API key **nunca** se
 escribe en el log.
 
-El fichero `totem-wifi.log` está en la carpeta de datos y rota solo (5 ficheros de 5 MB).
+El fichero `kioscode.log` está en la carpeta de datos y rota solo (5 ficheros de 5 MB).
 
 Windows, ver las últimas líneas y seguir en directo:
 
 ```powershell
-Get-Content "C:\ProgramData\TotemWifi\totem-wifi.log" -Tail 50 -Wait
+Get-Content "C:\ProgramData\Kioscode\kioscode.log" -Tail 50 -Wait
 ```
 
 Ubuntu:
 
 ```bash
-journalctl -u TotemWifi -f
+journalctl -u Kioscode -f
 ```
 
 Estado rápido (sirve para monitorización; responde 503 si UniFi no contesta):
@@ -554,7 +581,7 @@ Si el cambio es legítimo: `/admin` → **«Obtener huella del certificado»** �
 
 ## 16. Diagnóstico de problemas
 
-Con UniFi, vaya **por capas**, en este orden (`totem-wifi check` y «Probar conexión con UniFi» indican la capa). Las últimas filas recogen otros problemas frecuentes:
+Con UniFi, vaya **por capas**, en este orden (`kioscode check` y «Probar conexión con UniFi» indican la capa). Las últimas filas recogen otros problemas frecuentes:
 
 | Capa | Síntoma | Qué hacer |
 |---|---|---|
@@ -565,7 +592,7 @@ Con UniFi, vaya **por capas**, en este orden (`totem-wifi check` y «Probar cone
 | **Sitio** | HTTP 404 o «no se encuentra el sitio default» | Deje vacío **ID del sitio** y pulse «Probar conexión» para detectarlo. |
 | **Parámetros del voucher** | HTTP 400 | Revise duración (1–1 000 000 min) y velocidades (0 o 2–100 000 kbps). |
 | **Acceso al quiosco** | El tótem muestra «Acceso no permitido desde este equipo» | Su IP no está en *Equipos que pueden usar el quiosco*. En el log aparece `acceso denegado … desde IP`. |
-| | El tótem no carga la página | En Ubuntu, compruebe en `/admin` → *Estado* → *Cortafuegos (ufw)* que la red del tótem aparece en la lista. Si se queda en «Aplicando…» o da error, mire el ayudante con `systemctl status totem-wifi-firewall` y sincronice a mano con `sudo /opt/totem-wifi/totem-wifi firewall-sync` (muestra qué reglas añade o quita). En Windows, compruebe que la regla «Totem Wi-Fi (HTTP)» del Firewall incluye la IP del tótem (vuelva a ejecutar `install.ps1`). |
+| | El tótem no carga la página | En Ubuntu, compruebe en `/admin` → *Estado* → *Cortafuegos (ufw)* que la red del tótem aparece en la lista. Si se queda en «Aplicando…» o da error, mire el ayudante con `systemctl status kioscode-firewall` y sincronice a mano con `sudo /opt/kioscode/kioscode firewall-sync` (muestra qué reglas añade o quita). En Windows, compruebe que la regla «Kioscode (HTTP)» del Firewall incluye la IP del tótem (vuelva a ejecutar `install.ps1`). |
 | **Límites** | El botón muestra «Podrás solicitar tu código en N s» | Es la espera entre códigos contra abusos (`cooldown_seconds`, 20 s por tótem). Se reactiva solo. |
 | | «Hoy ya se han entregado todos los códigos disponibles» | Se ha alcanzado `daily_limit` (300). El contador vuelve a cero a medianoche. |
 | **Administración** | Ha olvidado la contraseña | Pare el servicio, edite `config.json` como administrador, deje `"admin_password_hash": ""`, arranque el servicio y abra `/admin` desde un equipo de *Equipos que pueden abrir /admin* para crear una nueva. |
@@ -599,11 +626,35 @@ sudo ./install.sh
 
 Los tótems recogen la versión nueva en la recarga de las 04:00 (o al reiniciar el navegador).
 
+### Desde Tótem Wi-Fi (versiones 1.x)
+
+La versión 2.0 cambia el nombre de la aplicación a **Kioscode**, y con él el ejecutable, el servicio
+(`Kioscode`), las carpetas (`/opt/kioscode`, `/etc/kioscode`, `/var/lib/kioscode`), el usuario del
+sistema (`kioscode`) y el nombre de las reglas del cortafuegos («Kioscode»). No se actualiza encima:
+
+1. Guarde una copia de la configuración anterior:
+
+   ```bash
+   sudo cp /etc/totem-wifi/config.json ~/config-totem-wifi.json
+   ```
+
+2. Desinstale la versión anterior con **su propio** `uninstall.sh` (el del paquete 1.x), que
+   quita también sus reglas de ufw:
+
+   ```bash
+   sudo ./uninstall.sh --purge
+   ```
+
+3. Instale Kioscode como en [2. Instalación en Ubuntu Server](#2-instalación-en-ubuntu-server) y
+   vuelva a configurar `/admin`. Si prefiere reutilizar la configuración, copie la copia guardada
+   a `/etc/kioscode/config.json` antes de arrancar y cambie en ella `"note": "Totem"` por
+   `"note": "Kioscode"` si quiere que los códigos nuevos aparezcan con ese nombre en UniFi.
+
 ---
 
 ## 18. Desinstalar
 
-Quita el servicio, el ayudante y las reglas «Totem Wi-Fi» del cortafuegos, y el programa. La configuración y los datos se conservan
+Quita el servicio, el ayudante y las reglas «Kioscode» del cortafuegos, y el programa. La configuración y los datos se conservan
 salvo que se indique lo contrario.
 
 Windows:
@@ -624,7 +675,7 @@ Ubuntu:
 sudo ./uninstall.sh
 ```
 
-Ubuntu, borrando también configuración, datos y el usuario `totem`:
+Ubuntu, borrando también configuración, datos y el usuario `kioscode`:
 
 ```bash
 sudo ./uninstall.sh --purge
@@ -679,24 +730,24 @@ Las frases que falten se muestran en castellano.
 ## 20. Línea de comandos
 
 ```text
-totem-wifi                       ejecuta en primer plano (pruebas)
-totem-wifi -config RUTA          usa otro config.json (y su carpeta para los datos)
-totem-wifi -data DIR             carpeta de datos (state.json, log, logo)
-totem-wifi install | uninstall | start | stop | restart | status
+kioscode                       ejecuta en primer plano (pruebas)
+kioscode -config RUTA          usa otro config.json (y su carpeta para los datos)
+kioscode -data DIR             carpeta de datos (state.json, log, logo)
+kioscode install | uninstall | start | stop | restart | status
                                  gestiona el servicio (como administrador / root)
-totem-wifi fingerprint HOST:PUERTO
+kioscode fingerprint HOST:PUERTO
                                  muestra la huella SHA-256 del certificado de un servidor
-totem-wifi check                 prueba la configuración y UniFi por capas (sale con ≠0 si falla)
-totem-wifi init                  crea config.json con los valores por defecto si no existe
-totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]
+kioscode check                 prueba la configuración y UniFi por capas (sale con ≠0 si falla)
+kioscode init                  crea config.json con los valores por defecto si no existe
+kioscode set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]
                                  ajusta UniFi, tótems y administración (lo usa install.sh; reinicie después)
-totem-wifi firewall-sync         ajusta ufw a los equipos permitidos (root; lo lanza systemd solo)
-totem-wifi allowlist             puerto e IPs permitidas
-totem-wifi version               versión
+kioscode firewall-sync         ajusta ufw a los equipos permitidos (root; lo lanza systemd solo)
+kioscode allowlist             puerto e IPs permitidas
+kioscode version               versión
 ```
 
 Sin `-config`, el programa usa `config.json` junto al ejecutable si existe; si no, el del servicio
-instalado (`C:\ProgramData\TotemWifi\` o `/etc/totem-wifi/`).
+instalado (`C:\ProgramData\Kioscode\` o `/etc/kioscode/`).
 
 ---
 
@@ -714,7 +765,7 @@ make build-all   # dist/ para windows/amd64, linux/amd64 y linux/arm64
 make release     # paquetes .zip y .tar.gz en dist/, que son lo que se copia al servidor
 ```
 
-Estructura: `cmd/totem-wifi` (arranque, comandos y servicio del sistema), `internal/config`,
+Estructura: `cmd/kioscode` (arranque, comandos y servicio del sistema), `internal/config`,
 `internal/unifi` (cliente de la Integration API con anclaje del certificado y cliente simulado),
 `internal/voucher` (cooldown, límite diario, formato del código), `internal/web` (servidor, quiosco
 y administración; los estáticos van embebidos), `internal/i18n` (textos) y `deploy/` (instaladores).
@@ -723,7 +774,7 @@ y administración; los estáticos van embebidos), `internal/i18n` (textos) y `de
 
 ## 22. Licencia
 
-Tótem Wi-Fi se distribuye bajo la **licencia MIT** (fichero [`LICENSE`](LICENSE)): se puede usar,
+Kioscode se distribuye bajo la **licencia MIT** (fichero [`LICENSE`](LICENSE)): se puede usar,
 copiar, modificar y redistribuir libremente, conservando el aviso de copyright.
 
 El ejecutable incluye componentes de terceros. Sus licencias y avisos de copyright aparecen

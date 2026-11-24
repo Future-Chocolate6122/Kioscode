@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"totem-wifi/internal/config"
+	"kioscode/internal/config"
 )
 
 func pngDe(w, h int) []byte {

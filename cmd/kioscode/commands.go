@@ -10,15 +10,15 @@ import (
 	"strings"
 	"time"
 
-	"totem-wifi/internal/config"
-	"totem-wifi/internal/firewall"
-	"totem-wifi/internal/unifi"
+	"kioscode/internal/config"
+	"kioscode/internal/firewall"
+	"kioscode/internal/unifi"
 )
 
 // runFingerprint imprime la huella del certificado de HOST:PUERTO.
 func runFingerprint(args []string) int {
 	if len(args) != 1 {
-		fmt.Fprintln(os.Stderr, "uso: totem-wifi fingerprint HOST:PUERTO   (por ejemplo 198.51.100.20:11443)")
+		fmt.Fprintln(os.Stderr, "uso: kioscode fingerprint HOST:PUERTO   (por ejemplo 198.51.100.20:11443)")
 		return 2
 	}
 	target := args[0]
@@ -53,7 +53,7 @@ func runCheck(configPath string) int {
 	bad := func(f string, a ...any) { fmt.Printf("[FALLO] "+f+"\n", a...); fail = true }
 
 	if _, err := os.Stat(configPath); err != nil {
-		bad("Configuración: no existe %s (arranque el servicio una vez o ejecute «totem-wifi init»)", configPath)
+		bad("Configuración: no existe %s (arranque el servicio una vez o ejecute «kioscode init»)", configPath)
 		return 1
 	}
 	st, _, err := config.Load(configPath)
@@ -219,7 +219,7 @@ func runAllowlist(configPath string) int {
 	return 0
 }
 
-// setOptions son los ajustes de instalación que admite «totem-wifi set».
+// setOptions son los ajustes de instalación que admite «kioscode set».
 type setOptions struct {
 	unifiURL, totems, adminIPs string
 	given                      []string // opciones indicadas en la línea de comandos
@@ -243,7 +243,7 @@ func splitList(s string) []string {
 // La API key no se admite aquí a propósito: quedaría en el historial de la consola.
 func runSet(configPath string, o setOptions) int {
 	if !o.has("unifi-url") && !o.has("totems") && !o.has("admin-ips") {
-		fmt.Fprintln(os.Stderr, "uso: totem-wifi set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]")
+		fmt.Fprintln(os.Stderr, "uso: kioscode set [-unifi-url URL] [-totems LISTA] [-admin-ips LISTA]")
 		return 2
 	}
 	st, _, err := config.Load(configPath)
@@ -283,7 +283,7 @@ func runSet(configPath string, o setOptions) int {
 	for _, c := range changes {
 		fmt.Println("  -", c)
 	}
-	fmt.Println("Si el servicio está en marcha, reinícielo para aplicar los cambios: totem-wifi restart")
+	fmt.Println("Si el servicio está en marcha, reinícielo para aplicar los cambios: kioscode restart")
 	return 0
 }
 
@@ -334,6 +334,6 @@ func runFirewallSync(configPath, dataDir string) int {
 	if !st.UFWActive {
 		fmt.Println("AVISO: ufw está desactivado; las reglas quedan preparadas pero no tienen efecto (sudo ufw enable, permitiendo antes SSH).")
 	}
-	fmt.Printf("Cortafuegos sincronizado: %d regla(s) de Tótem Wi-Fi.\n", len(st.Rules))
+	fmt.Printf("Cortafuegos sincronizado: %d regla(s) de Kioscode.\n", len(st.Rules))
 	return 0
 }

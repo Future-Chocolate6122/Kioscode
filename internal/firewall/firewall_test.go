@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"totem-wifi/internal/config"
+	"kioscode/internal/config"
 )
 
 var hexComment = hex.EncodeToString([]byte(Comment))
@@ -21,10 +21,10 @@ const reglasEjemplo = `*filter
 ### tuple ### allow tcp 22 0.0.0.0/0 any 0.0.0.0/0 in
 -A ufw-user-input -p tcp --dport 22 -j ACCEPT
 
-### tuple ### allow tcp 8080 0.0.0.0/0 any 192.0.2.0/24 in comment=546f74656d2057692d4669
+### tuple ### allow tcp 8080 0.0.0.0/0 any 192.0.2.0/24 in comment=4b696f73636f6465
 -A ufw-user-input -p tcp --dport 8080 -s 192.0.2.0/24 -j ACCEPT
 
-### tuple ### allow tcp 8080 0.0.0.0/0 any 203.0.113.9 in comment=546f74656d2057692d4669
+### tuple ### allow tcp 8080 0.0.0.0/0 any 203.0.113.9 in comment=4b696f73636f6465
 ### tuple ### allow tcp 8080 0.0.0.0/0 any 203.0.113.0/24 in
 ### tuple ### allow tcp 9090 0.0.0.0/0 any 203.0.113.11 in comment=6f74726f
 ### END RULES ###
@@ -35,7 +35,7 @@ func TestParseUserRulesSoloLasSuyas(t *testing.T) {
 	if len(got) != 2 || got[0] != (Rule{"192.0.2.0/24", 8080}) || got[1] != (Rule{"203.0.113.9", 8080}) {
 		t.Errorf("reglas leídas: %+v", got)
 	}
-	if hexComment != "546f74656d2057692d4669" {
+	if hexComment != "4b696f73636f6465" {
 		t.Errorf("el comentario en hexadecimal no coincide con el que escribe ufw: %s", hexComment)
 	}
 }
@@ -127,7 +127,7 @@ func TestSyncAnadeYQuitaSoloLoNecesario(t *testing.T) {
 	if del != "delete allow from 203.0.113.9 to any port 8080 proto tcp" {
 		t.Errorf("borrado: %s", del)
 	}
-	if add != "allow from 198.51.100.0/24 to any port 8080 proto tcp comment Totem Wi-Fi" {
+	if add != "allow from 198.51.100.0/24 to any port 8080 proto tcp comment Kioscode" {
 		t.Errorf("alta: %s", add)
 	}
 	for _, l := range u.llamadas {

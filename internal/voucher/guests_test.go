@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"totem-wifi/internal/config"
-	"totem-wifi/internal/unifi"
+	"kioscode/internal/config"
+	"kioscode/internal/unifi"
 )
 
 func conInvitados(f *falso, r *reloj) {
@@ -96,7 +96,7 @@ func TestExpireUnused(t *testing.T) {
 		t.Fatalf("n=%d err=%v", n, err)
 	}
 	limite := unifi.FilterTime(r.Now().Add(-15 * time.Minute))
-	want := "and(name.in('Totem', 'Totem (prueba admin)'), authorizedGuestCount.eq(0), createdAt.lt(" + limite + "))"
+	want := "and(name.in('Kioscode', 'Kioscode (prueba admin)'), authorizedGuestCount.eq(0), createdAt.lt(" + limite + "))"
 	if len(f.filtros) != 1 || f.filtros[0] != want {
 		t.Errorf("filtro de caducidad:\n got %v\nwant %s", f.filtros, want)
 	}

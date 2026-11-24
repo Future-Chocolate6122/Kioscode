@@ -11,8 +11,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"totem-wifi/internal/unifi"
-	"totem-wifi/internal/voucher"
+	"kioscode/internal/unifi"
+	"kioscode/internal/voucher"
 )
 
 const (

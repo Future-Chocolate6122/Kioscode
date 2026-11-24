@@ -8,7 +8,7 @@ import (
 )
 
 func TestRotacion(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "totem-wifi.log")
+	path := filepath.Join(t.TempDir(), "kioscode.log")
 	r, err := Open(path, 100, 2)
 	if err != nil {
 		t.Fatal(err)

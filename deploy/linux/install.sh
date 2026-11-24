@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instala (o actualiza) Tótem Wi-Fi como servicio systemd en Ubuntu Server.
+# Instala (o actualiza) Kioscode como servicio systemd en Ubuntu Server.
 #
 #   sudo ./install.sh [opciones]
 #
@@ -12,14 +12,14 @@
 # No descarga nada de Internet. Conserva config.json y los datos si ya existen.
 set -euo pipefail
 
-APP_DIR=/opt/totem-wifi
-CFG_DIR=/etc/totem-wifi
-DATA_DIR=/var/lib/totem-wifi
+APP_DIR=/opt/kioscode
+CFG_DIR=/etc/kioscode
+DATA_DIR=/var/lib/kioscode
 CFG="$CFG_DIR/config.json"
-BIN="$APP_DIR/totem-wifi"
-USR=totem
-UNIT=TotemWifi
-FW_UNIT=totem-wifi-firewall
+BIN="$APP_DIR/kioscode"
+USR=kioscode
+UNIT=Kioscode
+FW_UNIT=kioscode-firewall
 UFW=1
 SET_ARGS=()
 
@@ -40,13 +40,26 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 cd "$(dirname "$(readlink -f "$0")")"
-SRC=./totem-wifi
-[ -f "$SRC" ] || SRC=$(ls ./totem-wifi_linux_* 2>/dev/null | head -n1 || true)
+SRC=./kioscode
+[ -f "$SRC" ] || SRC=$(ls ./kioscode_linux_* 2>/dev/null | head -n1 || true)
 if [ -z "$SRC" ] || [ ! -f "$SRC" ]; then
-  echo "No se encuentra el ejecutable «totem-wifi» junto a este script." >&2
+  echo "No se encuentra el ejecutable «kioscode» junto a este script." >&2
   exit 1
 fi
 
+# Kioscode se llamaba «Tótem Wi-Fi» hasta la v1.4. Las dos usarían el mismo puerto: hay que quitar
+# antes la anterior con su propio uninstall.sh (que también borra sus reglas de ufw).
+if [ -d /opt/totem-wifi ] || [ -f /etc/systemd/system/TotemWifi.service ]; then
+  cat >&2 <<AVISO
+Hay instalada una versión anterior de esta aplicación con su nombre antiguo, «Tótem Wi-Fi».
+Desinstálela antes con el uninstall.sh de su propio paquete (1.x) y vuelva a ejecutar este
+instalador. Si quiere conservar su configuración, copie antes /etc/totem-wifi/config.json
+(ver README, punto 17).
+AVISO
+  exit 1
+fi
+
+echo "Kioscode: instalación en $(hostname)"
 echo "1/6 Usuario de sistema «$USR»"
 if ! id "$USR" >/dev/null 2>&1; then
   useradd --system --no-create-home --home-dir "$DATA_DIR" --shell /usr/sbin/nologin "$USR"
@@ -66,7 +79,7 @@ if [ -f "$CFG" ]; then
   echo "    Copia de la configuración anterior: $CFG.bak"
 fi
 # config.json contiene la API key y el hash de la contraseña: solo lo leen el
-# servicio (usuario totem) y root. El directorio es del servicio porque /admin
+# servicio (usuario kioscode) y root. El directorio es del servicio porque /admin
 # guarda los cambios en él.
 install -d -m 0750 -o "$USR" -g "$USR" "$CFG_DIR"
 install -d -m 0750 -o "$USR" -g "$USR" "$DATA_DIR"
@@ -89,10 +102,10 @@ echo "5/6 Cortafuegos (ufw)"
 FW_STATE="no gestionado"
 if [ "$UFW" -eq 1 ] && command -v ufw >/dev/null 2>&1; then
   # Ayudante: systemd lo lanza como root cada vez que cambia config.json y ajusta
-  # solo las reglas «Totem Wi-Fi» de ufw. El servicio web sigue sin privilegios.
+  # solo las reglas «Kioscode» de ufw. El servicio web sigue sin privilegios.
   cat > "/etc/systemd/system/$FW_UNIT.service" <<UNIT
 [Unit]
-Description=Tótem Wi-Fi: ajusta ufw a los equipos permitidos
+Description=Kioscode: ajusta ufw a los equipos permitidos
 After=ufw.service
 
 [Service]
@@ -101,7 +114,7 @@ ExecStart=$BIN firewall-sync -config $CFG -data $DATA_DIR
 UNIT
   cat > "/etc/systemd/system/$FW_UNIT.path" <<UNIT
 [Unit]
-Description=Tótem Wi-Fi: vigila config.json para actualizar ufw
+Description=Kioscode: vigila config.json para actualizar ufw
 
 [Path]
 PathChanged=$CFG
@@ -154,7 +167,7 @@ IP=${IP:-IP_DE_ESTE_SERVIDOR}
 
 cat <<FIN
 
-Instalación terminada (modo simulación hasta que configure UniFi en /admin).
+Kioscode instalado (modo simulación hasta que configure UniFi en /admin).
 
   Quiosco:         http://$IP:$PORT/
   Cortafuegos:     $FW_STATE
@@ -178,4 +191,4 @@ O vuelva a ejecutar el instalador con --admin-ips IP_DE_SU_PC.
 
 FIN
 fi
-echo "Log:  journalctl -u $UNIT -f    o    $DATA_DIR/totem-wifi.log"
+echo "Log:  journalctl -u $UNIT -f    o    $DATA_DIR/kioscode.log"

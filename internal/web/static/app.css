@@ -1,4 +1,4 @@
-/* Tótem Wi-Fi · estilos del quiosco y de la administración.
+/* Kioscode · estilos del quiosco y de la administración.
    Estilo institucional sobrio: paleta azul, grises, formas
    cuadradas y Montserrat / Raleway / Open Sans. Solo se usan estas variables. */
 
@@ -504,6 +504,10 @@ body.admin { font-size: 16px; }
 .admin .cabecera { height: 72px; padding: 0 32px; }
 .admin .logo-texto { font-size: 20px; }
 .admin .servicio { font-size: 14px; }
+/* Logotipo de Kioscode en la cabecera de /admin (24 px de alto, según docs/marca/LOGO.md). */
+.marca-app { display: flex; align-items: center; gap: 16px; }
+.marca-app img { display: block; height: 24px; width: auto; }
+.marca-app span { padding-left: 16px; border-left: 1px solid var(--gris-boton); }
 .admin-main { width: 100%; max-width: 1080px; margin: 0 auto; padding: 32px 24px 64px; }
 .admin h1 {
   font-family: var(--fuente-titulo); font-weight: 700; text-transform: uppercase;

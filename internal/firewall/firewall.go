@@ -1,11 +1,11 @@
 // Paquete firewall: sincroniza ufw con las IPs permitidas de config.json.
 //
-// Lo ejecuta como root un servicio systemd aparte (totem-wifi-firewall), que
+// Lo ejecuta como root un servicio systemd aparte (kioscode-firewall), que
 // systemd lanza cada vez que cambia config.json. El servicio web nunca tiene
 // privilegios: solo escribe config.json y lee el resultado en firewall-status.json.
 //
 // Reglas de seguridad del ayudante:
-//   - Solo crea y borra reglas con el comentario «Totem Wi-Fi»; nunca toca las demás
+//   - Solo crea y borra reglas con el comentario «Kioscode»; nunca toca las demás
 //     (SSH queda a salvo).
 //   - Nunca activa ni desactiva ufw.
 //   - Solo acepta IPs/redes válidas, un puerto ≥ 1024 y un número limitado de entradas,
@@ -29,11 +29,11 @@ import (
 	"strings"
 	"time"
 
-	"totem-wifi/internal/config"
+	"kioscode/internal/config"
 )
 
-// Comment identifica las reglas que gestiona Tótem Wi-Fi.
-const Comment = "Totem Wi-Fi"
+// Comment identifica las reglas que gestiona Kioscode.
+const Comment = "Kioscode"
 
 // MaxEntries limita las reglas que puede crear el ayudante.
 const MaxEntries = 64
@@ -98,9 +98,9 @@ func sortRules(r []Rule) {
 }
 
 // ParseUserRules extrae de /etc/ufw/user.rules (o user6.rules) las reglas con el
-// comentario de Tótem Wi-Fi. Formato de ufw:
+// comentario de Kioscode. Formato de ufw:
 //
-//	### tuple ### allow tcp 8080 0.0.0.0/0 any 192.0.2.0/24 in comment=546f74656d2057692d4669
+//	### tuple ### allow tcp 8080 0.0.0.0/0 any 192.0.2.0/24 in comment=4b696f73636f6465
 func ParseUserRules(data []byte) []Rule {
 	want := "comment=" + hex.EncodeToString([]byte(Comment))
 	var out []Rule
@@ -308,5 +308,5 @@ func ReadStatus(path string) (Status, error) {
 	return st, nil
 }
 
-// ErrNotManaged: el cortafuegos no lo gestiona Tótem Wi-Fi en este equipo.
+// ErrNotManaged: el cortafuegos no lo gestiona Kioscode en este equipo.
 var ErrNotManaged = errors.New("cortafuegos no gestionado")

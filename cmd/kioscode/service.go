@@ -11,7 +11,7 @@ import (
 	"github.com/kardianos/service"
 )
 
-const serviceName = "TotemWifi"
+const serviceName = "Kioscode"
 
 // Unidad systemd endurecida. @RW@ se sustituye por los directorios escribibles
 // (configuración y datos); el resto lo rellena kardianos/service.
@@ -68,8 +68,8 @@ func isServiceCommand(cmd string) bool {
 func newService(configPath, dataDir string, a *app) (service.Service, error) {
 	cfg := &service.Config{
 		Name:        serviceName,
-		DisplayName: "Tótem Wi-Fi",
-		Description: "Tótem Wi-Fi: entrega vouchers del hotspot de UniFi en una web de quiosco",
+		DisplayName: "Kioscode",
+		Description: "Kioscode: entrega vouchers del hotspot de UniFi en una web de quiosco",
 		Arguments:   []string{"-config", configPath, "-data", dataDir},
 		Option:      service.KeyValue{},
 	}
@@ -86,8 +86,8 @@ func newService(configPath, dataDir string, a *app) (service.Service, error) {
 		}
 		cfg.Option["SystemdScript"] = strings.ReplaceAll(systemdUnit, "@RW@", strings.Join(rw, " "))
 		// Usuario sin privilegios creado por install.sh; si no existe, se ejecuta como root.
-		if userExists("totem") {
-			cfg.UserName = "totem"
+		if userExists("kioscode") {
+			cfg.UserName = "kioscode"
 		}
 	}
 	return service.New(&program{a: a}, cfg)

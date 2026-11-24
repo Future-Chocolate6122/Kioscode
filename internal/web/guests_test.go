@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"totem-wifi/internal/voucher"
+	"kioscode/internal/voucher"
 )
 
 func idsEnPagina(body string) []string {

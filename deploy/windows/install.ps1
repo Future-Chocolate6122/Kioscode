@@ -1,12 +1,12 @@
 ﻿<#
 .SYNOPSIS
-  Instala (o actualiza) Tótem Wi-Fi como servicio de Windows.
+  Instala (o actualiza) Kioscode como servicio de Windows.
 
 .DESCRIPTION
-  - Crea %ProgramData%\TotemWifi (configuración, datos y log) con permisos solo
+  - Crea %ProgramData%\Kioscode (configuración, datos y log) con permisos solo
     para SYSTEM y Administradores, porque config.json guarda la API key.
-  - Copia totem-wifi.exe a %ProgramFiles%\TotemWifi.
-  - Registra el servicio «TotemWifi» (arranque automático, reinicio si falla).
+  - Copia kioscode.exe a %ProgramFiles%\Kioscode.
+  - Registra el servicio «Kioscode» (arranque automático, reinicio si falla).
   - Abre el puerto en el Firewall de Windows SOLO para las IPs de allowed_clients
     y admin_allowed_clients.
   - Arranca el servicio y abre http://localhost:8080/admin.
@@ -22,18 +22,24 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
-$ServiceName = 'TotemWifi'
-$RuleName    = 'Totem Wi-Fi (HTTP)'
-$Src     = Join-Path $PSScriptRoot 'totem-wifi.exe'
-$ProgDir = Join-Path $env:ProgramFiles 'TotemWifi'
-$DataDir = Join-Path $env:ProgramData 'TotemWifi'
-$Exe     = Join-Path $ProgDir 'totem-wifi.exe'
+$ServiceName = 'Kioscode'
+$RuleName    = 'Kioscode (HTTP)'
+$Src     = Join-Path $PSScriptRoot 'kioscode.exe'
+$ProgDir = Join-Path $env:ProgramFiles 'Kioscode'
+$DataDir = Join-Path $env:ProgramData 'Kioscode'
+$Exe     = Join-Path $ProgDir 'kioscode.exe'
 $Cfg     = Join-Path $DataDir 'config.json'
 
 if (-not (Test-Path $Src)) {
-    throw "No se encuentra totem-wifi.exe junto a este script ($PSScriptRoot)."
+    throw "No se encuentra kioscode.exe junto a este script ($PSScriptRoot)."
 }
 
+# Kioscode se llamaba «Tótem Wi-Fi» hasta la v1.4: las dos usarían el mismo puerto.
+if (Get-Service -Name 'TotemWifi' -ErrorAction SilentlyContinue) {
+    throw 'Hay instalada una versión anterior con su nombre antiguo, «Tótem Wi-Fi». Desinstálela antes con el uninstall.ps1 de su propio paquete (1.x) y vuelva a ejecutar este instalador.'
+}
+
+Write-Host 'Kioscode: instalación en este equipo'
 Write-Host '1/6 Parando la versión anterior (si existe)'
 $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
 if ($svc) {
@@ -81,7 +87,7 @@ foreach ($line in (& $Exe -config $Cfg -data $DataDir allowlist)) {
 }
 Get-NetFirewallRule -DisplayName $RuleName -ErrorAction SilentlyContinue | Remove-NetFirewallRule
 if ($addrs.Count -gt 0) {
-    New-NetFirewallRule -DisplayName $RuleName -Description 'Quiosco Tótem Wi-Fi: solo los equipos de allowed_clients y admin_allowed_clients' `
+    New-NetFirewallRule -DisplayName $RuleName -Description 'Quiosco Kioscode: solo los equipos de allowed_clients y admin_allowed_clients' `
         -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port `
         -RemoteAddress $addrs -Program $Exe -Profile Any | Out-Null
     Write-Host ("    Puerto {0} abierto solo para: {1}" -f $port, ($addrs -join ', '))
@@ -92,15 +98,15 @@ if ($addrs.Count -gt 0) {
 Write-Host '6/6 Arrancando el servicio'
 & $Exe start -config $Cfg -data $DataDir
 if ($LASTEXITCODE -ne 0) {
-    throw "El servicio no ha arrancado. Revise $DataDir\totem-wifi.log y el Visor de eventos."
+    throw "El servicio no ha arrancado. Revise $DataDir\kioscode.log y el Visor de eventos."
 }
 Start-Sleep -Seconds 2
 
 Write-Host ''
-Write-Host 'Instalación terminada (modo simulación hasta que configure UniFi).' -ForegroundColor Green
+Write-Host 'Kioscode instalado (modo simulación hasta que configure UniFi).' -ForegroundColor Green
 Write-Host "  Administración: http://localhost:$port/admin"
 Write-Host "  Quiosco:        http://IP_DE_ESTE_EQUIPO:$port/"
-Write-Host "  Log:            $DataDir\totem-wifi.log"
+Write-Host "  Log:            $DataDir\kioscode.log"
 if (-not $NoBrowser) {
     Start-Process "http://localhost:$port/admin"
 }

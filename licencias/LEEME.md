@@ -1,6 +1,6 @@
 # Licencias de terceros
 
-Tótem Wi-Fi se distribuye bajo la licencia MIT (`LICENSE`, en la raíz). El ejecutable incluye
+Kioscode se distribuye bajo la licencia MIT (`LICENSE`, en la raíz). El ejecutable incluye
 componentes de terceros, cuyas licencias exigen acompañar el programa con sus avisos. Todos aparecen
 también, con su texto completo, al final de `LICENSE`:
 

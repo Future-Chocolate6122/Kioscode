@@ -61,7 +61,7 @@ func TestCreateVoucherCuerpo(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Fatal(err)
 		}
-		want := map[string]any{"count": 1.0, "name": "Totem", "timeLimitMinutes": 240.0, "authorizedGuestLimit": 1.0, "rxRateLimitKbps": 5000.0}
+		want := map[string]any{"count": 1.0, "name": "Kioscode", "timeLimitMinutes": 240.0, "authorizedGuestLimit": 1.0, "rxRateLimitKbps": 5000.0}
 		for k, v := range want {
 			if body[k] != v {
 				t.Errorf("campo %s = %v, want %v", k, body[k], v)
@@ -74,9 +74,9 @@ func TestCreateVoucherCuerpo(t *testing.T) {
 			}
 		}
 		w.WriteHeader(http.StatusCreated)
-		io.WriteString(w, `{"vouchers":[{"id":"v1","code":"1234567890","name":"Totem","timeLimitMinutes":240,"createdAt":"2026-11-12T10:00:00Z","expired":false}]}`)
+		io.WriteString(w, `{"vouchers":[{"id":"v1","code":"1234567890","name":"Kioscode","timeLimitMinutes":240,"createdAt":"2026-11-12T10:00:00Z","expired":false}]}`)
 	})
-	v, err := c.CreateVoucher(context.Background(), "site-1", VoucherRequest{Name: "Totem", TimeLimitMinutes: 240, GuestLimit: 1, RxKbps: 5000})
+	v, err := c.CreateVoucher(context.Background(), "site-1", VoucherRequest{Name: "Kioscode", TimeLimitMinutes: 240, GuestLimit: 1, RxKbps: 5000})
 	if err != nil {
 		t.Fatal(err)
 	}

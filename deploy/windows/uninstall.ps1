@@ -1,10 +1,10 @@
 ﻿<#
 .SYNOPSIS
-  Desinstala Tótem Wi-Fi.
+  Desinstala Kioscode.
 
 .DESCRIPTION
-  Detiene y elimina el servicio, la regla del Firewall y %ProgramFiles%\TotemWifi.
-  Conserva %ProgramData%\TotemWifi (configuración, contador y log) salvo con -Purge.
+  Detiene y elimina el servicio, la regla del Firewall y %ProgramFiles%\Kioscode.
+  Conserva %ProgramData%\Kioscode (configuración, contador y log) salvo con -Purge.
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
@@ -17,11 +17,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
-$ServiceName = 'TotemWifi'
-$RuleName    = 'Totem Wi-Fi (HTTP)'
-$ProgDir = Join-Path $env:ProgramFiles 'TotemWifi'
-$DataDir = Join-Path $env:ProgramData 'TotemWifi'
-$Exe     = Join-Path $ProgDir 'totem-wifi.exe'
+$ServiceName = 'Kioscode'
+$RuleName    = 'Kioscode (HTTP)'
+$ProgDir = Join-Path $env:ProgramFiles 'Kioscode'
+$DataDir = Join-Path $env:ProgramData 'Kioscode'
+$Exe     = Join-Path $ProgDir 'kioscode.exe'
 
 $svc = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
 if ($svc) {
