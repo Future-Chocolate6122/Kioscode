@@ -35,7 +35,9 @@ el portal cautivo de su móvil, ordenador o tablet y ya navega.
 
 **Requisitos:** un UniFi OS Server o UniFi Network Application con la Integration API (aplicación
 Network 9.x o posterior), con un portal cautivo de vouchers en la red de invitados, y un equipo
-donde ejecutar Kioscode (recomendado: Ubuntu Server). Probado con UniFi OS Server 5.1 y Network 10.x.
+donde ejecutar Kioscode (recomendado: Ubuntu Server). Probado con UniFi OS Server 5.1 (Network 10.x).
+Con UniFi Network Application instalada por separado debería funcionar, porque usa la misma API, pero
+no se ha probado.
 
 > Kioscode es un proyecto independiente: no es un producto de Ubiquiti ni está respaldado por ella.
 > UniFi es una marca registrada de Ubiquiti Inc.
@@ -91,7 +93,7 @@ donde ejecutar Kioscode (recomendado: Ubuntu Server). Probado con UniFi OS Serve
 | `kioscode_<versión>_linux_arm64.tar.gz` | Ubuntu en ARM (por ejemplo, Raspberry Pi 4/5 de 64 bits) | ídem |
 
 `SHA256SUMS.txt` permite comprobar que el paquete ha llegado íntegro. Todos están en la página de
-versiones: <https://github.com/Future-Chocolate6122/totem-wifi/releases>.
+versiones: <https://github.com/Future-Chocolate6122/Kioscode/releases>.
 
 Dónde queda cada cosa una vez instalado:
 
@@ -111,14 +113,14 @@ Dónde queda cada cosa una vez instalado:
 
 1. Descargue el paquete en el servidor. Los enlaces de la versión actual (2.0.0) son estos; para otra
    versión, cambie `2.0.0` por la que corresponda (todas están en la
-   [página de versiones](https://github.com/Future-Chocolate6122/totem-wifi/releases)):
+   [página de versiones](https://github.com/Future-Chocolate6122/Kioscode/releases)):
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/totem-wifi/releases/download/v2.0.0/kioscode_2.0.0_linux_amd64.tar.gz
+   wget https://github.com/Future-Chocolate6122/Kioscode/releases/download/v2.0.0/kioscode_2.0.0_linux_amd64.tar.gz
    ```
 
    ```bash
-   wget https://github.com/Future-Chocolate6122/totem-wifi/releases/download/v2.0.0/SHA256SUMS.txt
+   wget https://github.com/Future-Chocolate6122/Kioscode/releases/download/v2.0.0/SHA256SUMS.txt
    ```
 
    Compruebe que ha llegado íntegro (debe decir `OK`):

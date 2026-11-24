@@ -35,7 +35,7 @@ commit. **Nunca** CGO: rompería la compilación cruzada y la promesa de «un so
 ## 3. Estructura del repositorio
 
 ```
-kioscode/   (repositorio: totem-wifi)
+kioscode/   (repositorio: github.com/Future-Chocolate6122/Kioscode)
 ├── CLAUDE.md                 ← este fichero
 ├── CONTEXTO.md
 ├── README.md                 ← guía de instalación y uso para el administrador (en castellano)

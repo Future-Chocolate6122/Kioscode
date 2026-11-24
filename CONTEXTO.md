@@ -282,7 +282,7 @@ Siguen abiertas (no bloquean; se rellenan en `/admin` de cada sede):
   `go version -m` no aparece en `LICENSE`. Sin cambios en el programa.
 
 - **2.0.0** — **la aplicación pasa a llamarse Kioscode** (decisión del usuario; en GitHub, «Kioscode
-  para UniFi»; el repositorio sigue siendo `totem-wifi`). Cambian ejecutable, módulo Go, servicio,
+  para UniFi»; repositorio renombrado a `Kioscode`). Cambian ejecutable, módulo Go, servicio,
   carpetas, usuario del sistema, log, ayudante y reglas del cortafuegos («Kioscode», hexadecimal
   `4b696f73636f6465` en `user.rules`) y la nota por defecto de los vouchers. Sin migración automática
   desde 1.x (no estaba en producción): se desinstala la 1.x con su `uninstall.sh`. Logotipo del
